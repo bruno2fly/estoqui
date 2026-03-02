@@ -25,7 +25,7 @@ export function parseProductsCSV(
   const headers = parseCSVLine(lines[0], separator).map((h) => normalize(h))
 
   const nameIdx = headers.findIndex((h) =>
-    /\b(name|produto|nome|product)\b/.test(h)
+    /\b(name|produto|nome|product|product_name|productname)\b/.test(h)
   )
   const brandIdx = headers.findIndex((h) => /\b(brand|marca)\b/.test(h))
   const categoryIdx = headers.findIndex((h) =>

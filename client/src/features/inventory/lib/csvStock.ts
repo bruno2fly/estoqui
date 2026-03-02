@@ -85,7 +85,7 @@ export function parseCSVStock(text: string): StockSnapshotRow[] {
   const headers = parseCSVLine(lines[0], separator).map((h) => normalize(h))
 
   const nameIdx = headers.findIndex((h) =>
-    /\b(name|produto|nome|item|desc|product)\b/.test(h)
+    /\b(name|produto|nome|item|desc|product|product_name|productname)\b/.test(h)
   )
   const brandIdx = headers.findIndex((h) => /\b(brand|marca)\b/.test(h))
   const stockIdx = headers.findIndex(
