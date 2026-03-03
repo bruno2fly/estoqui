@@ -1,11 +1,18 @@
 import type { Activity } from '@/types'
 import type { StateSetter, StateGetter } from '../types'
 import { generateId } from '../lib/generateId'
+import { supabase } from '@/lib/supabase'
+import { createActivity as dbCreateActivity } from '@/lib/supabase/activity'
 
 const MAX_ACTIVITY = 50
 
 export const initialActivityState = {
   activity: [] as Activity[],
+}
+
+async function getUid(): Promise<string> {
+  const { data } = await supabase.auth.getSession()
+  return data.session?.user?.id ?? ''
 }
 
 export function getActivityActions(set: StateSetter, _get: StateGetter) {
@@ -20,6 +27,7 @@ export function getActivityActions(set: StateSetter, _get: StateGetter) {
       set((s) => ({
         activity: [a, ...s.activity].slice(0, MAX_ACTIVITY),
       }))
+      getUid().then(uid => { if (uid) dbCreateActivity(a, uid).catch(console.error) })
     },
   }
 }

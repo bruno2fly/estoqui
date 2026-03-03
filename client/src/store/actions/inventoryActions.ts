@@ -4,6 +4,10 @@ import { computeBestVendor } from '../selectors/vendorPrices'
 import { generateId } from '../lib/generateId'
 import type { StateSetter } from '../types'
 import type { PersistedState } from '@/types'
+import { supabase } from '@/lib/supabase'
+import { upsertProducts } from '@/lib/supabase/products'
+import { upsertStockSnapshot } from '@/lib/supabase/stockSnapshots'
+import { createActivity as dbCreateActivity } from '@/lib/supabase/activity'
 
 const MAX_ACTIVITY = 50
 
@@ -24,6 +28,11 @@ export interface CreateOrderResult {
   order?: Order
   byVendor?: Record<string, OrderGroup>
   error?: string
+}
+
+async function getUid(): Promise<string> {
+  const { data } = await supabase.auth.getSession()
+  return data.session?.user?.id ?? ''
 }
 
 export function getInventoryActions(
@@ -169,7 +178,7 @@ export function getInventoryActions(
 
     /**
      * Atomic stock import: adds snapshot + merges matches + patches products
-     * + adds activity in a SINGLE set() call. No per-row store writes.
+     * + adds activity in a SINGLE set() call. Then persists to Supabase.
      */
     commitStockImport(payload: {
       uploadedAt: string
@@ -216,12 +225,24 @@ export function getInventoryActions(
         activity: [activity, ...state.activity].slice(0, MAX_ACTIVITY),
       })
 
+      // Persist to Supabase
+      getUid().then(uid => {
+        if (!uid) return
+        upsertStockSnapshot(snapshot, uid).catch(console.error)
+        // Batch update patched products
+        const patchedProducts = updatedProducts.filter(p => payload.productPatches[p.id])
+        if (patchedProducts.length > 0) {
+          upsertProducts(patchedProducts, uid).catch(console.error)
+        }
+        dbCreateActivity(activity, uid).catch(console.error)
+      })
+
       return snapshotId
     },
 
     /**
      * Atomic bulk create: generates all products + matches + snapshot row
-     * updates + activity in a SINGLE set() call.
+     * updates + activity in a SINGLE set() call. Then persists to Supabase.
      */
     bulkCreateProductsFromSnapshot(payload: {
       snapshotId: string
@@ -268,6 +289,15 @@ export function getInventoryActions(
         matches: { ...state.matches, ...newMatches },
         stockSnapshots: updatedSnapshots,
         activity: [activity, ...state.activity].slice(0, MAX_ACTIVITY),
+      })
+
+      // Persist to Supabase
+      getUid().then(uid => {
+        if (!uid) return
+        upsertProducts(newProducts, uid).catch(console.error)
+        const updatedSnap = updatedSnapshots.find(s => s.id === payload.snapshotId)
+        if (updatedSnap) upsertStockSnapshot(updatedSnap, uid).catch(console.error)
+        dbCreateActivity(activity, uid).catch(console.error)
       })
     },
   }

@@ -31,29 +31,44 @@ function WarehouseIcon({ className }: { className?: string }) {
 }
 
 export function LoginPage() {
-  const [username, setUsername] = useState('')
+  const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState('')
-  const [loading, setLoading] = useState(false)
+  const [isRegister, setIsRegister] = useState(false)
+  const [successMsg, setSuccessMsg] = useState('')
 
-  const login = useAuthStore((s) => s.login)
+  const signIn = useAuthStore((s) => s.signIn)
+  const signUp = useAuthStore((s) => s.signUp)
+  const loading = useAuthStore((s) => s.loading)
   const navigate = useNavigate()
 
-  function handleSubmit(e: FormEvent) {
+  async function handleSubmit(e: FormEvent) {
     e.preventDefault()
     setError('')
-    setLoading(true)
+    setSuccessMsg('')
 
-    setTimeout(() => {
-      const ok = login(username, password)
-      setLoading(false)
-      if (ok) {
-        navigate('/', { replace: true })
+    if (isRegister) {
+      const { error: err } = await signUp(email, password)
+      if (err) {
+        setError(err)
       } else {
-        setError('Invalid username or password')
+        const user = useAuthStore.getState().user
+        if (user) {
+          navigate('/', { replace: true })
+        } else {
+          setSuccessMsg('Account created! Check your email to confirm, then sign in.')
+          setIsRegister(false)
+        }
       }
-    }, 400)
+    } else {
+      const { error: err } = await signIn(email, password)
+      if (err) {
+        setError(err)
+      } else {
+        navigate('/', { replace: true })
+      }
+    }
   }
 
   return (
@@ -67,22 +82,24 @@ export function LoginPage() {
           <h1 className="text-2xl font-bold text-slate-800 tracking-tight">ESTOQUI</h1>
           <p className="text-gray-400 mt-1">Inventory Management</p>
           <p className="text-sm text-gray-500 mt-3 mb-8">
-            Streamline your stock, vendors, and orders in one place.
+            {isRegister
+              ? 'Create your account to get started.'
+              : 'Streamline your stock, vendors, and orders in one place.'}
           </p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label htmlFor="username" className="block text-sm font-medium text-slate-700 mb-1.5">
-              Username
+            <label htmlFor="email" className="block text-sm font-medium text-slate-700 mb-1.5">
+              Email
             </label>
             <input
-              id="username"
-              type="text"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              placeholder="Enter your username"
-              autoComplete="username"
+              id="email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="you@example.com"
+              autoComplete="email"
               autoFocus
               required
               className="w-full py-3 px-4 rounded-lg border border-gray-300 bg-white text-slate-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
@@ -99,9 +116,10 @@ export function LoginPage() {
                 type={showPassword ? 'text' : 'password'}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="Enter your password"
-                autoComplete="current-password"
+                placeholder={isRegister ? 'Min. 6 characters' : 'Enter your password'}
+                autoComplete={isRegister ? 'new-password' : 'current-password'}
                 required
+                minLength={isRegister ? 6 : undefined}
                 className="w-full py-3 px-4 pr-12 rounded-lg border border-gray-300 bg-white text-slate-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
               />
               <button
@@ -125,20 +143,29 @@ export function LoginPage() {
             </p>
           )}
 
+          {successMsg && (
+            <p className="text-sm text-green-700 text-center bg-green-50 py-2 px-3 rounded-lg">
+              {successMsg}
+            </p>
+          )}
+
           <button
             type="submit"
-            disabled={loading || !username || !password}
+            disabled={loading || !email || !password}
             className="w-full py-3 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold transition-colors disabled:bg-slate-400 disabled:hover:bg-slate-400 disabled:cursor-not-allowed"
           >
-            {loading ? 'Signing in...' : 'Sign In'}
+            {loading
+              ? (isRegister ? 'Creating account...' : 'Signing in...')
+              : (isRegister ? 'Create Account' : 'Sign In')}
           </button>
 
-          <a
-            href="#"
-            className="block text-center text-sm text-blue-600 hover:text-blue-700 transition-colors"
+          <button
+            type="button"
+            onClick={() => { setIsRegister(!isRegister); setError(''); setSuccessMsg('') }}
+            className="block w-full text-center text-sm text-blue-600 hover:text-blue-700 transition-colors"
           >
-            Forgot password?
-          </a>
+            {isRegister ? 'Already have an account? Sign in' : "Don't have an account? Create one"}
+          </button>
         </form>
 
         <p className="text-xs text-gray-400 text-center mt-8">By 2Fly</p>

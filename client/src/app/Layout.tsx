@@ -33,7 +33,7 @@ export function Layout() {
   const navigate = useNavigate()
   const title = pathToTitle[location.pathname] ?? 'Estoqui'
   const storeName = useStore((s) => s.settings?.storeName ?? DEFAULT_SETTINGS.storeName)
-  const logout = useAuthStore((s) => s.logout)
+  const signOut = useAuthStore((s) => s.signOut)
   const [storeMenuOpen, setStoreMenuOpen] = useState(false)
 
   const [dark, setDark] = useState(() => {
@@ -130,7 +130,7 @@ export function Layout() {
           </div>
           <button
             type="button"
-            onClick={() => { logout(); navigate('/login', { replace: true }) }}
+            onClick={() => { signOut().then(() => navigate('/login', { replace: true })) }}
             className="flex items-center gap-2 text-[12px] text-fg-secondary hover:text-danger transition-colors w-full"
           >
             <LogoutIcon className="w-3.5 h-3.5" />
@@ -193,7 +193,7 @@ export function Layout() {
                       <div className="border-t border-surface-border my-1" />
                       <button
                         type="button"
-                        onClick={() => { setStoreMenuOpen(false); logout(); navigate('/login', { replace: true }) }}
+                        onClick={() => { setStoreMenuOpen(false); signOut().then(() => navigate('/login', { replace: true })) }}
                         className="w-full text-left px-4 py-2.5 text-[13px] text-danger hover:bg-surface-hover transition-colors flex items-center gap-2.5"
                       >
                         <LogoutIcon className="w-4 h-4" />

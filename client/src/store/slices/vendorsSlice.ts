@@ -1,22 +1,35 @@
 import type { Vendor } from '@/types'
 import type { StateSetter, StateGetter } from '../types'
 import { generateId } from '../lib/generateId'
+import { supabase } from '@/lib/supabase'
+import { upsertVendor, deleteVendor as dbDeleteVendor } from '@/lib/supabase/vendors'
 
 export const initialVendorsState = {
   vendors: [] as Vendor[],
 }
 
+async function getUid(): Promise<string> {
+  const { data } = await supabase.auth.getSession()
+  return data.session?.user?.id ?? ''
+}
+
 export function getVendorsActions(set: StateSetter, _get: StateGetter) {
   return {
     addVendor: (vendor: Omit<Vendor, 'id'>) => {
-      const v: Vendor = { ...vendor, id: generateId() }
+      const v: Vendor = { ...vendor, id: generateId(), createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() }
       set((s) => ({ vendors: [...s.vendors, v] }))
+      getUid().then(uid => { if (uid) upsertVendor(v, uid).catch(console.error) })
       return v.id
     },
     updateVendor: (id: string, updates: Partial<Omit<Vendor, 'id'>>) => {
       set((s) => ({
         vendors: s.vendors.map((v) => (v.id === id ? { ...v, ...updates } : v)),
       }))
+      getUid().then(uid => {
+        if (!uid) return
+        const vendor = _get().vendors.find(v => v.id === id)
+        if (vendor) upsertVendor(vendor, uid).catch(console.error)
+      })
     },
     deleteVendor: (id: string) => {
       set((s) => ({
@@ -29,6 +42,7 @@ export function getVendorsActions(set: StateSetter, _get: StateGetter) {
           ),
         },
       }))
+      dbDeleteVendor(id).catch(console.error)
     },
   }
 }
