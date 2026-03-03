@@ -143,6 +143,8 @@ export function ReorderSection({
                   priceAge !== null && priceAge <= stalenessThreshold
                 const lineTotal = line.unitPrice * line.suggestedQty
                 const lastOrder = lastOrderByProduct[line.productId]
+                const isCase = line.packType === 'CASE'
+                const unitsPerCase = line.unitsPerCase ?? 1
 
                 return (
                   <React.Fragment key={idx}>
@@ -189,6 +191,11 @@ export function ReorderSection({
                           }
                           className="w-14 bg-input-bg border border-input-border text-fg px-1.5 py-1 rounded-lg text-[12px]"
                         />
+                        {isCase && (
+                          <span className="block text-[10px] text-muted mt-0.5">
+                            = {line.suggestedQty * unitsPerCase} units
+                          </span>
+                        )}
                       </td>
                       <td className="px-3 py-3">
                         <select
@@ -203,18 +210,25 @@ export function ReorderSection({
                           }
                         >
                           <option value="">Select...</option>
-                          {vendorPricesForProduct.map((vp) => (
-                            <option
-                              key={vp.vendorId}
-                              value={vp.vendorId}
-                            >
-                              {vp.vendor?.name} - R$ {vp.unitPrice.toFixed(2)}
-                            </option>
-                          ))}
+                          {vendorPricesForProduct.map((vp) => {
+                            const vpIsCase = vp.packType === 'CASE'
+                            const vpUnits = vp.unitsPerCase ?? 1
+                            return (
+                              <option
+                                key={vp.vendorId}
+                                value={vp.vendorId}
+                              >
+                                {vp.vendor?.name} - R$ {vp.unitPrice.toFixed(2)}{vpIsCase ? `/case (${vpUnits}u)` : ''} · R$ {vp.effectiveUnitCost.toFixed(2)}/ea
+                              </option>
+                            )
+                          })}
                         </select>
                       </td>
                       <td className="px-3 py-3 text-[13px] text-fg">
                         R$ {line.unitPrice.toFixed(2)}
+                        {isCase && (
+                          <span className="block text-[10px] text-muted">/case</span>
+                        )}
                       </td>
                       <td className="px-3 py-3 text-[13px] text-fg">
                         R$ {lineTotal.toFixed(2)}

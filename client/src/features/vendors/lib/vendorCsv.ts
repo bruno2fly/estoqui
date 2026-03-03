@@ -1,5 +1,7 @@
 import { parseCSVLine, detectSeparator } from '@/features/inventory/lib/csvStock'
 import { normalize } from '@/shared/lib/matching'
+import { parsePackFromText } from '@/lib/pack/parsePack'
+import type { PackType, PriceBasis } from '@/types'
 
 export interface VendorPriceRow {
   name: string
@@ -9,6 +11,10 @@ export interface VendorPriceRow {
   unitType: string
   price: number
   available: boolean
+  packType?: PackType
+  unitsPerCase?: number
+  unitDescriptor?: string
+  priceBasis?: PriceBasis
 }
 
 export interface VendorCsvParseResult {
@@ -103,7 +109,15 @@ export function parseVendorPriceCSV(
     }
 
     if (sku) skuCount++
-    prices.push({ name, brand, sku, unitSize, unitType, price, available })
+    const packText = [name, unitSize, unitType].filter(Boolean).join(' ')
+    const pack = parsePackFromText(packText)
+    prices.push({
+      name, brand, sku, unitSize, unitType, price, available,
+      packType: pack.packType,
+      unitsPerCase: pack.unitsPerCase,
+      unitDescriptor: pack.unitDescriptor,
+      priceBasis: pack.priceBasis,
+    })
   }
 
   if (prices.length === 0) {

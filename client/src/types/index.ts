@@ -35,11 +35,20 @@ export interface Product {
   unitPrice?: number
 }
 
+export type PackType = 'CASE' | 'UNIT'
+export type PriceBasis = 'PER_CASE' | 'PER_UNIT'
+
 export interface VendorPrice {
   vendorId: string
   productId: string
   unitPrice: number
   updatedAt: string // ISO date
+  packType?: PackType
+  unitsPerCase?: number           // default 1
+  unitDescriptor?: string         // e.g. "12 oz bottle", "330ml"
+  priceBasis?: PriceBasis         // default "PER_UNIT"
+  parseVersion?: number           // migration version
+  unitCost?: number               // derived: effective per-unit cost
 }
 
 export interface VendorPriceUpload {
@@ -84,6 +93,8 @@ export interface ReorderDraftLine {
   unitPrice: number
   priceUpdatedAt: string | null
   selected: boolean
+  packType?: PackType
+  unitsPerCase?: number
 }
 
 export interface ReorderDraft {

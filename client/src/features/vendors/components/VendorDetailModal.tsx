@@ -139,11 +139,20 @@ export function VendorDetailModal({
         (vp) => vp.vendorId === vendor.id && vp.productId === product!.id
       )
       const now = new Date().toISOString()
+      const effectiveUnitCost = row.packType === 'CASE' && row.priceBasis === 'PER_CASE' && (row.unitsPerCase ?? 1) > 0
+        ? row.price / (row.unitsPerCase ?? 1)
+        : row.price
       setVendorPrice({
         vendorId: vendor.id,
         productId: product.id,
         unitPrice: row.price,
         updatedAt: now,
+        packType: row.packType ?? 'UNIT',
+        unitsPerCase: row.unitsPerCase ?? 1,
+        unitDescriptor: row.unitDescriptor ?? '',
+        priceBasis: row.priceBasis ?? 'PER_UNIT',
+        parseVersion: 1,
+        unitCost: effectiveUnitCost,
       })
       if (existing) priceUpdated++
       else priceAdded++
@@ -494,6 +503,13 @@ export function VendorDetailModal({
                       <input className="bg-input-bg border border-input-border text-fg px-2 py-1 rounded-lg text-sm w-full" placeholder="SKU" value={row.sku} onChange={(e) => handleReviewRowChange(i, 'sku', e.target.value)} />
                       <input className="bg-input-bg border border-input-border text-fg px-2 py-1 rounded-lg text-sm w-full" placeholder="Price" type="number" step="0.01" value={row.price || ''} onChange={(e) => handleReviewRowChange(i, 'price', e.target.value)} />
                     </div>
+                    {row.packType === 'CASE' && (
+                      <div className="mt-1.5 flex items-center gap-2">
+                        <span className="inline-block px-1.5 py-0.5 rounded text-[10px] font-bold uppercase bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300">CASE</span>
+                        <span className="text-[11px] text-muted">{row.unitsPerCase} units/case{row.unitDescriptor ? ` · ${row.unitDescriptor}` : ''}</span>
+                        <span className="text-[11px] text-fg-secondary">Unit cost: R$ {((row.priceBasis === 'PER_CASE' && (row.unitsPerCase ?? 1) > 0) ? row.price / (row.unitsPerCase ?? 1) : row.price).toFixed(2)}</span>
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
@@ -529,7 +545,7 @@ export function VendorDetailModal({
             <table className="w-full border-collapse text-sm">
               <thead>
                 <tr className="border-b border-surface-border">
-                  {['Product', 'Brand', 'SKU', 'Size', 'Unit Price', 'Updated', 'Actions'].map((h) => (
+                  {['Product', 'Brand', 'SKU', 'Size', 'Pack', 'Price', 'Unit Cost', 'Updated', 'Actions'].map((h) => (
                     <th key={h} className="text-left text-fg-secondary font-semibold text-xs uppercase py-2">{h}</th>
                   ))}
                 </tr>
@@ -537,7 +553,7 @@ export function VendorDetailModal({
               <tbody>
                 {prices.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="py-4 text-center text-muted text-sm">
+                    <td colSpan={9} className="py-4 text-center text-muted text-sm">
                       No prices registered. Add products or import CSV / image.
                     </td>
                   </tr>
@@ -547,12 +563,24 @@ export function VendorDetailModal({
                     const daysAgo = Math.floor(
                       (Date.now() - new Date(vp.updatedAt).getTime()) / (1000 * 60 * 60 * 24)
                     )
+                    const isCase = vp.packType === 'CASE'
+                    const effectiveCost = vp.unitCost ?? (isCase && (vp.unitsPerCase ?? 1) > 0 ? vp.unitPrice / (vp.unitsPerCase ?? 1) : vp.unitPrice)
                     return (
                       <tr key={`${vp.vendorId}-${vp.productId}`} className="border-b border-surface-border">
                         <td className="py-2 text-fg">{product.name}</td>
                         <td className="py-2 text-fg">{product.brand}</td>
                         <td className="py-2 text-muted">{product.sku ?? '-'}</td>
                         <td className="py-2 text-fg">{product.unitSize ?? '-'}</td>
+                        <td className="py-2">
+                          {isCase ? (
+                            <div className="flex items-center gap-1.5">
+                              <span className="inline-block px-1.5 py-0.5 rounded text-[10px] font-bold uppercase bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300">CASE</span>
+                              <span className="text-[11px] text-muted">{vp.unitsPerCase}u{vp.unitDescriptor ? ` · ${vp.unitDescriptor}` : ''}</span>
+                            </div>
+                          ) : (
+                            <span className="inline-block px-1.5 py-0.5 rounded text-[10px] font-bold uppercase bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400">UNIT</span>
+                          )}
+                        </td>
                         <td className="py-2">
                           <input
                             type="number"
@@ -561,6 +589,11 @@ export function VendorDetailModal({
                             value={vp.unitPrice}
                             onChange={(e) => handlePriceChange(vp.productId, e.target.value)}
                           />
+                          {isCase && <span className="text-[10px] text-muted ml-1">/case</span>}
+                        </td>
+                        <td className="py-2 text-[13px] text-fg-secondary">
+                          R$ {effectiveCost.toFixed(2)}
+                          {isCase && <span className="text-[10px] text-muted ml-0.5">/ea</span>}
                         </td>
                         <td className="py-2 text-fg-secondary">{daysAgo === 0 ? 'Today' : `${daysAgo}d ago`}</td>
                         <td className="py-2">

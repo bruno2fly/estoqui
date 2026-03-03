@@ -78,6 +78,8 @@ export function getInventoryActions(
           unitPrice: vp ? vp.unitPrice : 0,
           priceUpdatedAt: vp ? vp.updatedAt : null,
           selected: true,
+          packType: vp?.packType,
+          unitsPerCase: vp?.unitsPerCase,
         })
       }
 
