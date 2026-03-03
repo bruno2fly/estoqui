@@ -34,6 +34,7 @@ export function Layout() {
   const title = pathToTitle[location.pathname] ?? 'Estoqui'
   const storeName = useStore((s) => s.settings?.storeName ?? DEFAULT_SETTINGS.storeName)
   const logout = useAuthStore((s) => s.logout)
+  const [storeMenuOpen, setStoreMenuOpen] = useState(false)
 
   const [dark, setDark] = useState(() => {
     if (typeof window !== 'undefined') {
@@ -143,16 +144,64 @@ export function Layout() {
           <div className="flex items-center justify-between">
             <h2 className="text-fg text-2xl font-bold">{title}</h2>
             <div className="flex items-center gap-3">
-              <button type="button" className="text-fg-secondary hover:text-fg transition-colors">
+              <button
+                type="button"
+                onClick={() => navigate('/settings')}
+                className="text-fg-secondary hover:text-fg transition-colors"
+                title="Settings"
+              >
                 <GearIcon className="w-[18px] h-[18px]" />
               </button>
-              <button type="button" className="text-fg-secondary hover:text-fg transition-colors">
+              <button
+                type="button"
+                onClick={() => navigate('/')}
+                className="text-fg-secondary hover:text-fg transition-colors"
+                title="Notifications"
+              >
                 <BellIcon className="w-[18px] h-[18px]" />
               </button>
-              <div className="flex items-center gap-1.5 text-fg pl-2 border-l border-surface-border">
-                <LockIcon className="w-3.5 h-3.5 text-fg-secondary" />
-                <span className="text-[17px] font-bold">{storeName}</span>
-                <ChevronDownIcon className="w-3.5 h-3.5 text-muted" />
+              <div className="relative pl-2 border-l border-surface-border">
+                <button
+                  type="button"
+                  onClick={() => setStoreMenuOpen(!storeMenuOpen)}
+                  className="flex items-center gap-1.5 text-fg hover:opacity-80 transition-opacity"
+                >
+                  <LockIcon className="w-3.5 h-3.5 text-fg-secondary" />
+                  <span className="text-[17px] font-bold">{storeName}</span>
+                  <ChevronDownIcon className={`w-3.5 h-3.5 text-muted transition-transform ${storeMenuOpen ? 'rotate-180' : ''}`} />
+                </button>
+                {storeMenuOpen && (
+                  <>
+                    <div className="fixed inset-0 z-10" onClick={() => setStoreMenuOpen(false)} />
+                    <div className="absolute right-0 top-full mt-2 w-48 bg-surface border border-surface-border rounded-xl shadow-lg z-20 py-1">
+                      <button
+                        type="button"
+                        onClick={() => { setStoreMenuOpen(false); navigate('/settings') }}
+                        className="w-full text-left px-4 py-2.5 text-[13px] text-fg-secondary hover:bg-surface-hover transition-colors flex items-center gap-2.5"
+                      >
+                        <GearIcon className="w-4 h-4" />
+                        Store Settings
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => { setStoreMenuOpen(false); navigate('/help') }}
+                        className="w-full text-left px-4 py-2.5 text-[13px] text-fg-secondary hover:bg-surface-hover transition-colors flex items-center gap-2.5"
+                      >
+                        <HelpSmIcon className="w-4 h-4" />
+                        Help & Support
+                      </button>
+                      <div className="border-t border-surface-border my-1" />
+                      <button
+                        type="button"
+                        onClick={() => { setStoreMenuOpen(false); logout(); navigate('/login', { replace: true }) }}
+                        className="w-full text-left px-4 py-2.5 text-[13px] text-danger hover:bg-surface-hover transition-colors flex items-center gap-2.5"
+                      >
+                        <LogoutIcon className="w-4 h-4" />
+                        Logout
+                      </button>
+                    </div>
+                  </>
+                )}
               </div>
             </div>
           </div>
@@ -292,6 +341,16 @@ function LogoutIcon({ className }: { className?: string }) {
       <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4" />
       <polyline points="16 17 21 12 16 7" />
       <line x1="21" y1="12" x2="9" y2="12" />
+    </svg>
+  )
+}
+
+function HelpSmIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="10" />
+      <path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3" />
+      <line x1="12" y1="17" x2="12.01" y2="17" />
     </svg>
   )
 }

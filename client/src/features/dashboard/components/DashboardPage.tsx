@@ -1,4 +1,4 @@
-import { useMemo, useCallback } from 'react'
+import { useState, useMemo, useCallback } from 'react'
 import { Link } from 'react-router-dom'
 import { useStore } from '@/store'
 import { getLowStockCount } from '@/store/selectors/dashboard'
@@ -25,13 +25,21 @@ export function DashboardPage() {
   const addActivity = useStore((s) => s.addActivity)
   const toast = useToast()
 
-  const notifications = [
+  const [showAllNotifs, setShowAllNotifs] = useState(false)
+  const [showAllActivity, setShowAllActivity] = useState(false)
+
+  const allNotifications = [
     { vendor: 'TRIUNFO FOODS', message: 'O pedido de 10kg de Feijão carioca...', time: 'Há 1h' },
     { vendor: 'TRIUNFO FOODS', message: 'Seu pedido foi entregue!', time: 'Há 4h' },
+    { vendor: 'SYSTEM', message: 'Low stock alert: 3 products below minimum', time: 'Há 1d' },
+    { vendor: 'SYSTEM', message: 'Welcome to Estoqui! Upload your first CSV to get started.', time: 'Há 2d' },
   ]
 
+  const notifications = showAllNotifs ? allNotifications : allNotifications.slice(0, 2)
+
   const recentActivity = useMemo(() => {
-    return (activity ?? []).slice(0, 5).map((act) => {
+    const items = showAllActivity ? (activity ?? []) : (activity ?? []).slice(0, 5)
+    return items.map((act) => {
       const date = new Date(act.date)
       return {
         type: ACTIVITY_TYPE_LABELS[act.type] ?? act.type,
@@ -42,7 +50,7 @@ export function DashboardPage() {
         })}`,
       }
     })
-  }, [activity])
+  }, [activity, showAllActivity])
 
   const handleCsvUpload = useCallback((file: File) => {
     const reader = new FileReader()
@@ -98,7 +106,13 @@ export function DashboardPage() {
                 <BellSmIcon />
                 <span className="text-[13px] font-semibold text-fg">Notifications</span>
               </div>
-              <Link to="/history" className="text-[11px] text-muted hover:text-primary transition-colors">See all</Link>
+              <button
+                type="button"
+                onClick={() => setShowAllNotifs(!showAllNotifs)}
+                className="text-[11px] text-muted hover:text-primary transition-colors"
+              >
+                {showAllNotifs ? 'Show less' : `See all (${allNotifications.length})`}
+              </button>
             </div>
             <div className="border border-surface-border rounded-xl p-4 space-y-3">
               {notifications.map((n, i) => (
@@ -142,7 +156,18 @@ export function DashboardPage() {
             <ActivitySmIcon />
             <span className="text-[13px] font-semibold text-fg">Recent Activity</span>
           </div>
-          <Link to="/history" className="text-[11px] text-muted hover:text-primary transition-colors">See all</Link>
+          <div className="flex items-center gap-3">
+            {(activity ?? []).length > 5 && (
+              <button
+                type="button"
+                onClick={() => setShowAllActivity(!showAllActivity)}
+                className="text-[11px] text-muted hover:text-primary transition-colors"
+              >
+                {showAllActivity ? 'Show less' : `See all (${(activity ?? []).length})`}
+              </button>
+            )}
+            <Link to="/history" className="text-[11px] text-muted hover:text-primary transition-colors">Full history</Link>
+          </div>
         </div>
         {recentActivity.length === 0 ? (
           <p className="text-[12px] text-muted text-center py-6">No recent activity</p>
