@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
-import { Outlet, useLocation, NavLink } from 'react-router-dom'
+import { Outlet, useLocation, NavLink, useNavigate } from 'react-router-dom'
 import { useStore, DEFAULT_SETTINGS } from '@/store'
+import { useAuthStore } from '@/store/slices/authSlice'
 
 const mainNavItems = [
   { to: '/', label: 'Dashboard', icon: DashboardIcon },
@@ -29,8 +30,10 @@ const pathToTitle: Record<string, string> = {
 
 export function Layout() {
   const location = useLocation()
+  const navigate = useNavigate()
   const title = pathToTitle[location.pathname] ?? 'Estoqui'
   const storeName = useStore((s) => s.settings?.storeName ?? DEFAULT_SETTINGS.storeName)
+  const logout = useAuthStore((s) => s.logout)
 
   const [dark, setDark] = useState(() => {
     if (typeof window !== 'undefined') {
@@ -102,7 +105,7 @@ export function Layout() {
           </nav>
         </div>
 
-        <div className="px-5 py-4 border-t border-sidebar-border">
+        <div className="px-5 py-4 border-t border-sidebar-border space-y-3">
           <div className="flex items-center justify-between">
             <span className="text-[12px] text-fg-secondary flex items-center gap-2">
               <MoonIcon className="w-3.5 h-3.5" />
@@ -124,6 +127,14 @@ export function Layout() {
               />
             </button>
           </div>
+          <button
+            type="button"
+            onClick={() => { logout(); navigate('/login', { replace: true }) }}
+            className="flex items-center gap-2 text-[12px] text-fg-secondary hover:text-danger transition-colors w-full"
+          >
+            <LogoutIcon className="w-3.5 h-3.5" />
+            Logout
+          </button>
         </div>
       </aside>
 
@@ -271,6 +282,16 @@ function ChevronDownIcon({ className }: { className?: string }) {
   return (
     <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
       <polyline points="6 9 12 15 18 9" />
+    </svg>
+  )
+}
+
+function LogoutIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4" />
+      <polyline points="16 17 21 12 16 7" />
+      <line x1="21" y1="12" x2="9" y2="12" />
     </svg>
   )
 }
