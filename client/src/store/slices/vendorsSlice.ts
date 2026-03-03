@@ -18,7 +18,7 @@ export function getVendorsActions(set: StateSetter, _get: StateGetter) {
     addVendor: (vendor: Omit<Vendor, 'id'>) => {
       const v: Vendor = { ...vendor, id: generateId(), createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() }
       set((s) => ({ vendors: [...s.vendors, v] }))
-      getUid().then(uid => { if (uid) upsertVendor(v, uid).catch(console.error) })
+      getUid().then(uid => { if (uid) upsertVendor(v, uid).catch((e) => console.error('[vendorsSlice] upsertVendor failed:', e)) })
       return v.id
     },
     updateVendor: (id: string, updates: Partial<Omit<Vendor, 'id'>>) => {
@@ -28,7 +28,7 @@ export function getVendorsActions(set: StateSetter, _get: StateGetter) {
       getUid().then(uid => {
         if (!uid) return
         const vendor = _get().vendors.find(v => v.id === id)
-        if (vendor) upsertVendor(vendor, uid).catch(console.error)
+        if (vendor) upsertVendor(vendor, uid).catch((e) => console.error('[vendorsSlice] upsertVendor (update) failed:', e))
       })
     },
     deleteVendor: (id: string) => {
@@ -42,7 +42,7 @@ export function getVendorsActions(set: StateSetter, _get: StateGetter) {
           ),
         },
       }))
-      dbDeleteVendor(id).catch(console.error)
+      dbDeleteVendor(id).catch((e) => console.error('[vendorsSlice] deleteVendor failed:', e))
     },
   }
 }

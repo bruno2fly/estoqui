@@ -10,13 +10,19 @@ export async function uploadProductImage(
   const { error } = await supabase.storage
     .from('product-images')
     .upload(path, file, { upsert: true })
-  if (error) throw error
+  if (error) {
+    console.error('[Supabase images] upload error:', error)
+    throw error
+  }
   return path
 }
 
 export async function deleteProductImage(path: string): Promise<void> {
   const { error } = await supabase.storage.from('product-images').remove([path])
-  if (error) throw error
+  if (error) {
+    console.error('[Supabase images] remove error:', error)
+    throw error
+  }
 }
 
 export function getProductImageUrl(path: string): string {

@@ -59,6 +59,11 @@ export const useStore = create<StoreState>()((set, get) => ({
 
   /** Populate store with data fetched from Supabase after login */
   hydrateFromSupabase: (data: PersistedState) => {
+    console.log('[hydrateFromSupabase] Hydrating store:', {
+      vendors: data.vendors?.length ?? 0,
+      products: data.products?.length ?? 0,
+      orders: data.orders?.length ?? 0,
+    })
     set({
       vendors: data.vendors,
       products: data.products,

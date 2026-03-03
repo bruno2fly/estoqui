@@ -16,15 +16,6 @@ import type { Vendor, VendorStatus } from '@/types'
 type SortKey = 'name' | 'score' | 'lastUpdate'
 type SortDir = 'asc' | 'desc'
 
-const SEED_VENDORS = [
-  'EB Express',
-  'Panamerican Foods',
-  'Triunfo Foods',
-  'Master Foods',
-  'Prime North',
-  'Zap',
-]
-
 export function VendorsPage() {
   const toast = useToast()
   const vendors = useStore((s) => s.vendors)
@@ -103,31 +94,6 @@ export function VendorsPage() {
     setDeleteTarget(null)
   }
 
-  const handleSeedVendors = () => {
-    const existing = new Set(vendors.map((v) => v.name.toLowerCase()))
-    let added = 0
-    SEED_VENDORS.forEach((name) => {
-      if (!existing.has(name.toLowerCase())) {
-        addVendor({
-          name,
-          phone: '',
-          notes: '',
-          staleAfterDays: 7,
-          updateCadence: 'weekly',
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-        })
-        added++
-      }
-    })
-    if (added > 0) {
-      addActivity('system', `Seeded ${added} vendor(s)`)
-      toast.show(`${added} vendor(s) added`)
-    } else {
-      toast.show('All seed vendors already exist')
-    }
-  }
-
   const toggleSort = (key: SortKey) => {
     if (sortKey === key) {
       setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'))
@@ -184,15 +150,6 @@ export function VendorsPage() {
               <option value="probation">Probation</option>
               <option value="inactive">Inactive</option>
             </select>
-            {vendors.length === 0 && (
-              <button
-                type="button"
-                onClick={handleSeedVendors}
-                className="px-3 py-1.5 rounded-lg border border-surface-border text-fg text-[12px] font-medium hover:bg-surface-hover transition-colors"
-              >
-                Seed Vendors
-              </button>
-            )}
             <button
               type="button"
               onClick={() => { setFormModal('add'); setEditingVendor(null) }}
@@ -205,14 +162,7 @@ export function VendorsPage() {
 
         {vendors.length === 0 ? (
           <div className="text-center py-12">
-            <p className="text-muted text-sm mb-3">No vendors registered</p>
-            <button
-              type="button"
-              onClick={handleSeedVendors}
-              className="px-4 py-2 rounded-lg border border-surface-border text-fg text-sm font-medium hover:bg-surface-hover transition-colors"
-            >
-              Seed Default Vendors (EB Express, Panamerican, Triunfo, Master, Prime North, Zap)
-            </button>
+            <p className="text-muted text-sm">No vendors registered</p>
           </div>
         ) : (
           <div className="border border-surface-border rounded-xl overflow-hidden overflow-x-auto">
