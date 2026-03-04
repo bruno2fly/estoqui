@@ -8,6 +8,7 @@ import { supabase } from '@/lib/supabase'
 import { upsertProducts } from '@/lib/supabase/products'
 import { upsertStockSnapshot } from '@/lib/supabase/stockSnapshots'
 import { createActivity as dbCreateActivity } from '@/lib/supabase/activity'
+import { emitSupabaseError } from '@/lib/supabase/errorEmitter'
 
 const MAX_ACTIVITY = 50
 
@@ -228,13 +229,13 @@ export function getInventoryActions(
       // Persist to Supabase
       getUid().then(uid => {
         if (!uid) return
-        upsertStockSnapshot(snapshot, uid).catch(console.error)
+        upsertStockSnapshot(snapshot, uid).catch((e) => emitSupabaseError('Inventory sync', e))
         // Batch update patched products
         const patchedProducts = updatedProducts.filter(p => payload.productPatches[p.id])
         if (patchedProducts.length > 0) {
-          upsertProducts(patchedProducts, uid).catch(console.error)
+          upsertProducts(patchedProducts, uid).catch((e) => emitSupabaseError('Inventory sync', e))
         }
-        dbCreateActivity(activity, uid).catch(console.error)
+        dbCreateActivity(activity, uid).catch((e) => emitSupabaseError('Inventory sync', e))
       })
 
       return snapshotId
@@ -294,10 +295,10 @@ export function getInventoryActions(
       // Persist to Supabase
       getUid().then(uid => {
         if (!uid) return
-        upsertProducts(newProducts, uid).catch(console.error)
+        upsertProducts(newProducts, uid).catch((e) => emitSupabaseError('Inventory sync', e))
         const updatedSnap = updatedSnapshots.find(s => s.id === payload.snapshotId)
-        if (updatedSnap) upsertStockSnapshot(updatedSnap, uid).catch(console.error)
-        dbCreateActivity(activity, uid).catch(console.error)
+        if (updatedSnap) upsertStockSnapshot(updatedSnap, uid).catch((e) => emitSupabaseError('Inventory sync', e))
+        dbCreateActivity(activity, uid).catch((e) => emitSupabaseError('Inventory sync', e))
       })
     },
   }

@@ -2,6 +2,7 @@ import type { VendorPrice } from '@/types'
 import type { StateSetter, StateGetter } from '../types'
 import { supabase } from '@/lib/supabase'
 import { upsertVendorPrice, deleteVendorPrice as dbDeleteVendorPrice } from '@/lib/supabase/vendorPrices'
+import { emitSupabaseError } from '@/lib/supabase/errorEmitter'
 
 export const initialVendorPricesState = {
   vendorPrices: [] as VendorPrice[],
@@ -22,7 +23,7 @@ export function getVendorPricesActions(set: StateSetter, _get: StateGetter) {
         )
         return { vendorPrices: [...rest, withTimestamp] }
       })
-      getUid().then(uid => { if (uid) upsertVendorPrice(withTimestamp, uid).catch(console.error) })
+      getUid().then(uid => { if (uid) upsertVendorPrice(withTimestamp, uid).catch((e) => emitSupabaseError('Save price', e)) })
     },
     removeVendorPrice: (vendorId: string, productId: string) => {
       set((s) => ({
@@ -30,7 +31,7 @@ export function getVendorPricesActions(set: StateSetter, _get: StateGetter) {
           (p) => !(p.vendorId === vendorId && p.productId === productId)
         ),
       }))
-      dbDeleteVendorPrice(vendorId, productId).catch(console.error)
+      dbDeleteVendorPrice(vendorId, productId).catch((e) => emitSupabaseError('Delete price', e))
     },
     setVendorPrices: (prices: VendorPrice[]) => {
       set(() => ({ vendorPrices: prices }))

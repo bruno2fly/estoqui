@@ -1,18 +1,41 @@
 /**
  * camelCase ↔ snake_case key transformation for Supabase DB rows.
+ *
+ * IMPORTANT: toDb mappers only include optional fields when they have real
+ * values.  This prevents "column does not exist" errors when the Postgres
+ * schema hasn't been extended with those columns yet.
  */
 
-// camelCase → snake_case
+import type {
+  Vendor,
+  Product,
+  VendorPrice,
+  Order,
+  Activity,
+  AppSettings,
+  StockSnapshot,
+} from '@/types'
+
+// ── helpers ─────────────────────────────────────────────────────────────
+
+/** Strip keys whose value is undefined (null is kept — it means "clear"). */
+function defined<T extends Record<string, unknown>>(obj: T): T {
+  const out = {} as Record<string, unknown>
+  for (const [k, v] of Object.entries(obj)) {
+    if (v !== undefined) out[k] = v
+  }
+  return out as T
+}
+
+// camelCase → snake_case (generic utilities kept for future use)
 function camelToSnake(str: string): string {
   return str.replace(/[A-Z]/g, (letter) => `_${letter.toLowerCase()}`)
 }
 
-// snake_case → camelCase
 function snakeToCamel(str: string): string {
   return str.replace(/_([a-z])/g, (_match, letter: string) => letter.toUpperCase())
 }
 
-/** Convert object keys from camelCase to snake_case */
 export function toSnakeCase<T extends Record<string, unknown>>(
   obj: T
 ): Record<string, unknown> {
@@ -23,7 +46,6 @@ export function toSnakeCase<T extends Record<string, unknown>>(
   return result
 }
 
-/** Convert object keys from snake_case to camelCase */
 export function toCamelCase<T extends Record<string, unknown>>(
   obj: T
 ): Record<string, unknown> {
@@ -36,22 +58,26 @@ export function toCamelCase<T extends Record<string, unknown>>(
 
 // ─── Vendor Mappers ──────────────────────────────────────────────────────
 
-import type { Vendor, Product, VendorPrice, Order, Activity, AppSettings, StockSnapshot } from '@/types'
-
 export function vendorToDb(v: Vendor, userId: string) {
-  return {
+  return defined({
     id: v.id,
     user_id: userId,
     name: v.name,
+    phone: v.phone || undefined,
     status: v.status ?? 'active',
-    contact_name: v.contactName ?? null,
-    contact_email: v.contactEmail ?? null,
-    contact_phone: v.phone || null,
-    notes: v.notes || '',
-    score: v.score ?? null,
+    contact_name: v.contactName || undefined,
+    contact_email: v.contactEmail || undefined,
+    contact_phone: v.phone || undefined,
+    notes: v.notes || undefined,
+    score: v.score ?? undefined,
+    preferred_channel: v.preferredChannel ?? undefined,
+    update_cadence: v.updateCadence ?? undefined,
+    expected_update_day_of_week: v.expectedUpdateDayOfWeek ?? undefined,
+    last_price_list_at: v.lastPriceListAt ?? undefined,
+    stale_after_days: v.staleAfterDays ?? undefined,
     created_at: v.createdAt ?? new Date().toISOString(),
     updated_at: v.updatedAt ?? new Date().toISOString(),
-  }
+  })
 }
 
 export function vendorFromDb(row: Record<string, unknown>): Vendor {
@@ -77,19 +103,19 @@ export function vendorFromDb(row: Record<string, unknown>): Vendor {
 // ─── Product Mappers ─────────────────────────────────────────────────────
 
 export function productToDb(p: Product, userId: string) {
-  return {
+  return defined({
     id: p.id,
     user_id: userId,
     name: p.name,
     brand: p.brand || '',
-    sku: p.sku ?? null,
-    category: p.category ?? null,
-    unit_size: p.unitSize ?? null,
-    min_stock: p.minStock ?? 10,
-    stock_qty: p.stockQty ?? null,
-    unit_cost: p.unitCost ?? null,
-    unit_price: p.unitPrice ?? null,
-  }
+    sku: p.sku ?? undefined,
+    category: p.category ?? undefined,
+    unit_size: p.unitSize ?? undefined,
+    min_stock: p.minStock ?? undefined,
+    stock_qty: p.stockQty ?? undefined,
+    unit_cost: p.unitCost ?? undefined,
+    unit_price: p.unitPrice ?? undefined,
+  })
 }
 
 export function productFromDb(row: Record<string, unknown>): Product {
@@ -110,19 +136,20 @@ export function productFromDb(row: Record<string, unknown>): Product {
 // ─── VendorPrice Mappers ─────────────────────────────────────────────────
 
 export function vendorPriceToDb(vp: VendorPrice, userId: string) {
-  return {
+  return defined({
     user_id: userId,
     vendor_id: vp.vendorId,
     product_id: vp.productId,
     unit_price: vp.unitPrice,
     updated_at: vp.updatedAt || new Date().toISOString(),
-    pack_type: vp.packType ?? null,
-    units_per_case: vp.unitsPerCase ?? null,
-    unit_descriptor: vp.unitDescriptor ?? null,
-    price_basis: vp.priceBasis ?? null,
-    parse_version: vp.parseVersion ?? null,
-    unit_cost: vp.unitCost ?? null,
-  }
+    // Pack fields — only sent when present (columns may not exist yet)
+    pack_type: vp.packType ?? undefined,
+    units_per_case: vp.unitsPerCase ?? undefined,
+    unit_descriptor: vp.unitDescriptor ?? undefined,
+    price_basis: vp.priceBasis ?? undefined,
+    parse_version: vp.parseVersion ?? undefined,
+    unit_cost: vp.unitCost ?? undefined,
+  })
 }
 
 export function vendorPriceFromDb(row: Record<string, unknown>): VendorPrice {
@@ -143,15 +170,15 @@ export function vendorPriceFromDb(row: Record<string, unknown>): VendorPrice {
 // ─── Order Mappers ───────────────────────────────────────────────────────
 
 export function orderToDb(o: Order, userId: string) {
-  return {
+  return defined({
     id: o.id,
     user_id: userId,
     created_at: o.createdAt,
-    snapshot_id: o.snapshotId ?? null,
+    snapshot_id: o.snapshotId ?? undefined,
     total: o.total,
     totals_by_vendor: o.totalsByVendor,
     lines: o.lines,
-  }
+  })
 }
 
 export function orderFromDb(row: Record<string, unknown>): Order {
@@ -189,13 +216,13 @@ export function activityFromDb(row: Record<string, unknown>): Activity {
 // ─── Settings Mappers ────────────────────────────────────────────────────
 
 export function settingsToDb(s: AppSettings, userId: string) {
-  return {
+  return defined({
     user_id: userId,
     store_name: s.storeName,
     staleness_threshold: s.stalenessThreshold,
     default_min_stock: s.defaultMinStock,
-    openai_api_key: s.openaiApiKey ?? '',
-  }
+    openai_api_key: s.openaiApiKey ?? undefined,
+  })
 }
 
 export function settingsFromDb(row: Record<string, unknown>): AppSettings {
@@ -210,14 +237,14 @@ export function settingsFromDb(row: Record<string, unknown>): AppSettings {
 // ─── StockSnapshot Mappers ───────────────────────────────────────────────
 
 export function stockSnapshotToDb(s: StockSnapshot, userId: string) {
-  return {
+  return defined({
     id: s.id,
     user_id: userId,
     uploaded_at: s.uploadedAt,
-    source_file_name: s.sourceFileName ?? null,
-    source_type: s.sourceType ?? null,
+    source_file_name: s.sourceFileName ?? undefined,
+    source_type: s.sourceType ?? undefined,
     rows: s.rows,
-  }
+  })
 }
 
 export function stockSnapshotFromDb(row: Record<string, unknown>): StockSnapshot {

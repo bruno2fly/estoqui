@@ -1,5 +1,6 @@
 import { supabase } from '@/lib/supabase'
 import { vendorToDb, vendorFromDb } from './mappers'
+import { safeUpsert } from './safeUpsert'
 import type { Vendor } from '@/types'
 
 export async function fetchVendors(userId: string): Promise<Vendor[]> {
@@ -12,11 +13,11 @@ export async function fetchVendors(userId: string): Promise<Vendor[]> {
 }
 
 export async function upsertVendor(vendor: Vendor, userId: string): Promise<void> {
-  const { error } = await supabase.from('vendors').upsert(vendorToDb(vendor, userId), { onConflict: 'id' })
-  if (error) {
-    console.error('[Supabase vendors] upsert error:', error)
-    throw error
-  }
+  await safeUpsert({
+    table: 'vendors',
+    data: vendorToDb(vendor, userId),
+    onConflict: 'id',
+  })
 }
 
 export async function deleteVendor(id: string): Promise<void> {

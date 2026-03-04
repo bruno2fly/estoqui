@@ -2,10 +2,12 @@ import {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useState,
   type ReactNode,
 } from 'react'
 import { createPortal } from 'react-dom'
+import { onSupabaseError } from '@/lib/supabase/errorEmitter'
 
 type ToastVariant = 'success' | 'error'
 
@@ -31,8 +33,15 @@ export function ToastProvider({ children }: { children: ReactNode }) {
     setToasts((prev) => [...prev, { id, message, variant }])
     setTimeout(() => {
       setToasts((prev) => prev.filter((t) => t.id !== id))
-    }, 3000)
+    }, variant === 'error' ? 5000 : 3000)
   }, [])
+
+  // Subscribe to Supabase write errors globally
+  useEffect(() => {
+    return onSupabaseError((msg) => {
+      show(`Save failed: ${msg}`, 'error')
+    })
+  }, [show])
 
   return (
     <ToastContext.Provider value={{ show }}>

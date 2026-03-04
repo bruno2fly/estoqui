@@ -1,5 +1,6 @@
 import { supabase } from '@/lib/supabase'
 import { productToDb, productFromDb } from './mappers'
+import { safeUpsert } from './safeUpsert'
 import type { Product } from '@/types'
 
 export async function fetchProducts(userId: string): Promise<Product[]> {
@@ -12,21 +13,21 @@ export async function fetchProducts(userId: string): Promise<Product[]> {
 }
 
 export async function upsertProduct(product: Product, userId: string): Promise<void> {
-  const { error } = await supabase.from('products').upsert(productToDb(product, userId), { onConflict: 'id' })
-  if (error) {
-    console.error('[Supabase products] upsert error:', error)
-    throw error
-  }
+  await safeUpsert({
+    table: 'products',
+    data: productToDb(product, userId),
+    onConflict: 'id',
+  })
 }
 
 export async function upsertProducts(products: Product[], userId: string): Promise<void> {
   if (products.length === 0) return
   const rows = products.map((p) => productToDb(p, userId))
-  const { error } = await supabase.from('products').upsert(rows, { onConflict: 'id' })
-  if (error) {
-    console.error('[Supabase products] upsertMany error:', error)
-    throw error
-  }
+  await safeUpsert({
+    table: 'products',
+    data: rows,
+    onConflict: 'id',
+  })
 }
 
 export async function deleteProduct(id: string): Promise<void> {

@@ -3,6 +3,7 @@ import type { StateSetter, StateGetter } from '../types'
 import { generateId } from '../lib/generateId'
 import { supabase } from '@/lib/supabase'
 import { upsertProduct, deleteProduct as dbDeleteProduct } from '@/lib/supabase/products'
+import { emitSupabaseError } from '@/lib/supabase/errorEmitter'
 
 export const initialProductsState = {
   products: [] as Product[],
@@ -18,7 +19,7 @@ export function getProductsActions(set: StateSetter, _get: StateGetter) {
     addProduct: (product: Omit<Product, 'id'>) => {
       const p: Product = { ...product, id: generateId() }
       set((s) => ({ products: [...s.products, p] }))
-      getUid().then(uid => { if (uid) upsertProduct(p, uid).catch(console.error) })
+      getUid().then(uid => { if (uid) upsertProduct(p, uid).catch((e) => emitSupabaseError('Save product', e)) })
       return p.id
     },
     updateProduct: (id: string, updates: Partial<Omit<Product, 'id'>>) => {
@@ -28,7 +29,7 @@ export function getProductsActions(set: StateSetter, _get: StateGetter) {
       getUid().then(uid => {
         if (!uid) return
         const product = _get().products.find(p => p.id === id)
-        if (product) upsertProduct(product, uid).catch(console.error)
+        if (product) upsertProduct(product, uid).catch((e) => emitSupabaseError('Save product', e))
       })
     },
     deleteProduct: (id: string) => {
@@ -47,7 +48,7 @@ export function getProductsActions(set: StateSetter, _get: StateGetter) {
           },
         }
       })
-      dbDeleteProduct(id).catch(console.error)
+      dbDeleteProduct(id).catch((e) => emitSupabaseError('Save product', e))
     },
   }
 }

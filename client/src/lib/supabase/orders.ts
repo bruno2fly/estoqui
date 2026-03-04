@@ -12,9 +12,23 @@ export async function fetchOrders(userId: string): Promise<Order[]> {
 }
 
 export async function createOrder(order: Order, userId: string): Promise<void> {
-  const { error } = await supabase.from('orders').insert(orderToDb(order, userId))
+  const row = orderToDb(order, userId)
+  const { error } = await supabase.from('orders').insert(row)
   if (error) {
-    console.error('[Supabase orders] insert error:', error)
+    // If a column doesn't exist, try stripping it
+    if (/column.*does not exist|Could not find/i.test(error.message)) {
+      console.warn('[orders] Retrying insert with minimal fields')
+      const { error: e2 } = await supabase.from('orders').insert({
+        id: row.id,
+        user_id: row.user_id,
+        created_at: row.created_at,
+        total: row.total,
+        totals_by_vendor: row.totals_by_vendor,
+        lines: row.lines,
+      })
+      if (e2) throw e2
+      return
+    }
     throw error
   }
 }

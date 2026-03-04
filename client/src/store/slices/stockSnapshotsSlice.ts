@@ -3,6 +3,7 @@ import type { StateSetter, StateGetter } from '../types'
 import { generateId } from '../lib/generateId'
 import { supabase } from '@/lib/supabase'
 import { upsertStockSnapshot, deleteStockSnapshot as dbDeleteSnapshot } from '@/lib/supabase/stockSnapshots'
+import { emitSupabaseError } from '@/lib/supabase/errorEmitter'
 
 export const initialStockSnapshotsState = {
   stockSnapshots: [] as StockSnapshot[],
@@ -18,7 +19,7 @@ export function getStockSnapshotsActions(set: StateSetter, _get: StateGetter) {
     addStockSnapshot: (snapshot: Omit<StockSnapshot, 'id'>) => {
       const s: StockSnapshot = { ...snapshot, id: generateId() }
       set((state) => ({ stockSnapshots: [...state.stockSnapshots, s] }))
-      getUid().then(uid => { if (uid) upsertStockSnapshot(s, uid).catch(console.error) })
+      getUid().then(uid => { if (uid) upsertStockSnapshot(s, uid).catch((e) => emitSupabaseError('Save snapshot', e)) })
       return s.id
     },
     updateStockSnapshotRows: (snapshotId: string, updateRow: (row: StockSnapshot['rows'][number], index: number) => StockSnapshot['rows'][number]) => {
@@ -33,7 +34,7 @@ export function getStockSnapshotsActions(set: StateSetter, _get: StateGetter) {
       getUid().then(uid => {
         if (!uid) return
         const snap = _get().stockSnapshots.find(s => s.id === snapshotId)
-        if (snap) upsertStockSnapshot(snap, uid).catch(console.error)
+        if (snap) upsertStockSnapshot(snap, uid).catch((e) => emitSupabaseError('Save snapshot', e))
       })
     },
     setMatchOnRow: (snapshotId: string, rowIndex: number, matchedProductId: string | null) => {
@@ -53,14 +54,14 @@ export function getStockSnapshotsActions(set: StateSetter, _get: StateGetter) {
       getUid().then(uid => {
         if (!uid) return
         const snap = _get().stockSnapshots.find(s => s.id === snapshotId)
-        if (snap) upsertStockSnapshot(snap, uid).catch(console.error)
+        if (snap) upsertStockSnapshot(snap, uid).catch((e) => emitSupabaseError('Save snapshot', e))
       })
     },
     deleteStockSnapshot: (snapshotId: string) => {
       set((s) => ({
         stockSnapshots: s.stockSnapshots.filter((snap) => snap.id !== snapshotId),
       }))
-      dbDeleteSnapshot(snapshotId).catch(console.error)
+      dbDeleteSnapshot(snapshotId).catch((e) => emitSupabaseError('Save snapshot', e))
     },
   }
 }

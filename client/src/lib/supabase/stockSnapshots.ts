@@ -1,5 +1,6 @@
 import { supabase } from '@/lib/supabase'
 import { stockSnapshotToDb, stockSnapshotFromDb } from './mappers'
+import { safeUpsert } from './safeUpsert'
 import type { StockSnapshot } from '@/types'
 
 export async function fetchStockSnapshots(userId: string): Promise<StockSnapshot[]> {
@@ -12,14 +13,11 @@ export async function fetchStockSnapshots(userId: string): Promise<StockSnapshot
 }
 
 export async function upsertStockSnapshot(snapshot: StockSnapshot, userId: string): Promise<void> {
-  const { error } = await supabase.from('stock_snapshots').upsert(
-    stockSnapshotToDb(snapshot, userId),
-    { onConflict: 'id' }
-  )
-  if (error) {
-    console.error('[Supabase stock_snapshots] upsert error:', error)
-    throw error
-  }
+  await safeUpsert({
+    table: 'stock_snapshots',
+    data: stockSnapshotToDb(snapshot, userId),
+    onConflict: 'id',
+  })
 }
 
 export async function deleteStockSnapshot(id: string): Promise<void> {

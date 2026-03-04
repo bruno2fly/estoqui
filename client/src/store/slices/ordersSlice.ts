@@ -3,6 +3,7 @@ import type { StateSetter, StateGetter } from '../types'
 import { generateId } from '../lib/generateId'
 import { supabase } from '@/lib/supabase'
 import { createOrder as dbCreateOrder } from '@/lib/supabase/orders'
+import { emitSupabaseError } from '@/lib/supabase/errorEmitter'
 
 export const initialOrdersState = {
   orders: [] as Order[],
@@ -18,7 +19,7 @@ export function getOrdersActions(set: StateSetter, _get: StateGetter) {
     addOrder: (order: Omit<Order, 'id'>) => {
       const o: Order = { ...order, id: generateId() }
       set((s) => ({ orders: [o, ...s.orders] }))
-      getUid().then(uid => { if (uid) dbCreateOrder(o, uid).catch(console.error) })
+      getUid().then(uid => { if (uid) dbCreateOrder(o, uid).catch((e) => emitSupabaseError('Save order', e)) })
       return o.id
     },
   }

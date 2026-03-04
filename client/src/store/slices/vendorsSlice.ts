@@ -3,6 +3,7 @@ import type { StateSetter, StateGetter } from '../types'
 import { generateId } from '../lib/generateId'
 import { supabase } from '@/lib/supabase'
 import { upsertVendor, deleteVendor as dbDeleteVendor } from '@/lib/supabase/vendors'
+import { emitSupabaseError } from '@/lib/supabase/errorEmitter'
 
 export const initialVendorsState = {
   vendors: [] as Vendor[],
@@ -18,7 +19,7 @@ export function getVendorsActions(set: StateSetter, _get: StateGetter) {
     addVendor: (vendor: Omit<Vendor, 'id'>) => {
       const v: Vendor = { ...vendor, id: generateId(), createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() }
       set((s) => ({ vendors: [...s.vendors, v] }))
-      getUid().then(uid => { if (uid) upsertVendor(v, uid).catch((e) => console.error('[vendorsSlice] upsertVendor failed:', e)) })
+      getUid().then(uid => { if (uid) upsertVendor(v, uid).catch((e) => emitSupabaseError('Save vendor', e)) })
       return v.id
     },
     updateVendor: (id: string, updates: Partial<Omit<Vendor, 'id'>>) => {
@@ -28,7 +29,7 @@ export function getVendorsActions(set: StateSetter, _get: StateGetter) {
       getUid().then(uid => {
         if (!uid) return
         const vendor = _get().vendors.find(v => v.id === id)
-        if (vendor) upsertVendor(vendor, uid).catch((e) => console.error('[vendorsSlice] upsertVendor (update) failed:', e))
+        if (vendor) upsertVendor(vendor, uid).catch((e) => emitSupabaseError('Update vendor', e))
       })
     },
     deleteVendor: (id: string) => {
@@ -42,7 +43,7 @@ export function getVendorsActions(set: StateSetter, _get: StateGetter) {
           ),
         },
       }))
-      dbDeleteVendor(id).catch((e) => console.error('[vendorsSlice] deleteVendor failed:', e))
+      dbDeleteVendor(id).catch((e) => emitSupabaseError('Delete vendor', e))
     },
   }
 }
