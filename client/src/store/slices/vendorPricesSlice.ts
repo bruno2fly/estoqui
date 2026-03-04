@@ -1,7 +1,7 @@
 import type { VendorPrice } from '@/types'
 import type { StateSetter, StateGetter } from '../types'
 import { supabase } from '@/lib/supabase'
-import { upsertVendorPrice, deleteVendorPrice as dbDeleteVendorPrice } from '@/lib/supabase/vendorPrices'
+import { upsertVendorPrice, deleteVendorPrice as dbDeleteVendorPrice, upsertVendorPrices } from '@/lib/supabase/vendorPrices'
 import { emitSupabaseError } from '@/lib/supabase/errorEmitter'
 
 export const initialVendorPricesState = {
@@ -32,6 +32,15 @@ export function getVendorPricesActions(set: StateSetter, _get: StateGetter) {
         ),
       }))
       dbDeleteVendorPrice(vendorId, productId).catch((e) => emitSupabaseError('Delete price', e))
+    },
+        setVendorPricesBatch: (prices: VendorPrice[]) => {
+      set((s) => {
+        const rest = s.vendorPrices.filter(
+          (p) => !prices.some((np) => np.vendorId === p.vendorId && np.productId === p.productId)
+        )
+        return { vendorPrices: [...rest, ...prices] }
+      })
+      getUid().then(uid => { if (uid) upsertVendorPrices(prices, uid).catch((e) => emitSupabaseError('Save prices batch', e)) })
     },
     setVendorPrices: (prices: VendorPrice[]) => {
       set(() => ({ vendorPrices: prices }))
