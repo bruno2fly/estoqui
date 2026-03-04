@@ -13,7 +13,7 @@ export async function fetchVendorPrices(userId: string): Promise<VendorPrice[]> 
   return (data ?? []).map((row: Record<string, unknown>) => vendorPriceFromDb(row))
 }
 
-export function upsertVendorPrice(vp: VendorPrice, userId: string): void {
+export async function upsertVendorPrice(vp: VendorPrice, userId: string): Promise<void> {
   enqueueWrite({
     table: 'vendor_prices',
     data: vendorPriceToDb(vp, userId),
