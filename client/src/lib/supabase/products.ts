@@ -22,14 +22,17 @@ export async function upsertProduct(product: Product, userId: string): Promise<v
 
 export async function upsertProducts(products: Product[], userId: string): Promise<void> {
   if (products.length === 0) return
-  const rows = products.map((p) => productToDb(p, userId))
-  await safeUpsert({
-    table: 'products',
-    data: rows,
-    onConflict: 'id',
-  })
+  const CHUNK = 200
+  for (let i = 0; i < products.length; i += CHUNK) {
+    const chunk = products.slice(i, i + CHUNK)
+    const rows = chunk.map((p) => productToDb(p, userId))
+    await safeUpsert({
+      table: 'products',
+      data: rows,
+      onConflict: 'id',
+    })
+  }
 }
-
 export async function deleteProduct(id: string): Promise<void> {
   const { error } = await supabase.from('products').delete().eq('id', id)
   if (error) {
