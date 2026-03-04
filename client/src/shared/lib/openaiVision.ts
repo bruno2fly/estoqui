@@ -26,6 +26,10 @@ function isImageFile(file: File): boolean {
   return IMAGE_TYPES.includes(file.type) || /\.(png|jpe?g|webp|gif)$/i.test(file.name)
 }
 
+function isPdfFile(file: File): boolean {
+  return file.type === 'application/pdf' || /\.pdf$/i.test(file.name)
+}
+
 async function callOpenAIRaw(
   apiKey: string,
   messages: unknown[],
@@ -110,6 +114,25 @@ export async function callOpenAIDocument(
 
   if (isImageFile(file)) {
     return callOpenAIVision(file, apiKey, systemPrompt, userPrompt)
+  }
+
+  // PDFs are binary — send as base64 to the vision endpoint
+  if (isPdfFile(file)) {
+    const base64 = await fileToBase64(file)
+    const messages = [
+      { role: 'system', content: systemPrompt },
+      {
+        role: 'user',
+        content: [
+          { type: 'text', text: userPrompt },
+          {
+            type: 'file',
+            file: { filename: file.name, file_data: base64 },
+          },
+        ],
+      },
+    ]
+    return callOpenAIRaw(apiKey, messages)
   }
 
   // Text-based file: read as text and send inline
