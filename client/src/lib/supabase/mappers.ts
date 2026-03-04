@@ -58,12 +58,15 @@ export function toCamelCase<T extends Record<string, unknown>>(
 
 // ─── Vendor Mappers ──────────────────────────────────────────────────────
 
+// DB columns: id, user_id, name, contact_phone, contact_name, contact_email,
+//   status, notes, score, created_at, updated_at, preferred_channel,
+//   stale_after_days, update_cadence, expected_update_day_of_week, last_price_list_at
+// MISSING in DB: phone
 export function vendorToDb(v: Vendor, userId: string) {
   return defined({
     id: v.id,
     user_id: userId,
     name: v.name,
-    phone: v.phone || undefined,
     status: v.status ?? 'active',
     contact_name: v.contactName || undefined,
     contact_email: v.contactEmail || undefined,
@@ -84,7 +87,7 @@ export function vendorFromDb(row: Record<string, unknown>): Vendor {
   return {
     id: row.id as string,
     name: row.name as string,
-    phone: (row.contact_phone as string) ?? (row.phone as string) ?? '',
+    phone: (row.contact_phone as string) ?? '',
     notes: (row.notes as string) ?? '',
     status: row.status as Vendor['status'],
     contactName: row.contact_name as string | undefined,
@@ -135,16 +138,14 @@ export function productFromDb(row: Record<string, unknown>): Product {
 
 // ─── VendorPrice Mappers ─────────────────────────────────────────────────
 
+// DB columns: id, user_id, vendor_id, product_id, price
+// MISSING in DB: unit_price, updated_at, cost, unit_cost, pack_*
 export function vendorPriceToDb(vp: VendorPrice, userId: string) {
-  // NOTE: pack columns (pack_type, units_per_case, unit_descriptor,
-  // price_basis, parse_version, unit_cost) are intentionally omitted —
-  // the DB table does not have them yet. Pack data lives in Zustand only.
   return {
     user_id: userId,
     vendor_id: vp.vendorId,
     product_id: vp.productId,
-    unit_price: vp.unitPrice,
-    updated_at: vp.updatedAt || new Date().toISOString(),
+    price: vp.unitPrice,
   }
 }
 
@@ -152,39 +153,46 @@ export function vendorPriceFromDb(row: Record<string, unknown>): VendorPrice {
   return {
     vendorId: row.vendor_id as string,
     productId: row.product_id as string,
-    unitPrice: row.unit_price as number,
-    updatedAt: row.updated_at as string,
-    packType: row.pack_type as VendorPrice['packType'],
-    unitsPerCase: row.units_per_case as number | undefined,
-    unitDescriptor: row.unit_descriptor as string | undefined,
-    priceBasis: row.price_basis as VendorPrice['priceBasis'],
-    parseVersion: row.parse_version as number | undefined,
-    unitCost: row.unit_cost as number | undefined,
+    unitPrice: (row.price as number) ?? (row.unit_price as number) ?? 0,
+    updatedAt: (row.updated_at as string) ?? (row.created_at as string) ?? '',
   }
 }
 
 // ─── Order Mappers ───────────────────────────────────────────────────────
 
+// DB columns: id, user_id, created_at, lines, status, vendor_id
+// MISSING in DB: snapshot_id, total, totals_by_vendor
 export function orderToDb(o: Order, userId: string) {
+  // Derive vendor_id from the first line if available
+  const firstVendorId = o.lines?.[0]?.vendorId ?? null
   return defined({
     id: o.id,
     user_id: userId,
     created_at: o.createdAt,
-    snapshot_id: o.snapshotId ?? undefined,
-    total: o.total,
-    totals_by_vendor: o.totalsByVendor,
     lines: o.lines,
+    status: 'completed',
+    vendor_id: firstVendorId ?? undefined,
   })
 }
 
 export function orderFromDb(row: Record<string, unknown>): Order {
+  const lines = (row.lines as Order['lines']) ?? []
+  // Recompute total and totalsByVendor from lines since DB doesn't store them
+  let total = 0
+  const totalsByVendor: Record<string, number> = {}
+  for (const line of lines) {
+    total += line.lineTotal ?? 0
+    if (line.vendorId) {
+      totalsByVendor[line.vendorId] = (totalsByVendor[line.vendorId] ?? 0) + (line.lineTotal ?? 0)
+    }
+  }
   return {
     id: row.id as string,
     createdAt: row.created_at as string,
-    snapshotId: row.snapshot_id as string | null | undefined,
-    total: row.total as number,
-    totalsByVendor: (row.totals_by_vendor as Record<string, number>) ?? {},
-    lines: (row.lines as Order['lines']) ?? [],
+    snapshotId: null,
+    total,
+    totalsByVendor,
+    lines,
   }
 }
 
@@ -211,11 +219,12 @@ export function activityFromDb(row: Record<string, unknown>): Activity {
 
 // ─── Settings Mappers ────────────────────────────────────────────────────
 
+// DB columns: id, user_id, store_name, default_min_stock, openai_api_key
+// MISSING in DB: staleness_threshold
 export function settingsToDb(s: AppSettings, userId: string) {
   return defined({
     user_id: userId,
     store_name: s.storeName,
-    staleness_threshold: s.stalenessThreshold,
     default_min_stock: s.defaultMinStock,
     openai_api_key: s.openaiApiKey ?? undefined,
   })
@@ -224,7 +233,7 @@ export function settingsToDb(s: AppSettings, userId: string) {
 export function settingsFromDb(row: Record<string, unknown>): AppSettings {
   return {
     storeName: (row.store_name as string) ?? 'My Store',
-    stalenessThreshold: (row.staleness_threshold as number) ?? 45,
+    stalenessThreshold: 45, // not stored in DB, use default
     defaultMinStock: (row.default_min_stock as number) ?? 10,
     openaiApiKey: (row.openai_api_key as string) ?? '',
   }
