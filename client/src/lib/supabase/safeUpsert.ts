@@ -23,8 +23,8 @@ export async function safeUpsert(opts: UpsertOptions): Promise<void> {
   const { table, onConflict } = opts
   let data = opts.data
 
-  // Try up to 5 times, stripping one bad column each time
-  for (let attempt = 0; attempt < 5; attempt++) {
+  // Try up to 10 times, stripping one bad column each time
+  for (let attempt = 0; attempt < 10; attempt++) {
     const query = onConflict
       ? supabase.from(table).upsert(data, { onConflict })
       : supabase.from(table).upsert(data)
@@ -64,5 +64,5 @@ export async function safeUpsert(opts: UpsertOptions): Promise<void> {
     throw error
   }
 
-  throw new Error(`[safeUpsert] Failed after 5 retries on ${table}`)
+  throw new Error(`[safeUpsert] Failed after 10 retries on ${table}`)
 }

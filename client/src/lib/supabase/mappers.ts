@@ -136,20 +136,16 @@ export function productFromDb(row: Record<string, unknown>): Product {
 // ─── VendorPrice Mappers ─────────────────────────────────────────────────
 
 export function vendorPriceToDb(vp: VendorPrice, userId: string) {
-  return defined({
+  // NOTE: pack columns (pack_type, units_per_case, unit_descriptor,
+  // price_basis, parse_version, unit_cost) are intentionally omitted —
+  // the DB table does not have them yet. Pack data lives in Zustand only.
+  return {
     user_id: userId,
     vendor_id: vp.vendorId,
     product_id: vp.productId,
     unit_price: vp.unitPrice,
     updated_at: vp.updatedAt || new Date().toISOString(),
-    // Pack fields — only sent when present (columns may not exist yet)
-    pack_type: vp.packType ?? undefined,
-    units_per_case: vp.unitsPerCase ?? undefined,
-    unit_descriptor: vp.unitDescriptor ?? undefined,
-    price_basis: vp.priceBasis ?? undefined,
-    parse_version: vp.parseVersion ?? undefined,
-    unit_cost: vp.unitCost ?? undefined,
-  })
+  }
 }
 
 export function vendorPriceFromDb(row: Record<string, unknown>): VendorPrice {
