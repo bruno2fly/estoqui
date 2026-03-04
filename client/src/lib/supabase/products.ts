@@ -13,7 +13,7 @@ export async function fetchProducts(userId: string): Promise<Product[]> {
   return (data ?? []).map((row: Record<string, unknown>) => productFromDb(row))
 }
 
-export function upsertProduct(product: Product, userId: string): void {
+export async function upsertProduct(product: Product, userId: string): Promise<void> {
   enqueueWrite({
     table: 'products',
     data: productToDb(product, userId),
