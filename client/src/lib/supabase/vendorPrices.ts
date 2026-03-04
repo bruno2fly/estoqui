@@ -1,6 +1,7 @@
 import { supabase } from '@/lib/supabase'
 import { vendorPriceToDb, vendorPriceFromDb } from './mappers'
 import { safeUpsert } from './safeUpsert'
+import { enqueueWrite } from './writeQueue'
 import type { VendorPrice } from '@/types'
 
 export async function fetchVendorPrices(userId: string): Promise<VendorPrice[]> {
@@ -12,14 +13,13 @@ export async function fetchVendorPrices(userId: string): Promise<VendorPrice[]> 
   return (data ?? []).map((row: Record<string, unknown>) => vendorPriceFromDb(row))
 }
 
-export async function upsertVendorPrice(vp: VendorPrice, userId: string): Promise<void> {
-  await safeUpsert({
+export function upsertVendorPrice(vp: VendorPrice, userId: string): void {
+  enqueueWrite({
     table: 'vendor_prices',
     data: vendorPriceToDb(vp, userId),
     onConflict: 'user_id,vendor_id,product_id',
   })
 }
-
 export async function upsertVendorPrices(vps: VendorPrice[], userId: string): Promise<void> {
   if (vps.length === 0) return
   const CHUNK = 200
