@@ -17,9 +17,10 @@ export async function upsertProduct(product: Product, userId: string): Promise<v
   enqueueWrite({
     table: 'products',
     data: productToDb(product, userId),
-    onConflict: 'id',
+    onConflict: 'user_id,name',
   })
 }
+
 export async function upsertProducts(products: Product[], userId: string): Promise<void> {
   if (products.length === 0) return
   const CHUNK = 200
@@ -29,10 +30,11 @@ export async function upsertProducts(products: Product[], userId: string): Promi
     await safeUpsert({
       table: 'products',
       data: rows,
-      onConflict: 'id',
+      onConflict: 'user_id,name',
     })
   }
 }
+
 export async function deleteProduct(id: string): Promise<void> {
   const { error } = await supabase.from('products').delete().eq('id', id)
   if (error) {
