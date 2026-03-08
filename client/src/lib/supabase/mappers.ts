@@ -138,14 +138,14 @@ export function productFromDb(row: Record<string, unknown>): Product {
 
 // ─── VendorPrice Mappers ─────────────────────────────────────────────────
 
-// DB columns: id, user_id, vendor_id, product_id, price
-// MISSING in DB: unit_price, updated_at, cost, unit_cost, pack_*
+// DB columns: id, user_id, vendor_id, product_id, price, updated_at
 export function vendorPriceToDb(vp: VendorPrice, userId: string) {
   return {
     user_id: userId,
     vendor_id: vp.vendorId,
     product_id: vp.productId,
     price: vp.unitPrice,
+    updated_at: vp.updatedAt || new Date().toISOString(),
   }
 }
 
@@ -154,7 +154,7 @@ export function vendorPriceFromDb(row: Record<string, unknown>): VendorPrice {
     vendorId: row.vendor_id as string,
     productId: row.product_id as string,
     unitPrice: (row.price as number) ?? (row.unit_price as number) ?? 0,
-    updatedAt: (row.updated_at as string) ?? (row.created_at as string) ?? '',
+    updatedAt: (row.updated_at as string) ?? (row.created_at as string) ?? new Date().toISOString(),
   }
 }
 

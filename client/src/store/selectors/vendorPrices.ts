@@ -40,8 +40,10 @@ export function computeBestVendor(
 
   const threshold = state.settings?.stalenessThreshold ?? 45
   const freshPrices = prices.filter((p) => {
-    const days =
-      (Date.now() - new Date(p.updatedAt).getTime()) / (1000 * 60 * 60 * 24)
+    if (!p.updatedAt) return true // no timestamp = treat as fresh
+    const ts = new Date(p.updatedAt).getTime()
+    if (isNaN(ts)) return true // invalid date = treat as fresh
+    const days = (Date.now() - ts) / (1000 * 60 * 60 * 24)
     return days <= threshold
   })
 
