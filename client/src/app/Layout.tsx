@@ -9,7 +9,6 @@ const mainNavItems = [
   { to: '/vendors', label: 'Vendors', icon: VendorsIcon },
   { to: '/catalog', label: 'Catalog', icon: CatalogIcon },
   { to: '/matching', label: 'Matching', icon: MatchingIcon },
-  { to: '/imports', label: 'Import Center', icon: ImportIcon },
   { to: '/catalog/needs-sku', label: 'Needs SKU', icon: NeedsSkuIcon },
   { to: '/history', label: 'History', icon: HistoryIcon },
 ] as const
@@ -25,7 +24,6 @@ const pathToTitle: Record<string, string> = {
   '/catalog': 'Catalog',
   '/vendors': 'Vendors',
   '/matching': 'Matching',
-  '/imports': 'Import Center',
   '/catalog/needs-sku': 'Needs SKU',
   '/history': 'History',
   '/settings': 'Settings',
