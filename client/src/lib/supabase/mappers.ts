@@ -138,14 +138,14 @@ export function productFromDb(row: Record<string, unknown>): Product {
 
 // ─── VendorPrice Mappers ─────────────────────────────────────────────────
 
-// DB columns: id, user_id, vendor_id, product_id, price
-// Note: updated_at does NOT exist in DB — timestamp lives only in local state
+// DB columns: id, user_id, vendor_id, product_id, price, updated_at
 export function vendorPriceToDb(vp: VendorPrice, userId: string) {
   return {
     user_id: userId,
     vendor_id: vp.vendorId,
     product_id: vp.productId,
     price: vp.unitPrice,
+    updated_at: vp.updatedAt || new Date().toISOString(),
   }
 }
 
