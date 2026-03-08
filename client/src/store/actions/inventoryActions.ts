@@ -36,11 +36,26 @@ async function getUid(): Promise<string> {
   return data.session?.user?.id ?? ''
 }
 
+/** Session-level state for the active order view (survives navigation, not persisted to DB) */
+export interface ActiveOrderView {
+  order: Order
+  byVendor: Record<string, OrderGroup>
+}
+
 export function getInventoryActions(
   set: StateSetter,
-  get: () => StoreWithActions
+  get: () => StoreWithActions & { activeOrderView: ActiveOrderView | null }
 ) {
   return {
+    activeOrderView: null as ActiveOrderView | null,
+
+    setActiveOrderView(view: ActiveOrderView | null) {
+      set({ activeOrderView: view } as any)
+    },
+
+    clearActiveOrderView() {
+      set({ activeOrderView: null } as any)
+    },
     buildReorderDraftFromSnapshot(snapshotId: string) {
       const state = get()
       const snapshot = state.stockSnapshots.find((s) => s.id === snapshotId)
@@ -174,6 +189,10 @@ export function getInventoryActions(
       // Don't clear reorderDraft here — user will "Archive Order" when done
 
       const order = get().orders[0]
+
+      // Persist order view in store so it survives page navigation
+      set({ activeOrderView: { order, byVendor } } as any)
+
       return { success: true, order, byVendor }
     },
 

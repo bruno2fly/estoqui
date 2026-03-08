@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react'
 import { useStore } from '@/store'
-import { ConfirmDialog } from '@/shared/components'
+import { ConfirmDialog, InfoTip } from '@/shared/components'
 import { useToast } from '@/shared/components'
 import { VendorFormModal } from './VendorFormModal'
 import { VendorDetailModal } from './VendorDetailModal'
@@ -120,10 +120,10 @@ export function VendorsPage() {
       {/* Summary cards */}
       {vendors.length > 0 && (
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <SummaryCard label="Avg Score" value={avgScore} color={getScoreColor(avgScore)} />
-          <SummaryCard label="Active" value={activeCount} color="text-green-600 dark:text-green-400" />
-          <SummaryCard label="Probation" value={probationCount} color="text-amber-600 dark:text-amber-400" />
-          <SummaryCard label="Inactive" value={inactiveCount} color="text-red-600 dark:text-red-400" />
+          <SummaryCard label="Avg Score" value={avgScore} color={getScoreColor(avgScore)} tip="The average quality score of all your vendors. Higher is better — based on how often they update prices and how complete their product lists are." />
+          <SummaryCard label="Active" value={activeCount} color="text-green-600 dark:text-green-400" tip="Vendors who are up to date. Their price lists are recent and ready to use." />
+          <SummaryCard label="Probation" value={probationCount} color="text-amber-600 dark:text-amber-400" tip="Vendors whose price lists are getting old. They need to send you an updated list soon." />
+          <SummaryCard label="Inactive" value={inactiveCount} color="text-red-600 dark:text-red-400" tip="Vendors who haven't sent a price list in a long time. You may want to contact them or remove them." />
         </div>
       )}
 
@@ -170,11 +170,17 @@ export function VendorsPage() {
               <thead>
                 <tr>
                   <SortHeader label="Vendor" sortKey="name" current={sortKey} dir={sortDir} onClick={toggleSort} sortIcon={sortIcon} />
-                  <th className="text-left text-fg-secondary font-semibold text-[11px] uppercase px-3 py-3">Status</th>
+                  <th className="text-left text-fg-secondary font-semibold text-[11px] uppercase px-3 py-3">
+                    <span className="inline-flex items-center gap-1">Status <InfoTip text="Shows if this vendor is Active (up to date), on Probation (getting old), or Inactive (very outdated)." /></span>
+                  </th>
                   <SortHeader label="Score" sortKey="score" current={sortKey} dir={sortDir} onClick={toggleSort} sortIcon={sortIcon} />
                   <SortHeader label="Last Update" sortKey="lastUpdate" current={sortKey} dir={sortDir} onClick={toggleSort} sortIcon={sortIcon} />
-                  <th className="text-left text-fg-secondary font-semibold text-[11px] uppercase px-3 py-3">Coverage</th>
-                  <th className="text-left text-fg-secondary font-semibold text-[11px] uppercase px-3 py-3">SKU%</th>
+                  <th className="text-left text-fg-secondary font-semibold text-[11px] uppercase px-3 py-3">
+                    <span className="inline-flex items-center gap-1">Coverage <InfoTip text="How much of this vendor's product list matched your catalog. 100% means every item they sent was found in your products." /></span>
+                  </th>
+                  <th className="text-left text-fg-secondary font-semibold text-[11px] uppercase px-3 py-3">
+                    <span className="inline-flex items-center gap-1">SKU% <InfoTip text="How many products from this vendor have a barcode (SKU). Barcodes help match products correctly." /></span>
+                  </th>
                   <th className="text-left text-fg-secondary font-semibold text-[11px] uppercase px-3 py-3">Products</th>
                   <th className="text-right text-fg-secondary font-semibold text-[11px] uppercase px-3 py-3"></th>
                 </tr>
@@ -292,11 +298,14 @@ export function VendorsPage() {
   )
 }
 
-function SummaryCard({ label, value, color }: { label: string; value: number; color: string }) {
+function SummaryCard({ label, value, color, tip }: { label: string; value: number; color: string; tip?: string }) {
   return (
     <div className="bg-surface border border-surface-border rounded-xl p-4 text-center">
       <div className={`text-2xl font-bold tabular-nums ${color}`}>{value}</div>
-      <div className="text-[11px] text-muted uppercase tracking-wide mt-1">{label}</div>
+      <div className="flex items-center justify-center gap-1.5 mt-1">
+        <span className="text-[11px] text-muted uppercase tracking-wide">{label}</span>
+        {tip && <InfoTip text={tip} />}
+      </div>
     </div>
   )
 }

@@ -80,7 +80,7 @@ export const useStore = create<StoreState>()((set, get) => ({
 
   /** Clear store on logout */
   clearStore: () => {
-    set({ ...initialState })
+    set({ ...initialState, activeOrderView: null } as any)
   },
 }))
 

@@ -65,10 +65,12 @@ export function OrderVendorCards({
   order,
   byVendor,
   onArchive,
+  onReset,
 }: {
   order: Order
   byVendor: Record<string, OrderGroup>
   onArchive: () => void
+  onReset?: () => void
 }) {
   const toast = useToast()
   const storeName = useStore((s) => s.settings?.storeName ?? DEFAULT_SETTINGS.storeName)
@@ -148,18 +150,33 @@ export function OrderVendorCards({
             </svg>
             <span className="text-[13px] font-semibold text-fg">Order Created</span>
           </div>
-          <button
-            type="button"
-            onClick={onArchive}
-            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-[12px] font-medium bg-fg text-background hover:opacity-80 transition-opacity"
-          >
-            <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <polyline points="21 8 21 21 3 21 3 8" />
-              <rect x="1" y="3" width="22" height="5" />
-              <line x1="10" y1="12" x2="14" y2="12" />
-            </svg>
-            Archive Order
-          </button>
+          <div className="flex items-center gap-2">
+            {onReset && (
+              <button
+                type="button"
+                onClick={onReset}
+                className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-[12px] font-medium text-danger border border-danger/30 hover:bg-danger/10 transition-colors"
+              >
+                <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="1 4 1 10 7 10" />
+                  <path d="M3.51 15a9 9 0 105.64-12.36L1 10" />
+                </svg>
+                Reset &amp; Start New
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={onArchive}
+              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-[12px] font-medium bg-fg text-background hover:opacity-80 transition-opacity"
+            >
+              <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="21 8 21 21 3 21 3 8" />
+                <rect x="1" y="3" width="22" height="5" />
+                <line x1="10" y1="12" x2="14" y2="12" />
+              </svg>
+              Archive Order
+            </button>
+          </div>
         </div>
 
         {/* Summary bar */}

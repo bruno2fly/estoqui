@@ -8,8 +8,7 @@ import { parseStockWithOpenAI } from '../lib/aiStockParse'
 import { findProductMatch } from '../lib/matching'
 import { ReorderSection } from './ReorderSection'
 import { OrderVendorCards } from './OrderSplitModal'
-import type { Order, StockSnapshotRow } from '@/types'
-import type { OrderGroup } from '@/store/actions/inventoryActions'
+import type { StockSnapshotRow } from '@/types'
 
 type UploadMode = 'csv' | 'ai'
 
@@ -26,7 +25,7 @@ export function InventoryPage() {
   const clearReorderDraft = useStore((s) => s.clearReorderDraft)
   const addActivity = useStore((s) => s.addActivity)
 
-  const [uploadMode, setUploadMode] = useState<UploadMode>('ai')
+  const [uploadMode, setUploadMode] = useState<UploadMode>('csv')
   const [uploadStatus, setUploadStatus] = useState<'idle' | 'success' | 'error'>('idle')
   const [uploadMessage, setUploadMessage] = useState('')
   const [aiLoading, setAiLoading] = useState(false)
@@ -35,11 +34,10 @@ export function InventoryPage() {
   const setVendorPrice = useStore((s) => s.setVendorPrice)
   const [confirmReset, setConfirmReset] = useState(false)
 
-  // Order state — stays inline until archived
-  const [orderData, setOrderData] = useState<{
-    order: Order
-    byVendor: Record<string, OrderGroup>
-  } | null>(null)
+  // Order state — persisted in Zustand store so it survives navigation
+  const orderData = useStore((s) => s.activeOrderView)
+  const setActiveOrderView = useStore((s) => s.setActiveOrderView)
+  const clearActiveOrderView = useStore((s) => s.clearActiveOrderView)
 
   const processStockRows = (rows: StockSnapshotRow[], fileName: string, sourceType: string) => {
     if (import.meta.env.DEV) {
@@ -203,7 +201,7 @@ export function InventoryPage() {
   const handleCsvFile = (file: File) => {
     setUploadStatus('idle')
     setUploadMessage('')
-    setOrderData(null)
+    clearActiveOrderView()
 
     const reader = new FileReader()
     reader.onload = (e) => {
@@ -229,7 +227,7 @@ export function InventoryPage() {
 
     setUploadStatus('idle')
     setUploadMessage('')
-    setOrderData(null)
+    clearActiveOrderView()
     setAiLoading(true)
 
     try {
@@ -253,7 +251,7 @@ export function InventoryPage() {
 
   const handleArchiveOrder = () => {
     clearReorderDraft()
-    setOrderData(null)
+    clearActiveOrderView()
     setUploadStatus('idle')
     setUploadMessage('')
     addActivity('order_archived', 'Order archived — ready for new inventory upload')
@@ -264,7 +262,7 @@ export function InventoryPage() {
     clearReorderDraft()
     setUploadStatus('idle')
     setUploadMessage('')
-    setOrderData(null)
+    clearActiveOrderView()
     addActivity('stock_reset', 'Inventory import reset — starting fresh')
     toast.show('Inventory reset. You can upload a new file.')
   }
@@ -317,11 +315,18 @@ export function InventoryPage() {
           </div>
 
           <div className="flex gap-2 border-b border-surface-border pb-2 mb-4">
+            {tabBtn('CSV', 'csv')}
             {tabBtn('AI (any file)', 'ai')}
-            {tabBtn('CSV only', 'csv')}
           </div>
 
-          {uploadMode === 'ai' ? (
+          {uploadMode === 'csv' ? (
+            <FileUpload
+              accept=".csv"
+              onFile={handleCsvFile}
+              label="Upload your CSV file here"
+              hint="Use the CSV file exported from your POS system"
+            />
+          ) : (
             <>
               {!settings?.openaiApiKey && (
                 <div className="bg-amber-50 dark:bg-yellow-900/30 border border-amber-200 dark:border-yellow-700/50 rounded-lg px-3 py-2 text-sm text-amber-700 dark:text-yellow-200 mb-3">
@@ -343,12 +348,6 @@ export function InventoryPage() {
                 </div>
               )}
             </>
-          ) : (
-            <FileUpload
-              accept=".csv"
-              onFile={handleCsvFile}
-              label="Upload your CSV file here"
-            />
           )}
 
           {uploadStatus === 'success' && (
@@ -367,16 +366,17 @@ export function InventoryPage() {
       {/* Reorder list — shown after upload, before order creation */}
       {showReorder && (
         <ReorderSection
-          onOrderCreated={(order, byVendor) => setOrderData({ order, byVendor })}
+          onOrderCreated={(order, byVendor) => setActiveOrderView({ order, byVendor })}
         />
       )}
 
       {/* Order vendor cards — shown inline after Create Order */}
       {showOrderCards && (
         <OrderVendorCards
-          order={orderData.order}
-          byVendor={orderData.byVendor}
+          order={orderData!.order}
+          byVendor={orderData!.byVendor}
           onArchive={handleArchiveOrder}
+          onReset={handleResetInventory}
         />
       )}
 

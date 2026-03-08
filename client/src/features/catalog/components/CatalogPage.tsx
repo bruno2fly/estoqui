@@ -2,7 +2,7 @@ import { useMemo, useState, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useStore } from '@/store'
 import { computeBestVendor } from '@/store/selectors/vendorPrices'
-import { Badge, SearchInput, ConfirmDialog } from '@/shared/components'
+import { Badge, SearchInput, ConfirmDialog, InfoTip } from '@/shared/components'
 import { useToast } from '@/shared/components'
 import { normalize } from '@/shared/lib/matching'
 import { AddProductModal } from './AddProductModal'
@@ -167,6 +167,7 @@ export function CatalogPage() {
           value={summary.total}
           active={statusFilter === 'all'}
           onClick={() => setStatusFilter('all')}
+          tip="Total number of products in your catalog. This includes everything you sell in your store."
         />
         <SummaryCard
           label="Low Stock"
@@ -174,6 +175,7 @@ export function CatalogPage() {
           color="text-amber-500"
           active={statusFilter === 'LOW'}
           onClick={() => setStatusFilter(statusFilter === 'LOW' ? 'all' : 'LOW')}
+          tip="Products that are running low. You still have some left, but you should order more soon."
         />
         <SummaryCard
           label="Critical"
@@ -181,6 +183,7 @@ export function CatalogPage() {
           color="text-red-500"
           active={statusFilter === 'CRITICAL'}
           onClick={() => setStatusFilter(statusFilter === 'CRITICAL' ? 'all' : 'CRITICAL')}
+          tip="Products that are almost out of stock or already gone. Order these right away!"
         />
         <SummaryCard
           label="Matched"
@@ -188,6 +191,7 @@ export function CatalogPage() {
           color="text-emerald-500"
           active={statusFilter === 'matched'}
           onClick={() => setStatusFilter(statusFilter === 'matched' ? 'all' : 'matched')}
+          tip="Products that have at least one vendor with a price. These are ready to order."
         />
         <SummaryCard
           label="Unmatched"
@@ -195,6 +199,7 @@ export function CatalogPage() {
           color="text-fg-secondary"
           active={statusFilter === 'unmatched'}
           onClick={() => setStatusFilter(statusFilter === 'unmatched' ? 'all' : 'unmatched')}
+          tip="Products that don't have any vendor price yet. You need to add a vendor and price to order these."
         />
       </div>
 
@@ -420,12 +425,14 @@ function SummaryCard({
   color,
   active,
   onClick,
+  tip,
 }: {
   label: string
   value: number
   color?: string
   active?: boolean
   onClick?: () => void
+  tip?: string
 }) {
   return (
     <button
@@ -437,7 +444,10 @@ function SummaryCard({
           : 'border-surface-border hover:bg-surface-hover'
       }`}
     >
-      <p className="text-[11px] text-fg-secondary leading-tight">{label}</p>
+      <div className="flex items-center gap-1.5">
+        <span className="text-[11px] text-fg-secondary leading-tight">{label}</span>
+        {tip && <InfoTip text={tip} />}
+      </div>
       <p className={`text-[22px] font-bold leading-none tabular-nums mt-0.5 ${color ?? 'text-fg'}`}>
         {String(value).padStart(2, '0')}
       </p>

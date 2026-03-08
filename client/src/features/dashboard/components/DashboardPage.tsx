@@ -2,7 +2,7 @@ import { useState, useMemo, useCallback } from 'react'
 import { Link } from 'react-router-dom'
 import { useStore } from '@/store'
 import { getLowStockCount } from '@/store/selectors/dashboard'
-import { FileUpload } from '@/shared/components'
+import { FileUpload, InfoTip } from '@/shared/components'
 import { useToast } from '@/shared/components'
 import { parseCSVStock } from '@/features/inventory/lib/csvStock'
 
@@ -90,10 +90,10 @@ export function DashboardPage() {
             <span className="text-[13px] font-semibold text-fg">Overview</span>
           </div>
           <div className="space-y-3">
-            <StatRow icon={<BoxIcon />} label="Total products" value={pad(products.length)} />
-            <StatRow icon={<PeopleIcon />} label="Total vendors" value={pad(vendors.length)} />
-            <StatRow icon={<CartAlertIcon />} label="Low stock items" value={pad(lowStockCount)} />
-            <StatRow icon={<OrderIcon />} label="Total orders" value={pad(orders.length)} />
+            <StatRow icon={<BoxIcon />} label="Total products" value={pad(products.length)} tip="All the products registered in your store catalog." />
+            <StatRow icon={<PeopleIcon />} label="Total vendors" value={pad(vendors.length)} tip="Companies or people you buy products from." />
+            <StatRow icon={<CartAlertIcon />} label="Low stock items" value={pad(lowStockCount)} tip="Products running low that you need to reorder soon." />
+            <StatRow icon={<OrderIcon />} label="Total orders" value={pad(orders.length)} tip="Purchase orders you created to send to your vendors." />
           </div>
         </div>
 
@@ -196,14 +196,17 @@ export function DashboardPage() {
   )
 }
 
-function StatRow({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
+function StatRow({ icon, label, value, tip }: { icon: React.ReactNode; label: string; value: string; tip?: string }) {
   return (
     <div className="border border-surface-border rounded-xl p-3.5 flex items-center gap-3">
       <div className="w-11 h-11 rounded-xl bg-surface-hover flex items-center justify-center shrink-0">
         {icon}
       </div>
       <div className="min-w-0">
-        <p className="text-[11px] text-fg-secondary leading-tight">{label}</p>
+        <div className="flex items-center gap-1.5">
+          <span className="text-[11px] text-fg-secondary leading-tight">{label}</span>
+          {tip && <InfoTip text={tip} />}
+        </div>
         <p className="text-[26px] font-bold text-fg leading-none tabular-nums mt-0.5">{value}</p>
       </div>
     </div>

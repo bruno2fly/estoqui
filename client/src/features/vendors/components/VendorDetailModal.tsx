@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react'
 import { useStore } from '@/store'
-import { Modal, Button, FileUpload } from '@/shared/components'
+import { Modal, Button, FileUpload, InfoTip } from '@/shared/components'
 import { useToast } from '@/shared/components'
 import { findProductByNameAndBrand, matchKey } from '@/shared/lib/matching'
 import { parseVendorPriceCSV, type VendorPriceRow } from '../lib/vendorCsv'
@@ -310,6 +310,7 @@ export function VendorDetailModal({
             <ComplianceCard
               label="Score"
               value={<span className={`text-2xl font-bold ${getScoreColor(score)}`}>{score}</span>}
+              tip="Quality score for this vendor. Based on how fresh their prices are and how complete their product list is. Higher is better."
             />
             <ComplianceCard
               label="Status"
@@ -318,6 +319,7 @@ export function VendorDetailModal({
                   {badge.label}
                 </span>
               }
+              tip="Active = prices are up to date. Probation = getting old. Inactive = very outdated, needs a new price list."
             />
             <ComplianceCard
               label="Last Update"
@@ -327,14 +329,17 @@ export function VendorDetailModal({
                   {isStale && <span className="block text-[10px] text-red-500 font-semibold">STALE</span>}
                 </span>
               }
+              tip="How long ago this vendor sent their last price list. If it says 'STALE', the prices may no longer be accurate."
             />
             <ComplianceCard
               label="Coverage"
               value={<span className="text-lg font-semibold text-fg">{latestUpload ? `${latestUpload.coveragePercent}%` : '-'}</span>}
+              tip="How many products from this vendor's list matched your catalog. 100% means everything matched."
             />
             <ComplianceCard
               label="SKU %"
               value={<span className="text-lg font-semibold text-fg">{latestUpload ? `${latestUpload.hasSkuPercent}%` : '-'}</span>}
+              tip="How many of this vendor's products have a barcode (SKU). Barcodes help match products correctly."
             />
           </div>
 
@@ -619,11 +624,14 @@ export function VendorDetailModal({
   )
 }
 
-function ComplianceCard({ label, value }: { label: string; value: React.ReactNode }) {
+function ComplianceCard({ label, value, tip }: { label: string; value: React.ReactNode; tip?: string }) {
   return (
     <div className="bg-surface-hover rounded-lg p-3 text-center">
       <div className="mb-1">{value}</div>
-      <div className="text-[10px] text-muted uppercase tracking-wide">{label}</div>
+      <div className="flex items-center justify-center gap-1">
+        <span className="text-[10px] text-muted uppercase tracking-wide">{label}</span>
+        {tip && <InfoTip text={tip} />}
+      </div>
     </div>
   )
 }
