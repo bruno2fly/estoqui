@@ -34,22 +34,21 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
   dataLoaded: false,
 
   initialize: async () => {
-    const TIMEOUT_MS = 8000
-    const timeoutPromise = new Promise<never>((_, reject) =>
-      setTimeout(() => reject(new Error('Auth timeout')), TIMEOUT_MS)
-    )
+    const TIMEOUT_MS = 5000 // only for session check, not data loading
 
     try {
       const { data: { session } } = await Promise.race([
         supabase.auth.getSession(),
-        timeoutPromise,
+        new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error('Auth session check timeout')), TIMEOUT_MS)
+        ),
       ]) as Awaited<ReturnType<typeof supabase.auth.getSession>>
+
       if (session?.user) {
         set({ user: session.user, session, initialized: true })
-        // Load user data in background (with timeout so we don't block forever)
-        const loadPromise = get().loadUserData()
-        await Promise.race([loadPromise, timeoutPromise]).catch(() => {
-          console.warn('[auth] loadUserData timed out — continuing with empty data')
+        // Load data in background — don't block the login screen
+        get().loadUserData().catch(() => {
+          console.warn('[auth] loadUserData failed on init — continuing with empty data')
           set({ dataLoaded: true })
         })
       } else {
@@ -77,8 +76,14 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
       set({ loading: false })
       return { error: error.message }
     }
+    // Set user immediately so navigation works, then load data in background
     set({ user: data.user, session: data.session, loading: false })
-    await get().loadUserData()
+    // Don't await — let the ProtectedRoute show "Loading your inventory..."
+    // while data downloads in the background
+    get().loadUserData().catch((err) => {
+      console.error('[auth] Failed to load data after sign-in:', err)
+      set({ dataLoaded: true }) // unblock UI even on failure
+    })
     return { error: null }
   },
 
@@ -92,7 +97,10 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
     // If email confirmation is disabled, user is signed in immediately
     if (data.user && data.session) {
       set({ user: data.user, session: data.session, loading: false })
-      await get().loadUserData()
+      get().loadUserData().catch((err) => {
+        console.error('[auth] Failed to load data after sign-up:', err)
+        set({ dataLoaded: true })
+      })
     } else {
       set({ loading: false })
     }
@@ -106,8 +114,14 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
   },
 
   loadUserData: async () => {
+    const DATA_TIMEOUT_MS = 30000 // 30s max for all data fetches
     try {
-      const data = await loadAllUserData()
+      const data = await Promise.race([
+        loadAllUserData(),
+        new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error('Data load timeout (30s)')), DATA_TIMEOUT_MS)
+        ),
+      ])
       const sanitized = sanitizeState(data)
       _getMainStore?.()?.hydrateFromSupabase(sanitized)
       set({ dataLoaded: true })
