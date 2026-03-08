@@ -171,7 +171,7 @@ export function getInventoryActions(
         'order_created',
         `Created orders for ${vendorNames} — Total R$ ${total.toFixed(2)}`
       )
-      set({ reorderDraft: { snapshotId: null, lines: [] } })
+      // Don't clear reorderDraft here — user will "Archive Order" when done
 
       const order = get().orders[0]
       return { success: true, order, byVendor }
