@@ -127,26 +127,59 @@ export function InventoryPage() {
       .filter((r) => r.rawVendor && r.matchedProductId && r.unitCost)
 
     if (vendorRows.length > 0) {
-      // Build vendor name → id map (find existing or create new)
+      // Build vendor lookup with fuzzy matching
       const currentVendors = useStore.getState().vendors
-      const vendorNameMap: Record<string, string> = {}
+      const vendorNameMap: Record<string, string> = {} // exact lowercase → id
+      const vendorList: { name: string; nameLower: string; id: string }[] = []
       for (const v of currentVendors) {
-        vendorNameMap[v.name.toLowerCase().trim()] = v.id
+        const key = v.name.toLowerCase().trim()
+        vendorNameMap[key] = v.id
+        vendorList.push({ name: v.name, nameLower: key, id: v.id })
+      }
+
+      // Fuzzy vendor match: exact → contains → first-word match
+      const findVendorId = (csvName: string): string | null => {
+        const csvLower = csvName.toLowerCase().trim()
+        // 1. Exact match
+        if (vendorNameMap[csvLower]) return vendorNameMap[csvLower]
+        // 2. Existing vendor name is contained in CSV name, or vice versa
+        for (const v of vendorList) {
+          if (csvLower.includes(v.nameLower) || v.nameLower.includes(csvLower)) return v.id
+        }
+        // 3. First word match (e.g., "Zap" matches "ZAP FOODS LLC")
+        const csvFirst = csvLower.split(/\s+/)[0]
+        if (csvFirst.length >= 3) {
+          for (const v of vendorList) {
+            const vFirst = v.nameLower.split(/\s+/)[0]
+            if (csvFirst === vFirst) return v.id
+          }
+        }
+        return null
       }
 
       let newVendorCount = 0
+      // Cache resolved CSV name → vendorId to avoid re-matching
+      const resolvedVendors: Record<string, string> = {}
+
       for (const row of vendorRows) {
         const vendorName = row.rawVendor!.trim()
         const vendorKey = vendorName.toLowerCase()
 
-        // Create vendor if it doesn't exist
-        if (!vendorNameMap[vendorKey]) {
-          const vendorId = addVendor({ name: vendorName, phone: '', notes: '', status: 'active' })
-          vendorNameMap[vendorKey] = vendorId
-          newVendorCount++
+        if (!resolvedVendors[vendorKey]) {
+          const existingId = findVendorId(vendorName)
+          if (existingId) {
+            resolvedVendors[vendorKey] = existingId
+          } else {
+            // Create new vendor only if no fuzzy match found
+            const vendorId = addVendor({ name: vendorName, phone: '', notes: '', status: 'active' })
+            resolvedVendors[vendorKey] = vendorId
+            vendorNameMap[vendorKey] = vendorId
+            vendorList.push({ name: vendorName, nameLower: vendorKey, id: vendorId })
+            newVendorCount++
+          }
         }
 
-        const vendorId = vendorNameMap[vendorKey]
+        const vendorId = resolvedVendors[vendorKey]
         const productId = row.matchedProductId!
 
         // Create vendor price for this product
