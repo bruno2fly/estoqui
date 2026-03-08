@@ -36,7 +36,9 @@ export function parseVendorPriceCSV(
   }
 
   const separator = detectSeparator(lines[0])
-  const headers = parseCSVLine(lines[0], separator).map((h) => normalize(h))
+  const headers = parseCSVLine(lines[0], separator).map((h) =>
+    normalize(h).replace(/_/g, ' ')
+  )
 
   const normalizeHeader = (h: string) =>
     h.replace(/\([^)]*\)/g, '').replace(/[^a-z0-9]/g, '')
