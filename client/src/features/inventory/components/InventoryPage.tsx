@@ -31,6 +31,8 @@ export function InventoryPage() {
   const [uploadMessage, setUploadMessage] = useState('')
   const [aiLoading, setAiLoading] = useState(false)
   const bulkCreateProductsFromSnapshot = useStore((s) => s.bulkCreateProductsFromSnapshot)
+  const addVendor = useStore((s) => s.addVendor)
+  const setVendorPrice = useStore((s) => s.setVendorPrice)
   const [confirmReset, setConfirmReset] = useState(false)
   const [orderSplit, setOrderSplit] = useState<{
     order: Order
@@ -113,9 +115,50 @@ export function InventoryPage() {
       bulkCreateProductsFromSnapshot({ snapshotId, items })
     }
 
+    // Auto-create vendors and vendor prices from CSV vendor/cost columns
+    const vendorRows = rows.filter((r) => r.rawVendor && r.matchedProductId && r.unitCost)
+    if (vendorRows.length > 0) {
+      // Build vendor name → id map (find existing or create new)
+      const currentVendors = useStore.getState().vendors
+      const vendorNameMap: Record<string, string> = {}
+      for (const v of currentVendors) {
+        vendorNameMap[v.name.toLowerCase().trim()] = v.id
+      }
+
+      let newVendorCount = 0
+      for (const row of vendorRows) {
+        const vendorName = row.rawVendor!.trim()
+        const vendorKey = vendorName.toLowerCase()
+
+        // Create vendor if it doesn't exist
+        if (!vendorNameMap[vendorKey]) {
+          const vendorId = addVendor({ name: vendorName, phone: '', notes: '', status: 'active' })
+          vendorNameMap[vendorKey] = vendorId
+          newVendorCount++
+        }
+
+        const vendorId = vendorNameMap[vendorKey]
+        const productId = row.matchedProductId!
+
+        // Create vendor price for this product
+        setVendorPrice({
+          vendorId,
+          productId,
+          unitPrice: row.unitCost!,
+          updatedAt: new Date().toISOString(),
+        })
+      }
+
+      if (newVendorCount > 0) {
+        addActivity('vendor_created', `Auto-created ${newVendorCount} vendors from inventory import`)
+      }
+    }
+
+    const vendorPriceCount = vendorRows.length
     setUploadStatus('success')
     setUploadMessage(
-      `${rows.length} products imported (${matchedCount} matched, ${unmatched.length} new products created)`
+      `${rows.length} products imported (${matchedCount} matched, ${unmatched.length} new created)` +
+      (vendorPriceCount > 0 ? ` · ${vendorPriceCount} vendor prices linked` : '')
     )
     toast.show(`${rows.length} products imported`)
 

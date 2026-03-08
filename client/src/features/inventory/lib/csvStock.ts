@@ -108,6 +108,9 @@ export function parseCSVStock(text: string): StockSnapshotRow[] {
   const categoryIdx = headers.findIndex((h) =>
     /\b(category|categoria|section|secao|dept|department|group|grupo)\b/.test(h)
   )
+  const vendorIdx = headers.findIndex((h) =>
+    /\b(vendor|supplier|fornecedor|distributor)\b/.test(h)
+  )
   const skuIdx = (() => {
     const normalizeHeader = (h: string) => h.replace(/\([^)]*\)/g, '').replace(/[^a-z0-9]/g, '')
     const preferred = headers.findIndex((h) =>
@@ -120,7 +123,7 @@ export function parseCSVStock(text: string): StockSnapshotRow[] {
   })()
 
   if (import.meta.env.DEV) {
-    console.debug(`[CSV parse] Header indices — name:${nameIdx} brand:${brandIdx} sku:${skuIdx} stock:${stockIdx} cost:${costIdx} price:${priceIdx} category:${categoryIdx}`)
+    console.debug(`[CSV parse] Header indices — name:${nameIdx} brand:${brandIdx} sku:${skuIdx} stock:${stockIdx} cost:${costIdx} price:${priceIdx} category:${categoryIdx} vendor:${vendorIdx}`)
   }
 
   if (nameIdx === -1 || stockIdx === -1) {
@@ -167,10 +170,13 @@ export function parseCSVStock(text: string): StockSnapshotRow[] {
 
     const rawSku = skuIdx >= 0 ? (parts[skuIdx] ?? '').trim() : undefined
 
+    const rawVendor = vendorIdx >= 0 ? (parts[vendorIdx] ?? '').trim() : undefined
+
     rows.push({
       rawName,
       rawBrand: (brandIdx >= 0 ? (parts[brandIdx] ?? '') : '').trim(),
       rawSku: rawSku || undefined,
+      rawVendor: rawVendor || undefined,
       stockQty: Math.floor(stockQty),
       matchedProductId: null,
       unitCost: unitCost && unitCost > 0 ? unitCost : undefined,

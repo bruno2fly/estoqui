@@ -69,6 +69,7 @@ export interface StockSnapshotRow {
   rawName: string
   rawBrand: string
   rawSku?: string
+  rawVendor?: string
   stockQty: number
   matchedProductId: string | null
   unitCost?: number
