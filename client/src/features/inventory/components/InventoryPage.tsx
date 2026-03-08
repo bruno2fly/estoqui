@@ -6,7 +6,6 @@ import { useToast } from '@/shared/components'
 import { parseCSVStock } from '../lib/csvStock'
 import { parseStockWithOpenAI } from '../lib/aiStockParse'
 import { findProductMatch } from '../lib/matching'
-import { MatchingSection } from './MatchingSection'
 import { ReorderSection } from './ReorderSection'
 import { OrderSplitModal } from './OrderSplitModal'
 import type { Order, StockSnapshotRow } from '@/types'
@@ -23,9 +22,7 @@ export function InventoryPage() {
   const buildReorderDraftFromSnapshot = useStore(
     (s) => s.buildReorderDraftFromSnapshot
   )
-  const stockSnapshots = useStore((s) => s.stockSnapshots)
   const reorderDraft = useStore((s) => s.reorderDraft)
-  const deleteStockSnapshot = useStore((s) => s.deleteStockSnapshot)
   const clearReorderDraft = useStore((s) => s.clearReorderDraft)
   const addActivity = useStore((s) => s.addActivity)
 
@@ -33,7 +30,7 @@ export function InventoryPage() {
   const [uploadStatus, setUploadStatus] = useState<'idle' | 'success' | 'error'>('idle')
   const [uploadMessage, setUploadMessage] = useState('')
   const [aiLoading, setAiLoading] = useState(false)
-  const [matchingSnapshotId, setMatchingSnapshotId] = useState<string | null>(null)
+  const bulkCreateProductsFromSnapshot = useStore((s) => s.bulkCreateProductsFromSnapshot)
   const [confirmReset, setConfirmReset] = useState(false)
   const [orderSplit, setOrderSplit] = useState<{
     order: Order
@@ -91,18 +88,39 @@ export function InventoryPage() {
     })
 
     const matchedCount = rows.filter((r) => r.matchedProductId).length
+
+    // Auto-create products for any unmatched rows
+    const unmatched = rows
+      .map((row, index) => ({ row, index }))
+      .filter(({ row }) => !row.matchedProductId)
+
+    if (unmatched.length > 0) {
+      const defaultMin = settings?.defaultMinStock ?? 10
+      const items = unmatched.map(({ row, index }) => ({
+        snapshotRowIndex: index,
+        product: {
+          name: row.rawName,
+          brand: row.rawBrand || '',
+          sku: row.rawSku || '',
+          category: row.category || '',
+          unitSize: '',
+          minStock: defaultMin,
+          unitCost: row.unitCost,
+          unitPrice: row.unitPrice,
+        },
+        matchKey: matchKey(row.rawName, row.rawBrand),
+      }))
+      bulkCreateProductsFromSnapshot({ snapshotId, items })
+    }
+
     setUploadStatus('success')
     setUploadMessage(
-      `${rows.length} products imported (${matchedCount} matched)`
+      `${rows.length} products imported (${matchedCount} matched, ${unmatched.length} new products created)`
     )
     toast.show(`${rows.length} products imported`)
 
-    const unmatched = rows.filter((r) => !r.matchedProductId)
-    if (unmatched.length > 0) {
-      setMatchingSnapshotId(snapshotId)
-    } else {
-      buildReorderDraftFromSnapshot(snapshotId)
-    }
+    // Always build reorder draft immediately
+    buildReorderDraftFromSnapshot(snapshotId)
   }
 
   const handleCsvFile = (file: File) => {
@@ -154,19 +172,7 @@ export function InventoryPage() {
     setAiLoading(false)
   }
 
-  const handleMatchingAllMatched = () => {
-    if (matchingSnapshotId) {
-      buildReorderDraftFromSnapshot(matchingSnapshotId)
-      setMatchingSnapshotId(null)
-      toast.show('All items matched. Reorder list generated.')
-    }
-  }
-
   const handleResetInventory = () => {
-    if (matchingSnapshotId) {
-      deleteStockSnapshot(matchingSnapshotId)
-      setMatchingSnapshotId(null)
-    }
     clearReorderDraft()
     setUploadStatus('idle')
     setUploadMessage('')
@@ -175,14 +181,7 @@ export function InventoryPage() {
     toast.show('Inventory reset. You can upload a new file.')
   }
 
-  const hasActiveSession = Boolean(matchingSnapshotId) || Boolean(reorderDraft?.lines?.length)
-
-  const matchingSnapshot = matchingSnapshotId
-    ? stockSnapshots.find((s) => s.id === matchingSnapshotId)
-    : null
-  const hasUnmatched =
-    matchingSnapshot?.rows.some((r: StockSnapshotRow) => !r.matchedProductId) ?? false
-  const showMatching = Boolean(matchingSnapshotId && matchingSnapshot && hasUnmatched)
+  const hasActiveSession = Boolean(reorderDraft?.lines?.length)
   const showReorder = Boolean(reorderDraft?.lines?.length)
 
   const tabBtn = (label: string, tabMode: UploadMode) => (
@@ -272,13 +271,6 @@ export function InventoryPage() {
           </p>
         )}
       </div>
-
-      {showMatching && matchingSnapshotId && (
-        <MatchingSection
-          snapshotId={matchingSnapshotId}
-          onAllMatched={handleMatchingAllMatched}
-        />
-      )}
 
       {showReorder && (
         <ReorderSection
