@@ -10,6 +10,7 @@ import { HistoryPage } from '@/features/history'
 import { SettingsPage } from '@/features/settings'
 import { MatchingPage } from '@/features/matching'
 import { HelpPage } from '@/features/help'
+import { ImportCenterPage, ImportUploadDetailPage, NeedsSkuQueuePage } from '@/features/import'
 
 export function AppRoutes() {
   return (
@@ -22,6 +23,9 @@ export function AppRoutes() {
           <Route path="catalog" element={<CatalogPage />} />
           <Route path="vendors" element={<VendorsPage />} />
           <Route path="matching" element={<MatchingPage />} />
+          <Route path="imports" element={<ImportCenterPage />} />
+          <Route path="imports/:uploadId" element={<ImportUploadDetailPage />} />
+          <Route path="catalog/needs-sku" element={<NeedsSkuQueuePage />} />
           <Route path="history" element={<HistoryPage />} />
           <Route path="settings" element={<SettingsPage />} />
           <Route path="help" element={<HelpPage />} />

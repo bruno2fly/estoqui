@@ -34,16 +34,29 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
   dataLoaded: false,
 
   initialize: async () => {
+    const TIMEOUT_MS = 8000
+    const timeoutPromise = new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error('Auth timeout')), TIMEOUT_MS)
+    )
+
     try {
-      const { data: { session } } = await supabase.auth.getSession()
+      const { data: { session } } = await Promise.race([
+        supabase.auth.getSession(),
+        timeoutPromise,
+      ]) as Awaited<ReturnType<typeof supabase.auth.getSession>>
       if (session?.user) {
         set({ user: session.user, session, initialized: true })
-        // Load user data in background
-        await get().loadUserData()
+        // Load user data in background (with timeout so we don't block forever)
+        const loadPromise = get().loadUserData()
+        await Promise.race([loadPromise, timeoutPromise]).catch(() => {
+          console.warn('[auth] loadUserData timed out — continuing with empty data')
+          set({ dataLoaded: true })
+        })
       } else {
         set({ initialized: true })
       }
-    } catch {
+    } catch (err) {
+      console.warn('[auth] Initialize failed:', err)
       set({ initialized: true })
     }
 
