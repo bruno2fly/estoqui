@@ -122,9 +122,8 @@ export function parseCSVStock(text: string): StockSnapshotRow[] {
     )
   })()
 
-  if (import.meta.env.DEV) {
-    console.debug(`[CSV parse] Header indices — name:${nameIdx} brand:${brandIdx} sku:${skuIdx} stock:${stockIdx} cost:${costIdx} price:${priceIdx} category:${categoryIdx} vendor:${vendorIdx}`)
-  }
+  console.log(`[CSV parse] Headers: ${JSON.stringify(headers)}`)
+  console.log(`[CSV parse] Indices — name:${nameIdx} brand:${brandIdx} sku:${skuIdx} stock:${stockIdx} cost:${costIdx} price:${priceIdx} category:${categoryIdx} vendor:${vendorIdx}`)
 
   if (nameIdx === -1 || stockIdx === -1) {
     return lines.slice(1).map((line, idx) => {

@@ -119,6 +119,16 @@ export function InventoryPage() {
     const updatedSnapshot = useStore.getState().stockSnapshots.find((s) => s.id === snapshotId)
     const updatedRows = updatedSnapshot?.rows ?? rows
 
+    // Debug: show what's in the first few rows to diagnose vendor linking
+    if (rows.length > 0) {
+      const s = rows[0]
+      console.log('[Inventory] Sample orig row[0]:', { rawName: s.rawName, rawBrand: s.rawBrand, rawVendor: s.rawVendor, unitCost: s.unitCost, unitPrice: s.unitPrice, matchedProductId: s.matchedProductId })
+    }
+    if (updatedRows.length > 0) {
+      const s = updatedRows[0]
+      console.log('[Inventory] Sample updated row[0]:', { rawName: s.rawName, rawBrand: s.rawBrand, rawVendor: s.rawVendor, unitCost: s.unitCost, unitPrice: s.unitPrice, matchedProductId: s.matchedProductId })
+    }
+
     // Auto-create vendors and vendor prices from CSV vendor/cost/price/brand columns
     // Strategy: use rawVendor if present, fallback to rawBrand as vendor name
     //           use unitCost if present, fallback to unitPrice as cost
@@ -131,7 +141,7 @@ export function InventoryPage() {
       })
       .filter((r) => r.rawVendor && r.matchedProductId && r.unitCost && r.unitCost > 0)
 
-    console.log(`[Inventory] Vendor linking: ${vendorRows.length} rows with vendor+product+cost out of ${updatedRows.length} total`, vendorRows.length > 0 ? { sampleVendor: vendorRows[0].rawVendor, sampleCost: vendorRows[0].unitCost } : {})
+    console.log(`[Inventory] Vendor linking: ${vendorRows.length} rows with vendor+product+cost out of ${updatedRows.length} total`, vendorRows.length > 0 ? { sampleVendor: vendorRows[0].rawVendor, sampleCost: vendorRows[0].unitCost } : 'NO VENDOR ROWS')
 
     if (vendorRows.length > 0) {
       const currentVendors = useStore.getState().vendors
