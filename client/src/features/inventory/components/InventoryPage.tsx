@@ -119,10 +119,17 @@ export function InventoryPage() {
     const updatedSnapshot = useStore.getState().stockSnapshots.find((s) => s.id === snapshotId)
     const updatedRows = updatedSnapshot?.rows ?? rows
 
-    // Auto-create vendors and vendor prices from CSV vendor/cost columns
+    // Auto-create vendors and vendor prices from CSV vendor/cost/price/brand columns
+    // Strategy: use rawVendor if present, fallback to rawBrand as vendor name
+    //           use unitCost if present, fallback to unitPrice as cost
     const vendorRows = updatedRows
-      .map((r, i) => ({ ...r, rawVendor: rows[i]?.rawVendor, unitCost: rows[i]?.unitCost }))
-      .filter((r) => r.rawVendor && r.matchedProductId && r.unitCost)
+      .map((r, i) => {
+        const orig = rows[i]
+        const vendor = orig?.rawVendor || orig?.rawBrand || ''
+        const cost = orig?.unitCost ?? orig?.unitPrice ?? 0
+        return { ...r, rawVendor: vendor, unitCost: cost }
+      })
+      .filter((r) => r.rawVendor && r.matchedProductId && r.unitCost && r.unitCost > 0)
 
     if (vendorRows.length > 0) {
       const currentVendors = useStore.getState().vendors
