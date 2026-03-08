@@ -125,11 +125,13 @@ export function InventoryPage() {
     const vendorRows = updatedRows
       .map((r, i) => {
         const orig = rows[i]
-        const vendor = orig?.rawVendor || orig?.rawBrand || ''
-        const cost = orig?.unitCost ?? orig?.unitPrice ?? 0
+        const vendor = orig?.rawVendor || orig?.rawBrand || r.rawVendor || r.rawBrand || ''
+        const cost = orig?.unitCost ?? orig?.unitPrice ?? r.unitCost ?? r.unitPrice ?? 0
         return { ...r, rawVendor: vendor, unitCost: cost }
       })
       .filter((r) => r.rawVendor && r.matchedProductId && r.unitCost && r.unitCost > 0)
+
+    console.log(`[Inventory] Vendor linking: ${vendorRows.length} rows with vendor+product+cost out of ${updatedRows.length} total`, vendorRows.length > 0 ? { sampleVendor: vendorRows[0].rawVendor, sampleCost: vendorRows[0].unitCost } : {})
 
     if (vendorRows.length > 0) {
       const currentVendors = useStore.getState().vendors
@@ -202,6 +204,8 @@ export function InventoryPage() {
     toast.show(`${rows.length} products imported`)
 
     // Always build reorder draft immediately
+    const vpCount = useStore.getState().vendorPrices.length
+    console.log(`[Inventory] Building reorder draft. vendorPrices in store: ${vpCount}, vendors: ${useStore.getState().vendors.length}`)
     buildReorderDraftFromSnapshot(snapshotId)
   }
 
