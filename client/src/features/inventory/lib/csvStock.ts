@@ -125,7 +125,8 @@ export function parseCSVStock(text: string): StockSnapshotRow[] {
   console.log(`[CSV parse] Headers: ${JSON.stringify(headers)}`)
   console.log(`[CSV parse] Indices — name:${nameIdx} brand:${brandIdx} sku:${skuIdx} stock:${stockIdx} cost:${costIdx} price:${priceIdx} category:${categoryIdx} vendor:${vendorIdx}`)
 
-  if (nameIdx === -1 || stockIdx === -1) {
+  // Only use dumb fallback when we can't even find a product name column
+  if (nameIdx === -1) {
     return lines.slice(1).map((line, idx) => {
       const parts = parseCSVLine(line, separator)
       const stockVal = parts[2] ?? parts[1] ?? '0'
@@ -147,7 +148,7 @@ export function parseCSVStock(text: string): StockSnapshotRow[] {
     const parts = parseCSVLine(lines[i], separator)
 
     // Check for category row (section header)
-    if (categoryIdx === -1 && isCategoryRow(parts, nameIdx, stockIdx)) {
+    if (stockIdx >= 0 && categoryIdx === -1 && isCategoryRow(parts, nameIdx, stockIdx)) {
       currentCategory = (parts[nameIdx] ?? '').trim()
       continue
     }
@@ -155,11 +156,15 @@ export function parseCSVStock(text: string): StockSnapshotRow[] {
     const rawName = (parts[nameIdx] ?? '').trim()
     if (!rawName) continue
 
-    const stockVal = parts[stockIdx] ?? '0'
-    const stockClean = stockVal.replace(/,/g, '').replace(/[^\d.\-]/g, '')
-    const stockRaw = parseFloat(stockClean) || 0
-    const stockQty = Math.max(0, stockRaw)
-    if (isNaN(stockRaw)) continue
+    // Stock column is optional — default to 0 for price-list CSVs
+    let stockQty = 0
+    if (stockIdx >= 0) {
+      const stockVal = parts[stockIdx] ?? '0'
+      const stockClean = stockVal.replace(/,/g, '').replace(/[^\d.\-]/g, '')
+      const stockRaw = parseFloat(stockClean) || 0
+      stockQty = Math.max(0, stockRaw)
+      if (isNaN(stockRaw)) continue
+    }
 
     const unitCost = costIdx >= 0 ? parseNum(parts[costIdx] ?? '') : undefined
     const unitPrice = priceIdx >= 0 ? parseNum(parts[priceIdx] ?? '') : undefined
