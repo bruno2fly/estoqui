@@ -115,8 +115,17 @@ export function InventoryPage() {
       bulkCreateProductsFromSnapshot({ snapshotId, items })
     }
 
+    // Re-read snapshot rows from store to get updated matchedProductIds
+    // (bulkCreateProductsFromSnapshot sets matchedProductId on new products)
+    const updatedSnapshot = useStore.getState().stockSnapshots.find((s) => s.id === snapshotId)
+    const updatedRows = updatedSnapshot?.rows ?? rows
+
     // Auto-create vendors and vendor prices from CSV vendor/cost columns
-    const vendorRows = rows.filter((r) => r.rawVendor && r.matchedProductId && r.unitCost)
+    // Use updatedRows which has matchedProductId set for ALL rows (existing + newly created)
+    const vendorRows = updatedRows
+      .map((r, i) => ({ ...r, rawVendor: rows[i]?.rawVendor, unitCost: rows[i]?.unitCost }))
+      .filter((r) => r.rawVendor && r.matchedProductId && r.unitCost)
+
     if (vendorRows.length > 0) {
       // Build vendor name → id map (find existing or create new)
       const currentVendors = useStore.getState().vendors
