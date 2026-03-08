@@ -8,7 +8,6 @@ import { CatalogPage } from '@/features/catalog'
 import { VendorsPage } from '@/features/vendors'
 import { HistoryPage } from '@/features/history'
 import { SettingsPage } from '@/features/settings'
-import { MatchingPage } from '@/features/matching'
 import { HelpPage } from '@/features/help'
 import { NeedsSkuQueuePage } from '@/features/import'
 
@@ -22,7 +21,6 @@ export function AppRoutes() {
           <Route path="inventory" element={<InventoryPage />} />
           <Route path="catalog" element={<CatalogPage />} />
           <Route path="vendors" element={<VendorsPage />} />
-          <Route path="matching" element={<MatchingPage />} />
           <Route path="catalog/needs-sku" element={<NeedsSkuQueuePage />} />
           <Route path="history" element={<HistoryPage />} />
           <Route path="settings" element={<SettingsPage />} />

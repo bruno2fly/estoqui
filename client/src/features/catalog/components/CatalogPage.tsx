@@ -1,4 +1,5 @@
 import { useMemo, useState, useCallback } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useStore } from '@/store'
 import { computeBestVendor } from '@/store/selectors/vendorPrices'
 import { Badge, SearchInput, ConfirmDialog } from '@/shared/components'
@@ -49,6 +50,7 @@ const STATUS_PILL_CLS: Record<StockStatus, string> = {
 
 export function CatalogPage() {
   const toast = useToast()
+  const navigate = useNavigate()
   const state = useStore((s) => s)
   const products = state.products
   const updateProduct = useStore((s) => s.updateProduct)
@@ -224,6 +226,13 @@ export function CatalogPage() {
               placeholder="Filter by name, brand, SKU or category..."
               debounceMs={0}
             />
+            <button
+              type="button"
+              onClick={() => navigate('/catalog/needs-sku')}
+              className="px-3.5 py-1.5 rounded-lg border border-surface-border text-fg text-[12px] font-medium hover:bg-surface-hover transition-colors"
+            >
+              Needs SKU
+            </button>
             <button
               type="button"
               onClick={() => setAddModalOpen(true)}
