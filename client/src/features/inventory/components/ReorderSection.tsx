@@ -27,6 +27,7 @@ export function ReorderSection({
   const orders = state.orders
   const vendors = state.vendors
   const toggleReorderLineSelected = useStore((s) => s.toggleReorderLineSelected)
+  const toggleReorderLinePackType = useStore((s) => s.toggleReorderLinePackType)
   const updateReorderLine = useStore((s) => s.updateReorderLine)
   const createOrderFromDraft = useStore((s) => s.createOrderFromDraft)
   const stalenessThreshold = getStalenessThreshold(state)
@@ -121,7 +122,7 @@ export function ReorderSection({
           <table className="w-full border-collapse">
             <thead>
               <tr>
-                {['', 'Product', 'SKU', 'Current', 'Min', 'Qty', 'Vendor', 'Unit', 'Total', 'Status'].map((h, i) => (
+                {['', 'Product', 'SKU', 'Current', 'Min', 'Qty', 'Vendor', 'Type', 'Unit', 'Total', 'Status'].map((h, i) => (
                   <th key={i} className="text-left text-fg font-semibold text-[13px] px-3 py-3">
                     {i === 0 ? '\u2713' : h}
                   </th>
@@ -224,10 +225,42 @@ export function ReorderSection({
                           })}
                         </select>
                       </td>
+                      <td className="px-3 py-3">
+                        <div className="flex gap-0.5">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (!isCase) toggleReorderLinePackType(idx)
+                            }}
+                            className={`px-1.5 py-0.5 rounded text-[10px] font-bold uppercase transition-colors ${
+                              isCase
+                                ? 'bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-700'
+                                : 'bg-surface-border/50 text-muted hover:bg-surface-border'
+                            }`}
+                          >
+                            CX
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (isCase) toggleReorderLinePackType(idx)
+                            }}
+                            className={`px-1.5 py-0.5 rounded text-[10px] font-bold uppercase transition-colors ${
+                              !isCase
+                                ? 'bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-700'
+                                : 'bg-surface-border/50 text-muted hover:bg-surface-border'
+                            }`}
+                          >
+                            UN
+                          </button>
+                        </div>
+                      </td>
                       <td className="px-3 py-3 text-[13px] text-fg">
                         R$ {line.unitPrice.toFixed(2)}
-                        {isCase && (
-                          <span className="block text-[10px] text-muted">/case</span>
+                        {isCase ? (
+                          <span className="block text-[10px] text-muted">/case{unitsPerCase > 1 ? ` (${unitsPerCase}u)` : ''}</span>
+                        ) : (
+                          <span className="block text-[10px] text-muted">/unit</span>
                         )}
                       </td>
                       <td className="px-3 py-3 text-[13px] text-fg">
@@ -260,6 +293,7 @@ export function ReorderSection({
                           <td className="px-3 py-1.5 text-[11px] text-muted">
                             {lastOrder.vendorName}
                           </td>
+                          <td className="px-3 py-1.5" />
                           <td className="px-3 py-1.5 text-[11px] text-muted">
                             R$ {lastOrder.unitPrice.toFixed(2)}
                           </td>
@@ -274,6 +308,7 @@ export function ReorderSection({
                         <>
                           <td className="px-3 py-1.5 text-[11px] text-muted">-</td>
                           <td className="px-3 py-1.5 text-[11px] text-muted">-</td>
+                          <td className="px-3 py-1.5" />
                           <td className="px-3 py-1.5 text-[11px] text-muted">-</td>
                           <td className="px-3 py-1.5 text-[11px] text-muted">-</td>
                           <td className="px-3 py-1.5 text-[11px] text-muted">-</td>

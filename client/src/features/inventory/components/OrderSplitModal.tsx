@@ -34,19 +34,32 @@ function VendorListModal({
             <tr className="border-b border-surface-border">
               <th className="text-left text-muted font-semibold px-4 py-2">Product</th>
               <th className="text-right text-muted font-semibold px-3 py-2 w-16">Qty</th>
+              <th className="text-center text-muted font-semibold px-3 py-2 w-16">Type</th>
               <th className="text-right text-muted font-semibold px-3 py-2 w-24">Unit</th>
               <th className="text-right text-muted font-semibold px-4 py-2 w-24">Total</th>
             </tr>
           </thead>
           <tbody>
-            {group.lines.map((l, i) => (
-              <tr key={i} className="border-b border-surface-border/50 hover:bg-surface-hover/50">
-                <td className="px-4 py-1.5 text-fg">{l.productName}</td>
-                <td className="px-3 py-1.5 text-right text-fg">{l.qty}</td>
-                <td className="px-3 py-1.5 text-right text-muted">R$ {l.unitPrice.toFixed(2)}</td>
-                <td className="px-4 py-1.5 text-right font-medium text-fg">R$ {l.lineTotal.toFixed(2)}</td>
-              </tr>
-            ))}
+            {group.lines.map((l, i) => {
+              const isCase = l.packType === 'CASE'
+              return (
+                <tr key={i} className="border-b border-surface-border/50 hover:bg-surface-hover/50">
+                  <td className="px-4 py-1.5 text-fg">{l.productName}</td>
+                  <td className="px-3 py-1.5 text-right text-fg">{l.qty}</td>
+                  <td className="px-3 py-1.5 text-center">
+                    <span className={`inline-block px-1.5 py-0.5 rounded text-[10px] font-bold uppercase ${
+                      isCase
+                        ? 'bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300'
+                        : 'bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300'
+                    }`}>
+                      {isCase ? 'CX' : 'UN'}
+                    </span>
+                  </td>
+                  <td className="px-3 py-1.5 text-right text-muted">R$ {l.unitPrice.toFixed(2)}</td>
+                  <td className="px-4 py-1.5 text-right font-medium text-fg">R$ {l.lineTotal.toFixed(2)}</td>
+                </tr>
+              )
+            })}
           </tbody>
         </table>
       </div>
@@ -88,6 +101,8 @@ export function OrderVendorCards({
       name: l.productName ?? 'Product',
       unitPrice: l.unitPrice,
       lineTotal: l.lineTotal,
+      packType: l.packType,
+      unitsPerCase: l.unitsPerCase,
     }))
     const subtotal = order.totalsByVendor[vendorId] ?? group.subtotal
     const text = formatWhatsAppMessage(storeName, group.vendor.name, items, subtotal)
@@ -125,6 +140,8 @@ export function OrderVendorCards({
         name: l.productName ?? 'Product',
         unitPrice: l.unitPrice,
         lineTotal: l.lineTotal,
+        packType: l.packType,
+        unitsPerCase: l.unitsPerCase,
       }))
       const subtotal = order.totalsByVendor[group.vendorId] ?? group.subtotal
       allMessages.push(formatWhatsAppMessage(storeName, group.vendor.name, items, subtotal))

@@ -110,6 +110,8 @@ export interface OrderLine {
   qty: number
   unitPrice: number
   lineTotal: number
+  packType?: PackType
+  unitsPerCase?: number
 }
 
 export interface Order {

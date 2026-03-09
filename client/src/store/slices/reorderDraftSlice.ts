@@ -37,6 +37,8 @@ export function getReorderDraftActions(set: StateSetter, get: StateGetter) {
             chosenVendorId: vendorId || null,
             unitPrice: vp ? vp.unitPrice : 0,
             priceUpdatedAt: vp ? vp.updatedAt : null,
+            packType: vp?.packType ?? line.packType,
+            unitsPerCase: vp?.unitsPerCase ?? line.unitsPerCase,
           }
         } else {
           lines[lineIndex] = { ...line, [field]: value }
@@ -50,6 +52,20 @@ export function getReorderDraftActions(set: StateSetter, get: StateGetter) {
         const line = lines[lineIndex]
         if (!line) return s
         lines[lineIndex] = { ...line, selected: !line.selected }
+        return { reorderDraft: { ...s.reorderDraft, lines } }
+      })
+    },
+    toggleReorderLinePackType: (lineIndex: number) => {
+      set((s) => {
+        const lines = [...s.reorderDraft.lines]
+        const line = lines[lineIndex]
+        if (!line) return s
+        const newPackType = line.packType === 'CASE' ? 'UNIT' : 'CASE'
+        lines[lineIndex] = {
+          ...line,
+          packType: newPackType,
+          unitsPerCase: newPackType === 'UNIT' ? 1 : (line.unitsPerCase && line.unitsPerCase > 1 ? line.unitsPerCase : 1),
+        }
         return { reorderDraft: { ...s.reorderDraft, lines } }
       })
     },

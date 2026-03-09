@@ -160,6 +160,8 @@ export function getInventoryActions(
           qty: line.suggestedQty,
           unitPrice: line.unitPrice,
           lineTotal,
+          packType: line.packType,
+          unitsPerCase: line.unitsPerCase,
         })
         byVendor[vendorId].subtotal += lineTotal
       }
