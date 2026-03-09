@@ -52,11 +52,11 @@ function VendorListModal({
                         ? 'bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300'
                         : 'bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300'
                     }`}>
-                      {isCase ? 'CX' : 'UN'}
+                      {isCase ? 'CASE' : 'UNIT'}
                     </span>
                   </td>
-                  <td className="px-3 py-1.5 text-right text-muted">R$ {l.unitPrice.toFixed(2)}</td>
-                  <td className="px-4 py-1.5 text-right font-medium text-fg">R$ {l.lineTotal.toFixed(2)}</td>
+                  <td className="px-3 py-1.5 text-right text-muted">$ {l.unitPrice.toFixed(2)}</td>
+                  <td className="px-4 py-1.5 text-right font-medium text-fg">$ {l.lineTotal.toFixed(2)}</td>
                 </tr>
               )
             })}
@@ -65,7 +65,7 @@ function VendorListModal({
       </div>
       <div className="pt-3 mt-3 border-t border-surface-border flex items-center justify-between">
         <Button variant="secondary" onClick={onClose}>Close</Button>
-        <span className="text-sm font-semibold text-fg">Subtotal: R$ {subtotal.toFixed(2)}</span>
+        <span className="text-sm font-semibold text-fg">Subtotal: $ {subtotal.toFixed(2)}</span>
       </div>
     </Modal>
   )
@@ -209,7 +209,7 @@ export function OrderVendorCards({
           </div>
           <div className="w-px h-6 bg-surface-border" />
           <div className="flex items-center gap-1.5">
-            <span className="text-xl font-bold text-success">R$ {order.total.toFixed(2)}</span>
+            <span className="text-xl font-bold text-success">$ {order.total.toFixed(2)}</span>
             <span className="text-xs text-muted">total</span>
           </div>
           <div className="ml-auto">
@@ -238,7 +238,7 @@ export function OrderVendorCards({
                       {group.vendor.name}
                     </h4>
                     <p className="text-[11px] text-muted mt-0.5">
-                      {group.lines.length} {group.lines.length === 1 ? 'product' : 'products'} · R$ {subtotal.toFixed(2)}
+                      {group.lines.length} {group.lines.length === 1 ? 'product' : 'products'} · $ {subtotal.toFixed(2)}
                     </p>
                   </div>
                   <button

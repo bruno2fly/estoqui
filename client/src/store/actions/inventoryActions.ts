@@ -186,7 +186,7 @@ export function getInventoryActions(
         .join(', ')
       get().addActivity(
         'order_created',
-        `Created orders for ${vendorNames} — Total R$ ${total.toFixed(2)}`
+        `Created orders for ${vendorNames} — Total $ ${total.toFixed(2)}`
       )
       // Don't clear reorderDraft here — user will "Archive Order" when done
 

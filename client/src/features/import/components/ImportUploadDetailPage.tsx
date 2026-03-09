@@ -185,7 +185,7 @@ function ResolvedTable({ rows }: { rows: ImportRow[] }) {
               <td className="px-3 py-2.5 text-[13px] text-fg">{r.productName}</td>
               <td className="px-3 py-2.5 text-[13px] text-fg-secondary">{r.brand ?? '—'}</td>
               <td className="px-3 py-2.5 text-[13px] tabular-nums">{r.resolvedSku ?? r.sku ?? '—'}</td>
-              <td className="px-3 py-2.5 text-[13px] tabular-nums">R$ {r.price.toFixed(2)}</td>
+              <td className="px-3 py-2.5 text-[13px] tabular-nums">$ {r.price.toFixed(2)}</td>
             </tr>
           ))}
         </tbody>
@@ -232,7 +232,7 @@ function UnresolvedTable({
               </td>
               <td className="px-3 py-2.5 text-[13px] text-fg-secondary">{r.brand ?? '—'}</td>
               <td className="px-3 py-2.5 text-[13px] tabular-nums">{r.barcode ?? '—'}</td>
-              <td className="px-3 py-2.5 text-[13px] tabular-nums">R$ {r.price.toFixed(2)}</td>
+              <td className="px-3 py-2.5 text-[13px] tabular-nums">$ {r.price.toFixed(2)}</td>
               <td className="px-3 py-2.5 text-[13px] tabular-nums">{r.confidence}%</td>
               <td className="px-3 py-2.5">
                 <div className="flex flex-wrap gap-1">

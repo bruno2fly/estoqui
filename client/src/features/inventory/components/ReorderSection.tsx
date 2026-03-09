@@ -219,7 +219,7 @@ export function ReorderSection({
                                 key={vp.vendorId}
                                 value={vp.vendorId}
                               >
-                                {vp.vendor?.name} - R$ {vp.unitPrice.toFixed(2)}{vpIsCase ? `/case (${vpUnits}u)` : ''} · R$ {vp.effectiveUnitCost.toFixed(2)}/ea
+                                {vp.vendor?.name} - ${vp.unitPrice.toFixed(2)}{vpIsCase ? `/case (${vpUnits}u)` : ''} · ${vp.effectiveUnitCost.toFixed(2)}/ea
                               </option>
                             )
                           })}
@@ -238,7 +238,7 @@ export function ReorderSection({
                                 : 'bg-surface-border/50 text-muted hover:bg-surface-border'
                             }`}
                           >
-                            CX
+                            CASE
                           </button>
                           <button
                             type="button"
@@ -251,12 +251,12 @@ export function ReorderSection({
                                 : 'bg-surface-border/50 text-muted hover:bg-surface-border'
                             }`}
                           >
-                            UN
+                            UNIT
                           </button>
                         </div>
                       </td>
                       <td className="px-3 py-3 text-[13px] text-fg">
-                        R$ {line.unitPrice.toFixed(2)}
+                        $ {line.unitPrice.toFixed(2)}
                         {isCase ? (
                           <span className="block text-[10px] text-muted">/case{unitsPerCase > 1 ? ` (${unitsPerCase}u)` : ''}</span>
                         ) : (
@@ -264,7 +264,7 @@ export function ReorderSection({
                         )}
                       </td>
                       <td className="px-3 py-3 text-[13px] text-fg">
-                        R$ {lineTotal.toFixed(2)}
+                        $ {lineTotal.toFixed(2)}
                       </td>
                       <td className="px-3 py-3">
                         {line.priceUpdatedAt ? (
@@ -295,10 +295,10 @@ export function ReorderSection({
                           </td>
                           <td className="px-3 py-1.5" />
                           <td className="px-3 py-1.5 text-[11px] text-muted">
-                            R$ {lastOrder.unitPrice.toFixed(2)}
+                            $ {lastOrder.unitPrice.toFixed(2)}
                           </td>
                           <td className="px-3 py-1.5 text-[11px] text-muted">
-                            R$ {lastOrder.lineTotal.toFixed(2)}
+                            $ {lastOrder.lineTotal.toFixed(2)}
                           </td>
                           <td className="px-3 py-1.5 text-[11px] text-muted">
                             {new Date(lastOrder.date).toLocaleDateString('pt-BR')}
@@ -323,7 +323,7 @@ export function ReorderSection({
         </div>
       </div>
       <div className="mt-5 pt-5 border-t border-surface-border text-right">
-        <p className="text-[15px] font-semibold text-fg">Total: R$ {grandTotal.toFixed(2)}</p>
+        <p className="text-[15px] font-semibold text-fg">Total: $ {grandTotal.toFixed(2)}</p>
       </div>
     </div>
   )

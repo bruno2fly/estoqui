@@ -124,7 +124,7 @@ export function ProductDetailModal({
                       >
                         <td className="py-2">{vp.vendor?.name ?? '-'}</td>
                         <td className="py-2">
-                          R$ {vp.unitPrice.toFixed(2)}
+                          $ {vp.unitPrice.toFixed(2)}
                         </td>
                         <td className="py-2">{daysAgo} days ago</td>
                         <td className="py-2">

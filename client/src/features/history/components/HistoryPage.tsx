@@ -57,7 +57,7 @@ export function HistoryPage() {
                         {vendorCount}
                       </td>
                       <td className="px-4 py-3 text-[13px] text-fg">
-                        R$ {order.total.toFixed(2)}
+                        $ {order.total.toFixed(2)}
                       </td>
                       <td className="px-4 py-3 text-right">
                         <button

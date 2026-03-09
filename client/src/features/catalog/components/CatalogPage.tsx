@@ -317,10 +317,10 @@ export function CatalogPage() {
                           />
                         </td>
                         <td className="px-3 py-2.5 text-[13px] text-fg tabular-nums">
-                          {row.unitCost != null ? `R$ ${row.unitCost.toFixed(2)}` : '—'}
+                          {row.unitCost != null ? `$ ${row.unitCost.toFixed(2)}` : '—'}
                         </td>
                         <td className="px-3 py-2.5 text-[13px] text-fg tabular-nums">
-                          {row.unitPrice != null ? `R$ ${row.unitPrice.toFixed(2)}` : '—'}
+                          {row.unitPrice != null ? `$ ${row.unitPrice.toFixed(2)}` : '—'}
                         </td>
                         <td className="px-3 py-2.5 text-[13px] tabular-nums">
                           {row.marginPercent !== null ? (
@@ -333,7 +333,7 @@ export function CatalogPage() {
                           {row.bestVendorName}
                         </td>
                         <td className="px-3 py-2.5 text-[13px] text-fg tabular-nums">
-                          {row.bestPrice != null ? `R$ ${row.bestPrice.toFixed(2)}` : '—'}
+                          {row.bestPrice != null ? `$ ${row.bestPrice.toFixed(2)}` : '—'}
                         </td>
                         <td className="px-3 py-2.5">
                           {row.hasVendorMatch ? (

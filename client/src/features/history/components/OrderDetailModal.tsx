@@ -123,14 +123,14 @@ export function OrderDetailModal({
                   <tr key={i} className="border-b border-surface-border">
                     <td className="py-2">{l.productName ?? 'Product removed'}</td>
                     <td className="py-2">{l.qty}</td>
-                    <td className="py-2">R$ {l.unitPrice.toFixed(2)}</td>
-                    <td className="py-2">R$ {l.lineTotal.toFixed(2)}</td>
+                    <td className="py-2">$ {l.unitPrice.toFixed(2)}</td>
+                    <td className="py-2">$ {l.lineTotal.toFixed(2)}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
             <p className="text-right font-semibold mt-2">
-              Subtotal: R$ {(order.totalsByVendor[group.vendor.id] ?? 0).toFixed(2)}
+              Subtotal: $ {(order.totalsByVendor[group.vendor.id] ?? 0).toFixed(2)}
             </p>
             <div className="flex gap-2 mt-3 flex-wrap">
               <Button onClick={() => copyWhatsApp(group.vendor.id)}>
@@ -153,7 +153,7 @@ export function OrderDetailModal({
         ))}
         <div className="pt-4 border-t-2 border-surface-border text-right">
           <p className="text-lg font-semibold">
-            Total: R$ {order.total.toFixed(2)}
+            Total: $ {order.total.toFixed(2)}
           </p>
         </div>
       </div>

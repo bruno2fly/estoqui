@@ -219,10 +219,10 @@ function MatchRow({
       </td>
       <td className="px-4 py-3 text-[13px] text-fg tabular-nums">{sizeLabel}</td>
       <td className="px-4 py-3 text-[13px] text-fg tabular-nums">
-        R$ {result.casePrice.toFixed(2)}
+        $ {result.casePrice.toFixed(2)}
       </td>
       <td className="px-4 py-3 text-[13px] text-fg tabular-nums">
-        {result.derivedUnitCost !== null ? `R$ ${result.derivedUnitCost.toFixed(2)}` : '—'}
+        {result.derivedUnitCost !== null ? `$ ${result.derivedUnitCost.toFixed(2)}` : '—'}
       </td>
       <td className="px-4 py-3">
         <span className={`text-[13px] font-semibold tabular-nums ${confidenceColor}`}>

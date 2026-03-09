@@ -218,7 +218,7 @@ export function NeedsSkuQueuePage() {
                     </td>
                     <td className="px-3 py-2.5 text-[13px] text-fg-secondary">{r.brand ?? '—'}</td>
                     <td className="px-3 py-2.5 text-[13px] tabular-nums">{r.barcode ?? '—'}</td>
-                    <td className="px-3 py-2.5 text-[13px] tabular-nums">R$ {r.price.toFixed(2)}</td>
+                    <td className="px-3 py-2.5 text-[13px] tabular-nums">$ {r.price.toFixed(2)}</td>
                     <td className="px-3 py-2.5 text-[13px] tabular-nums">{r.confidence}%</td>
                     <td className="px-3 py-2.5 text-right" onClick={(e) => e.stopPropagation()}>
                       <button
@@ -255,7 +255,7 @@ export function NeedsSkuQueuePage() {
               <p><span className="text-muted">Product:</span> {drawerRow.productName}</p>
               <p><span className="text-muted">Brand:</span> {drawerRow.brand ?? '—'}</p>
               <p><span className="text-muted">Barcode:</span> {drawerRow.barcode ?? '—'}</p>
-              <p><span className="text-muted">Price:</span> R$ {drawerRow.price.toFixed(2)}</p>
+              <p><span className="text-muted">Price:</span> $ {drawerRow.price.toFixed(2)}</p>
               <p><span className="text-muted">Confidence:</span> {drawerRow.confidence}%</p>
               {drawerRow.proposedMatches && drawerRow.proposedMatches.length > 0 && (
                 <div>

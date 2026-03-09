@@ -512,7 +512,7 @@ export function VendorDetailModal({
                       <div className="mt-1.5 flex items-center gap-2">
                         <span className="inline-block px-1.5 py-0.5 rounded text-[10px] font-bold uppercase bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300">CASE</span>
                         <span className="text-[11px] text-muted">{row.unitsPerCase} units/case{row.unitDescriptor ? ` · ${row.unitDescriptor}` : ''}</span>
-                        <span className="text-[11px] text-fg-secondary">Unit cost: R$ {((row.priceBasis === 'PER_CASE' && (row.unitsPerCase ?? 1) > 0) ? row.price / (row.unitsPerCase ?? 1) : row.price).toFixed(2)}</span>
+                        <span className="text-[11px] text-fg-secondary">Unit cost: $ {((row.priceBasis === 'PER_CASE' && (row.unitsPerCase ?? 1) > 0) ? row.price / (row.unitsPerCase ?? 1) : row.price).toFixed(2)}</span>
                       </div>
                     )}
                   </div>
@@ -597,7 +597,7 @@ export function VendorDetailModal({
                           {isCase && <span className="text-[10px] text-muted ml-1">/case</span>}
                         </td>
                         <td className="py-2 text-[13px] text-fg-secondary">
-                          R$ {effectiveCost.toFixed(2)}
+                          $ {effectiveCost.toFixed(2)}
                           {isCase && <span className="text-[10px] text-muted ml-0.5">/ea</span>}
                         </td>
                         <td className="py-2 text-fg-secondary">{daysAgo === 0 ? 'Today' : `${daysAgo}d ago`}</td>
