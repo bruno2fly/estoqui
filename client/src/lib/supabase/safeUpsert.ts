@@ -52,12 +52,23 @@ export async function safeUpsert(opts: UpsertOptions): Promise<void> {
       continue // retry without the bad column
     }
 
-    // If onConflict constraint doesn't exist, fall back to plain insert
-    if (onConflict && NO_UNIQUE_CONSTRAINT.test(error.message)) {
-      console.warn(`[safeUpsert] No unique constraint for "${onConflict}" on ${table}, falling back to insert`)
+    // If onConflict constraint doesn't exist or server error, fall back to plain insert
+    const errMsg = error.message ?? ''
+    const errCode = String((error as unknown as Record<string, unknown>).code ?? '')
+    const isConstraintIssue = NO_UNIQUE_CONSTRAINT.test(errMsg)
+    const isServerError = errCode === '500' || errMsg.includes('Internal Server Error')
+
+    if (onConflict && (isConstraintIssue || isServerError)) {
+      console.warn(`[safeUpsert] ${isServerError ? '500 error' : 'No unique constraint'} for "${onConflict}" on ${table}, falling back to insert`)
       const { error: insertError } = await supabase.from(table).insert(data)
-      if (insertError) throw insertError
-      return
+      if (!insertError) return
+      // If duplicate key on insert, that's fine — data already exists
+      const insertMsg = insertError.message ?? ''
+      if (insertMsg.includes('duplicate key') || insertMsg.includes('unique constraint') || insertMsg.includes('already exists')) {
+        console.warn(`[safeUpsert] Insert fallback hit duplicates on ${table}, skipping`)
+        return
+      }
+      throw insertError
     }
 
     // Some other error — throw it
