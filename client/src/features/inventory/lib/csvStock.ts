@@ -113,12 +113,8 @@ export function parseCSVStock(text: string): StockSnapshotRow[] {
   )
   const skuIdx = (() => {
     const normalizeHeader = (h: string) => h.replace(/\([^)]*\)/g, '').replace(/[^a-z0-9]/g, '')
-    const preferred = headers.findIndex((h) =>
-      /^(sku|itemsku|productcode|productsku|plu|itemcode|code|codigo)$/.test(normalizeHeader(h))
-    )
-    if (preferred >= 0) return preferred
     return headers.findIndex((h) =>
-      /^(upc|barcode|ean)$/.test(normalizeHeader(h))
+      /^(sku|itemsku|productcode|productsku|plu|itemcode|code|codigo|upc|barcode|ean)$/.test(normalizeHeader(h))
     )
   })()
 
