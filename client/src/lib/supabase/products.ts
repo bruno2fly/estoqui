@@ -55,3 +55,48 @@ export async function deleteProduct(id: string): Promise<void> {
     throw error
   }
 }
+
+export async function deleteAllProducts(userId: string): Promise<number> {
+  let totalDeleted = 0
+  // Delete in batches to avoid timeouts
+  while (true) {
+    const { data, error: fetchErr } = await supabase
+      .from('products')
+      .select('id')
+      .eq('user_id', userId)
+      .limit(500)
+    if (fetchErr) throw fetchErr
+    if (!data || data.length === 0) break
+    const ids = data.map((r) => r.id as string)
+    const { error: delErr } = await supabase
+      .from('products')
+      .delete()
+      .in('id', ids)
+    if (delErr) throw delErr
+    totalDeleted += ids.length
+    console.log(`[deleteAllProducts] Deleted ${totalDeleted} so far...`)
+  }
+  return totalDeleted
+}
+
+export async function deleteAllVendorPrices(userId: string): Promise<number> {
+  let totalDeleted = 0
+  while (true) {
+    const { data, error: fetchErr } = await supabase
+      .from('vendor_prices')
+      .select('id')
+      .eq('user_id', userId)
+      .limit(500)
+    if (fetchErr) throw fetchErr
+    if (!data || data.length === 0) break
+    const ids = data.map((r) => r.id as string)
+    const { error: delErr } = await supabase
+      .from('vendor_prices')
+      .delete()
+      .in('id', ids)
+    if (delErr) throw delErr
+    totalDeleted += ids.length
+    console.log(`[deleteAllVendorPrices] Deleted ${totalDeleted} so far...`)
+  }
+  return totalDeleted
+}

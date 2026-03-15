@@ -2,7 +2,7 @@ import type { Product } from '@/types'
 import type { StateSetter, StateGetter } from '../types'
 import { generateId } from '../lib/generateId'
 import { supabase } from '@/lib/supabase'
-import { upsertProduct, deleteProduct as dbDeleteProduct, upsertProducts } from '@/lib/supabase/products'
+import { upsertProduct, deleteProduct as dbDeleteProduct, upsertProducts, deleteAllProducts, deleteAllVendorPrices } from '@/lib/supabase/products'
 import { emitSupabaseError } from '@/lib/supabase/errorEmitter'
 
 export const initialProductsState = {
@@ -55,6 +55,23 @@ export function getProductsActions(set: StateSetter, _get: StateGetter) {
         }
       })
       dbDeleteProduct(id).catch((e) => emitSupabaseError('Save product', e))
+    },
+    resetCatalog: async (): Promise<{ productsDeleted: number; pricesDeleted: number }> => {
+      const uid = await getUid()
+      if (!uid) throw new Error('Not authenticated')
+      // Delete from Supabase first
+      const pricesDeleted = await deleteAllVendorPrices(uid)
+      const productsDeleted = await deleteAllProducts(uid)
+      // Clear local state (keep vendors, orders, activity, settings)
+      set(() => ({
+        products: [],
+        vendorPrices: [],
+        matches: {},
+        stockSnapshots: [],
+        reorderDraft: { snapshotId: null, lines: [] },
+        activeOrderView: null,
+      }))
+      return { productsDeleted, pricesDeleted }
     },
   }
 }

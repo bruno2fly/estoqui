@@ -24,6 +24,9 @@ export function SettingsPage() {
   const [showApiKey, setShowApiKey] = useState(false)
   const [showResetConfirm, setShowResetConfirm] = useState(false)
   const [showClearAllConfirm, setShowClearAllConfirm] = useState(false)
+  const [showResetCatalogConfirm, setShowResetCatalogConfirm] = useState(false)
+  const [resetCatalogRunning, setResetCatalogRunning] = useState(false)
+  const resetCatalog = useStore((s) => s.resetCatalog)
 
   useEffect(() => {
     setStoreName(settings?.storeName ?? DEFAULT_SETTINGS.storeName)
@@ -65,6 +68,19 @@ export function SettingsPage() {
     setShowClearAllConfirm(false)
     toast.show('All data cleared. Reloading…')
     window.location.reload()
+  }
+
+  const handleResetCatalogConfirm = async () => {
+    setResetCatalogRunning(true)
+    try {
+      const result = await resetCatalog()
+      setShowResetCatalogConfirm(false)
+      toast.show(`Catalog reset! Deleted ${result.productsDeleted} products and ${result.pricesDeleted} vendor prices.`)
+    } catch (err) {
+      toast.show(`Error: ${err instanceof Error ? err.message : 'Unknown error'}`, 'error')
+    } finally {
+      setResetCatalogRunning(false)
+    }
   }
 
   return (
@@ -172,6 +188,13 @@ export function SettingsPage() {
           </button>
           <button
             type="button"
+            onClick={() => setShowResetCatalogConfirm(true)}
+            className="px-4 py-2 rounded-lg border border-amber-500/50 text-[12px] font-medium text-amber-600 hover:bg-amber-500/10 transition-colors"
+          >
+            Reset Catalog
+          </button>
+          <button
+            type="button"
             onClick={() => setShowClearAllConfirm(true)}
             className="px-4 py-2 rounded-lg border border-danger/50 text-[12px] font-medium text-danger hover:bg-danger/10 transition-colors"
           >
@@ -187,6 +210,16 @@ export function SettingsPage() {
         title="Reset settings?"
         message="Reset all settings to defaults?"
         confirmLabel="Reset"
+        variant="danger"
+      />
+
+      <ConfirmDialog
+        open={showResetCatalogConfirm}
+        onClose={() => !resetCatalogRunning && setShowResetCatalogConfirm(false)}
+        onConfirm={handleResetCatalogConfirm}
+        title="Reset catalog?"
+        message="This will delete ALL products and vendor prices from the database. Vendors, orders, and settings will be kept. You can then upload a fresh product list. This cannot be undone."
+        confirmLabel={resetCatalogRunning ? 'Deleting...' : 'Reset Catalog'}
         variant="danger"
       />
 
