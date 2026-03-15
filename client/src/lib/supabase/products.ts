@@ -63,7 +63,6 @@ async function batchDelete(
 ): Promise<number> {
   const BATCH = 200
   let totalDeleted = 0
-  let staleRounds = 0
   while (true) {
     const { data, error: fetchErr } = await supabase
       .from(table)
@@ -85,7 +84,6 @@ async function batchDelete(
       throw new Error(`${label} delete failed: ${delErr.message ?? JSON.stringify(delErr)}`)
     }
     totalDeleted += ids.length
-    staleRounds = 0
     console.log(`[${label}] Deleted ${totalDeleted} so far...`)
     // Small pause to avoid rate-limit
     await new Promise((r) => setTimeout(r, 50))
