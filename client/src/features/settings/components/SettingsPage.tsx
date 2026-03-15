@@ -77,7 +77,8 @@ export function SettingsPage() {
       setShowResetCatalogConfirm(false)
       toast.show(`Catalog reset! Deleted ${result.productsDeleted} products and ${result.pricesDeleted} vendor prices.`)
     } catch (err) {
-      toast.show(`Error: ${err instanceof Error ? err.message : 'Unknown error'}`, 'error')
+      console.error('[resetCatalog] Error:', err)
+      toast.show(`Error: ${err instanceof Error ? err.message : JSON.stringify(err)}`, 'error')
     } finally {
       setResetCatalogRunning(false)
     }

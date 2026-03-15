@@ -56,47 +56,52 @@ export async function deleteProduct(id: string): Promise<void> {
   }
 }
 
-export async function deleteAllProducts(userId: string): Promise<number> {
+async function batchDelete(
+  table: string,
+  userId: string,
+  label: string,
+): Promise<number> {
+  const BATCH = 200
   let totalDeleted = 0
-  // Delete in batches to avoid timeouts
+  let staleRounds = 0
   while (true) {
     const { data, error: fetchErr } = await supabase
-      .from('products')
+      .from(table)
       .select('id')
       .eq('user_id', userId)
-      .limit(500)
-    if (fetchErr) throw fetchErr
+      .limit(BATCH)
+    if (fetchErr) {
+      console.error(`[${label}] fetch error:`, JSON.stringify(fetchErr))
+      throw new Error(`${label} fetch failed: ${fetchErr.message ?? JSON.stringify(fetchErr)}`)
+    }
     if (!data || data.length === 0) break
     const ids = data.map((r) => r.id as string)
     const { error: delErr } = await supabase
-      .from('products')
+      .from(table)
       .delete()
       .in('id', ids)
-    if (delErr) throw delErr
+    if (delErr) {
+      console.error(`[${label}] delete error:`, JSON.stringify(delErr))
+      throw new Error(`${label} delete failed: ${delErr.message ?? JSON.stringify(delErr)}`)
+    }
     totalDeleted += ids.length
-    console.log(`[deleteAllProducts] Deleted ${totalDeleted} so far...`)
+    staleRounds = 0
+    console.log(`[${label}] Deleted ${totalDeleted} so far...`)
+    // Small pause to avoid rate-limit
+    await new Promise((r) => setTimeout(r, 50))
   }
+  console.log(`[${label}] Done — ${totalDeleted} total deleted`)
   return totalDeleted
 }
 
+export async function deleteAllProducts(userId: string): Promise<number> {
+  return batchDelete('products', userId, 'deleteAllProducts')
+}
+
 export async function deleteAllVendorPrices(userId: string): Promise<number> {
-  let totalDeleted = 0
-  while (true) {
-    const { data, error: fetchErr } = await supabase
-      .from('vendor_prices')
-      .select('id')
-      .eq('user_id', userId)
-      .limit(500)
-    if (fetchErr) throw fetchErr
-    if (!data || data.length === 0) break
-    const ids = data.map((r) => r.id as string)
-    const { error: delErr } = await supabase
-      .from('vendor_prices')
-      .delete()
-      .in('id', ids)
-    if (delErr) throw delErr
-    totalDeleted += ids.length
-    console.log(`[deleteAllVendorPrices] Deleted ${totalDeleted} so far...`)
-  }
-  return totalDeleted
+  return batchDelete('vendor_prices', userId, 'deleteAllVendorPrices')
+}
+
+export async function deleteAllStockSnapshots(userId: string): Promise<number> {
+  return batchDelete('stock_snapshots', userId, 'deleteAllStockSnapshots')
 }

@@ -2,7 +2,7 @@ import type { Product } from '@/types'
 import type { StateSetter, StateGetter } from '../types'
 import { generateId } from '../lib/generateId'
 import { supabase } from '@/lib/supabase'
-import { upsertProduct, deleteProduct as dbDeleteProduct, upsertProducts, deleteAllProducts, deleteAllVendorPrices } from '@/lib/supabase/products'
+import { upsertProduct, deleteProduct as dbDeleteProduct, upsertProducts, deleteAllProducts, deleteAllVendorPrices, deleteAllStockSnapshots } from '@/lib/supabase/products'
 import { emitSupabaseError } from '@/lib/supabase/errorEmitter'
 
 export const initialProductsState = {
@@ -59,9 +59,14 @@ export function getProductsActions(set: StateSetter, _get: StateGetter) {
     resetCatalog: async (): Promise<{ productsDeleted: number; pricesDeleted: number }> => {
       const uid = await getUid()
       if (!uid) throw new Error('Not authenticated')
-      // Delete from Supabase first
+      console.log('[resetCatalog] Starting — uid:', uid)
+      // Delete dependents first (FK order matters)
+      const snapshotsDeleted = await deleteAllStockSnapshots(uid)
+      console.log('[resetCatalog] Stock snapshots deleted:', snapshotsDeleted)
       const pricesDeleted = await deleteAllVendorPrices(uid)
+      console.log('[resetCatalog] Vendor prices deleted:', pricesDeleted)
       const productsDeleted = await deleteAllProducts(uid)
+      console.log('[resetCatalog] Products deleted:', productsDeleted)
       // Clear local state (keep vendors, orders, activity, settings)
       set(() => ({
         products: [],
