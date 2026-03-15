@@ -5,6 +5,7 @@ import { getLowStockCount } from '@/store/selectors/dashboard'
 import { FileUpload, InfoTip } from '@/shared/components'
 import { useToast } from '@/shared/components'
 import { parseCSVStock } from '@/features/inventory/lib/csvStock'
+import { findProductMatch, matchKey } from '@/shared/lib/matching'
 
 const ACTIVITY_TYPE_LABELS: Record<string, string> = {
   stock_uploaded: 'Stock Upload',
@@ -20,8 +21,11 @@ export function DashboardPage() {
   const vendors = useStore((s) => s.vendors)
   const orders = useStore((s) => s.orders)
   const activity = useStore((s) => s.activity)
+  const matches = useStore((s) => s.matches)
+  const settings = useStore((s) => s.settings)
   const lowStockCount = useStore(getLowStockCount)
-  const addStockSnapshot = useStore((s) => s.addStockSnapshot)
+  const commitStockImport = useStore((s) => s.commitStockImport)
+  const bulkCreateProductsFromSnapshot = useStore((s) => s.bulkCreateProductsFromSnapshot)
   const addActivity = useStore((s) => s.addActivity)
   const toast = useToast()
 
@@ -61,20 +65,74 @@ export function DashboardPage() {
         toast.show('No products found in CSV.', 'error')
         return
       }
-      addStockSnapshot({
+
+      // Match existing products
+      const currentProducts = useStore.getState().products
+      const currentMatches = useStore.getState().matches
+      const newMatches: Record<string, string> = {}
+      const productPatches: Record<string, { stockQty?: number; unitCost?: number; unitPrice?: number; category?: string }> = {}
+
+      rows.forEach((row) => {
+        const productId = findProductMatch(row.rawName, row.rawBrand, currentProducts, currentMatches, row.rawSku)
+        if (productId) {
+          row.matchedProductId = productId
+          newMatches[matchKey(row.rawName, row.rawBrand)] = productId
+          const existing = productPatches[productId]
+          if (existing) {
+            existing.stockQty = (existing.stockQty ?? 0) + row.stockQty
+          } else {
+            productPatches[productId] = {
+              stockQty: row.stockQty,
+              unitCost: row.unitCost,
+              unitPrice: row.unitPrice,
+              category: row.category,
+            }
+          }
+        }
+      })
+
+      const snapshotId = commitStockImport({
         uploadedAt: new Date().toISOString(),
         sourceFileName: file.name,
         sourceType: 'csv',
         rows,
+        newMatches,
+        productPatches,
       })
-      addActivity('stock_uploaded', `Stock snapshot uploaded: ${file.name} (${rows.length} items)`)
+
+      // Auto-create products for unmatched rows (with SKU, cost, vendor)
+      const unmatched = rows
+        .map((row, index) => ({ row, index }))
+        .filter(({ row }) => !row.matchedProductId)
+
+      if (unmatched.length > 0) {
+        const defaultMin = settings?.defaultMinStock ?? 10
+        const items = unmatched.map(({ row, index }) => ({
+          snapshotRowIndex: index,
+          product: {
+            name: row.rawName,
+            brand: row.rawBrand || '',
+            sku: row.rawSku || '',
+            category: row.category || '',
+            unitSize: '',
+            minStock: defaultMin,
+            unitCost: row.unitCost,
+            unitPrice: row.unitPrice,
+          },
+          matchKey: matchKey(row.rawName, row.rawBrand),
+        }))
+        bulkCreateProductsFromSnapshot({ snapshotId, items })
+      }
+
+      const matchedCount = rows.filter((r) => r.matchedProductId).length
+      addActivity('stock_uploaded', `Stock snapshot uploaded: ${file.name} (${rows.length} items, ${matchedCount} matched)`)
       toast.show(`${rows.length} products imported from CSV`)
     }
     reader.onerror = () => {
       toast.show('Failed to read file.', 'error')
     }
     reader.readAsText(file)
-  }, [addStockSnapshot, addActivity, toast])
+  }, [commitStockImport, bulkCreateProductsFromSnapshot, settings, addActivity, toast])
 
   const pad = (n: number) => String(n).padStart(2, '0')
 
