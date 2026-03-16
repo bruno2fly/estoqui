@@ -22,10 +22,11 @@ export function parseProductsCSV(
   }
 
   const separator = detectSeparator(lines[0])
-  const headers = parseCSVLine(lines[0], separator).map((h) => normalize(h))
+  const rawHeaders = parseCSVLine(lines[0], separator)
+  const headers = rawHeaders.map((h) => normalize(h))
 
   const nameIdx = headers.findIndex((h) =>
-    /\b(name|produto|nome|product|product_name|productname)\b/.test(h)
+    /\b(name|produto|nome|product|product_name|productname|item|desc|description|descricao)\b/.test(h)
   )
   const brandIdx = headers.findIndex((h) => /\b(brand|marca)\b/.test(h))
   const categoryIdx = headers.findIndex((h) =>
@@ -38,11 +39,14 @@ export function parseProductsCSV(
     /\b(minstock|min_stock|min stock|estoque mínimo)\b/.test(h)
   )
   const skuIdx = headers.findIndex((h) => /\b(sku|código|codigo)\b/.test(h))
+  const barcodeIdx = headers.findIndex((h) => /\b(barcode|ean|upc|gtin)\b/.test(h))
+  // Use barcode column as SKU when SKU column is missing (user request: "barcode as SKU")
+  const effectiveSkuIdx = skuIdx >= 0 ? skuIdx : barcodeIdx
 
   if (nameIdx === -1) {
     return {
       error:
-        'CSV must have a Product Name column. Optional: Brand, SKU, Category, Size/Unit, Min Stock',
+        'CSV must have a Product Name column. Optional: Brand, SKU or Barcode, Category, Size/Unit, Min Stock',
     }
   }
 
@@ -77,7 +81,7 @@ export function parseProductsCSV(
     products.push({
       name,
       brand,
-      sku: (skuIdx >= 0 ? (parts[skuIdx] ?? '') : '').trim(),
+      sku: (effectiveSkuIdx >= 0 ? (parts[effectiveSkuIdx] ?? '') : '').trim(),
       category: (categoryIdx >= 0 ? (parts[categoryIdx] ?? '') : '').trim(),
       unitSize: (sizeIdx >= 0 ? (parts[sizeIdx] ?? '') : '').trim(),
       minStock,

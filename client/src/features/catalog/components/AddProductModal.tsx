@@ -182,6 +182,17 @@ export function AddProductModal({
     const reader = new FileReader()
     reader.onload = () => {
       const text = (reader.result as string) ?? ''
+      // Detect binary / non-CSV: .numbers is Zip, produces garbage when read as text
+      const hasNullBytes = /\x00/.test(text)
+      const looksBinary = hasNullBytes || (text.length > 0 && (text.match(/[\x00-\x08\x0b\x0c\x0e-\x1f]/g)?.length ?? 0) / text.length > 0.05)
+      if (looksBinary || file.name.toLowerCase().endsWith('.numbers')) {
+        toast.show(
+          'Apple Numbers (.numbers) files cannot be read directly. Export as CSV: File → Export To → CSV in Numbers, then upload the .csv file.',
+          'error'
+        )
+        setCsvLoading(false)
+        return
+      }
       const result = parseProductsCSV(text)
       if ('error' in result) {
         toast.show(result.error, 'error')
@@ -333,7 +344,7 @@ export function AddProductModal({
               accept=".csv"
               onFile={handleCsvFile}
               label="Drag a CSV file or click to select"
-              hint="Columns: Product Name (required). Optional: Brand, SKU, Category, Size/Unit, Min Stock. Brand is auto-detected when empty."
+              hint="Columns: Product Name (required). Optional: Brand, SKU or Barcode, Category, Size/Unit, Min Stock. Brand is auto-detected when empty."
             />
             {csvLoading && (
               <p className="text-sm text-muted">Processing CSV…</p>
