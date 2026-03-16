@@ -32,13 +32,18 @@ export function getReorderDraftActions(set: StateSetter, get: StateGetter) {
           const vp = state.vendorPrices.find(
             (p) => p.vendorId === vendorId && p.productId === line.productId
           )
+          const vpPackType = vp?.packType ?? 'UNIT'
+          const vpUnits = vp?.unitsPerCase ?? 1
           lines[lineIndex] = {
             ...line,
             chosenVendorId: vendorId || null,
             unitPrice: vp ? vp.unitPrice : 0,
             priceUpdatedAt: vp ? vp.updatedAt : null,
-            packType: vp?.packType ?? line.packType,
-            unitsPerCase: vp?.unitsPerCase ?? line.unitsPerCase,
+            packType: vpPackType,
+            unitsPerCase: vpUnits,
+            // Store vendor's original case data for CASE ↔ UNIT toggle
+            vendorCasePrice: vp ? vp.unitPrice : 0,
+            vendorUnitsPerCase: vpUnits,
           }
         } else {
           lines[lineIndex] = { ...line, [field]: value }
@@ -60,11 +65,34 @@ export function getReorderDraftActions(set: StateSetter, get: StateGetter) {
         const lines = [...s.reorderDraft.lines]
         const line = lines[lineIndex]
         if (!line) return s
+
         const newPackType = line.packType === 'CASE' ? 'UNIT' : 'CASE'
+        const origUnits = line.vendorUnitsPerCase ?? line.unitsPerCase ?? 1
+        const origCasePrice = line.vendorCasePrice ?? line.unitPrice
+
+        let newPrice = line.unitPrice
+        let newUnitsPerCase = line.unitsPerCase ?? 1
+
+        if (newPackType === 'UNIT') {
+          // Switching to UNIT: show per-unit price
+          newUnitsPerCase = 1
+          newPrice = origUnits > 1
+            ? Math.round((origCasePrice / origUnits) * 100) / 100
+            : origCasePrice
+        } else {
+          // Switching to CASE: restore original case price
+          newUnitsPerCase = origUnits
+          newPrice = origCasePrice
+        }
+
         lines[lineIndex] = {
           ...line,
           packType: newPackType,
-          unitsPerCase: newPackType === 'UNIT' ? 1 : (line.unitsPerCase && line.unitsPerCase > 1 ? line.unitsPerCase : 1),
+          unitsPerCase: newUnitsPerCase,
+          unitPrice: newPrice,
+          // Preserve originals for future toggles
+          vendorCasePrice: origCasePrice,
+          vendorUnitsPerCase: origUnits,
         }
         return { reorderDraft: { ...s.reorderDraft, lines } }
       })

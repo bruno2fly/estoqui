@@ -105,6 +105,9 @@ export function getInventoryActions(
           selected: true,
           packType: vp?.packType,
           unitsPerCase: vp?.unitsPerCase,
+          // Store original vendor pricing for CASE ↔ UNIT toggle
+          vendorCasePrice: vp ? vp.unitPrice : 0,
+          vendorUnitsPerCase: vp?.unitsPerCase,
         })
       }
 

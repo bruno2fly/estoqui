@@ -91,11 +91,14 @@ export interface ReorderDraftLine {
   minStock: number
   suggestedQty: number
   chosenVendorId: string | null
-  unitPrice: number
+  unitPrice: number                      // current display price (changes with toggle)
   priceUpdatedAt: string | null
   selected: boolean
   packType?: PackType
   unitsPerCase?: number
+  // Original vendor pricing — preserved for CASE ↔ UNIT toggle recalculation
+  vendorCasePrice?: number               // original case price from vendor
+  vendorUnitsPerCase?: number            // original units per case from vendor
 }
 
 export interface ReorderDraft {
