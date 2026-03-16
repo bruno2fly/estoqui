@@ -87,6 +87,28 @@ export function parsePackFromText(text: string): PackInfo {
   }
 }
 
+// ── Display helpers ──────────────────────────────────────────────────────────
+
+/**
+ * Strip case-pack notation from a product name for cleaner display.
+ * e.g. "Detergente Ype Coco Fr 24 X 500Ml" → "Detergente Ype Coco"
+ * e.g. "La Cascada Fresa 24 x 12 oz Bottle" → "La Cascada Fresa"
+ * e.g. "Coca-Cola 2L" → "Coca-Cola" (standalone size removed)
+ */
+export function stripPackFromName(name: string): string {
+  return name
+    // Remove "Fr" / "Frd" before pack notation (Brazilian vendor lists)
+    .replace(/\s+Fr(?:d)?\s+(?=\d)/gi, ' ')
+    // Remove pack notation: "24 x 500ml", "06X260ml", "24 x 12 oz bottle"
+    .replace(/\b\d{1,4}\s*[xX×]\s*\d*[.\d]*\s*(?:oz|g|gr|kg|lb|lbs?|ml|l|lts?|gal)?[a-z]*\b[^,\n]*/gi, '')
+    // Remove standalone sizes: "500ml", "1.5L", "12oz", "2kg"
+    .replace(/\b\d+(?:\.\d+)?\s*(?:oz|g|gr|kg|lb|lbs?|ml|l|lts?|gal)\b/gi, '')
+    // Clean up leftover separators and whitespace
+    .replace(/[\s\-/]+$/, '')
+    .replace(/\s+/g, ' ')
+    .trim()
+}
+
 // ── Unit cost computation ────────────────────────────────────────────────────
 
 /**

@@ -13,6 +13,7 @@ import {
   getScoreColor,
   getStatusBadge,
 } from '../lib/vendorScore'
+import { stripPackFromName } from '@/lib/pack/parsePack'
 import { AddProductToVendorModal } from './AddProductToVendorModal'
 
 type ImportMode = 'csv' | 'image'
@@ -550,15 +551,15 @@ export function VendorDetailModal({
             <table className="w-full border-collapse text-sm">
               <thead>
                 <tr className="border-b border-surface-border">
-                  {['Product', 'Brand', 'SKU', 'Size', 'Pack', 'Price', 'Unit Cost', 'Updated', 'Actions'].map((h) => (
-                    <th key={h} className="text-left text-fg-secondary font-semibold text-xs uppercase py-2">{h}</th>
+                  {['Product', 'Case Qty', 'Unit Size', 'Type', 'Brand', 'SKU', 'Price', 'Unit Cost', 'Updated', ''].map((h) => (
+                    <th key={h} className="text-left text-fg-secondary font-semibold text-xs uppercase py-2 px-1.5 first:pl-0">{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
                 {prices.length === 0 ? (
                   <tr>
-                    <td colSpan={9} className="py-4 text-center text-muted text-sm">
+                    <td colSpan={10} className="py-4 text-center text-muted text-sm">
                       No prices registered. Add products or import CSV / image.
                     </td>
                   </tr>
@@ -570,39 +571,69 @@ export function VendorDetailModal({
                     )
                     const isCase = vp.packType === 'CASE'
                     const effectiveCost = vp.unitCost ?? (isCase && (vp.unitsPerCase ?? 1) > 0 ? vp.unitPrice / (vp.unitsPerCase ?? 1) : vp.unitPrice)
+                    const cleanName = stripPackFromName(product.name) || product.name
+                    const unitSize = vp.unitDescriptor || product.unitSize || '-'
                     return (
                       <tr key={`${vp.vendorId}-${vp.productId}`} className="border-b border-surface-border">
-                        <td className="py-2 text-fg">{product.name}</td>
-                        <td className="py-2 text-fg">{product.brand}</td>
-                        <td className="py-2 text-muted">{product.sku ?? '-'}</td>
-                        <td className="py-2 text-fg">{product.unitSize ?? '-'}</td>
-                        <td className="py-2">
+                        {/* Product — clean name without pack notation */}
+                        <td className="py-2 px-1.5 pl-0 text-fg font-medium max-w-[220px]">
+                          <span className="line-clamp-2">{cleanName}</span>
+                        </td>
+                        {/* Case Qty */}
+                        <td className="py-2 px-1.5 text-center text-fg">
                           {isCase ? (
-                            <div className="flex items-center gap-1.5">
-                              <span className="inline-block px-1.5 py-0.5 rounded text-[10px] font-bold uppercase bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300">CASE</span>
-                              <span className="text-[11px] text-muted">{vp.unitsPerCase}u{vp.unitDescriptor ? ` · ${vp.unitDescriptor}` : ''}</span>
-                            </div>
+                            <span className="font-semibold">{vp.unitsPerCase ?? '-'}</span>
+                          ) : (
+                            <span className="text-muted">1</span>
+                          )}
+                        </td>
+                        {/* Unit Size */}
+                        <td className="py-2 px-1.5 text-fg text-[13px]">{unitSize}</td>
+                        {/* Sell Type */}
+                        <td className="py-2 px-1.5">
+                          {isCase ? (
+                            <span className="inline-block px-1.5 py-0.5 rounded text-[10px] font-bold uppercase bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300">CASE</span>
                           ) : (
                             <span className="inline-block px-1.5 py-0.5 rounded text-[10px] font-bold uppercase bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400">UNIT</span>
                           )}
                         </td>
-                        <td className="py-2">
-                          <input
-                            type="number"
-                            step="0.01"
-                            className="w-20 bg-input-bg border border-input-border text-fg px-1.5 py-1 rounded-lg text-sm"
-                            value={vp.unitPrice}
-                            onChange={(e) => handlePriceChange(vp.productId, e.target.value)}
-                          />
-                          {isCase && <span className="text-[10px] text-muted ml-1">/case</span>}
+                        {/* Brand */}
+                        <td className="py-2 px-1.5 text-fg text-[13px]">{product.brand || '-'}</td>
+                        {/* SKU */}
+                        <td className="py-2 px-1.5 text-muted text-[12px]">{product.sku || '-'}</td>
+                        {/* Price */}
+                        <td className="py-2 px-1.5">
+                          <div className="flex items-center gap-1">
+                            <input
+                              type="number"
+                              step="0.01"
+                              className="w-20 bg-input-bg border border-input-border text-fg px-1.5 py-1 rounded-lg text-sm"
+                              value={vp.unitPrice}
+                              onChange={(e) => handlePriceChange(vp.productId, e.target.value)}
+                            />
+                            {isCase && <span className="text-[10px] text-muted">/cs</span>}
+                          </div>
                         </td>
-                        <td className="py-2 text-[13px] text-fg-secondary">
+                        {/* Unit Cost */}
+                        <td className="py-2 px-1.5 text-[13px] text-fg-secondary whitespace-nowrap">
                           $ {effectiveCost.toFixed(2)}
                           {isCase && <span className="text-[10px] text-muted ml-0.5">/ea</span>}
                         </td>
-                        <td className="py-2 text-fg-secondary">{daysAgo === 0 ? 'Today' : `${daysAgo}d ago`}</td>
-                        <td className="py-2">
-                          <Button variant="danger" className="!py-1 !text-xs" onClick={() => handleRemovePrice(vp.productId)}>Remove</Button>
+                        {/* Updated */}
+                        <td className="py-2 px-1.5 text-[12px] text-fg-secondary whitespace-nowrap">{daysAgo === 0 ? 'Today' : `${daysAgo}d`}</td>
+                        {/* Actions */}
+                        <td className="py-2 px-1.5">
+                          <button
+                            type="button"
+                            onClick={() => handleRemovePrice(vp.productId)}
+                            className="text-danger hover:text-danger/80 transition-colors"
+                            title="Remove product"
+                          >
+                            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <polyline points="3 6 5 6 21 6" />
+                              <path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" />
+                            </svg>
+                          </button>
                         </td>
                       </tr>
                     )
