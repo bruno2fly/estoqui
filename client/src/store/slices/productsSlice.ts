@@ -2,7 +2,7 @@ import type { Product } from '@/types'
 import type { StateSetter, StateGetter } from '../types'
 import { generateId } from '../lib/generateId'
 import { supabase } from '@/lib/supabase'
-import { upsertProduct, deleteProduct as dbDeleteProduct, upsertProducts, deleteAllProducts, deleteAllVendorPrices, deleteAllStockSnapshots } from '@/lib/supabase/products'
+import { upsertProduct, deleteProduct as dbDeleteProduct, insertNewProducts, deleteAllProducts, deleteAllVendorPrices, deleteAllStockSnapshots } from '@/lib/supabase/products'
 import { emitSupabaseError } from '@/lib/supabase/errorEmitter'
 
 export const initialProductsState = {
@@ -25,7 +25,17 @@ export function getProductsActions(set: StateSetter, _get: StateGetter) {
         addProductsBatch: (products: Omit<Product, 'id'>[]) => {
       const newProducts: Product[] = products.map((p) => ({ ...p, id: generateId() }))
       set((s) => ({ products: [...s.products, ...newProducts] }))
-      getUid().then(uid => { if (uid) upsertProducts(newProducts, uid).catch((e) => emitSupabaseError('Save products batch', e)) })
+      console.log(`[addProductsBatch] Persisting ${newProducts.length} products to Supabase...`)
+      getUid().then(async (uid) => {
+        if (!uid) { console.error('[addProductsBatch] No uid'); return }
+        try {
+          const count = await insertNewProducts(newProducts, uid)
+          console.log(`[addProductsBatch] ✓ ${count}/${newProducts.length} persisted`)
+        } catch (e) {
+          console.error('[addProductsBatch] FAILED:', e)
+          emitSupabaseError('Save products batch', e)
+        }
+      })
       return newProducts
     },
     updateProduct: (id: string, updates: Partial<Omit<Product, 'id'>>) => {
