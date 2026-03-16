@@ -25,6 +25,7 @@ function VendorListModal({
   group: OrderGroup | null
   onSave: (vendorId: string, lines: OrderLine[]) => void
 }) {
+  const products = useStore((s) => s.products)
   const [editLines, setEditLines] = useState<OrderLine[]>([])
   const [hasChanges, setHasChanges] = useState(false)
 
@@ -70,6 +71,7 @@ function VendorListModal({
           <thead className="sticky top-0 bg-surface z-10">
             <tr className="border-b border-surface-border">
               <th className="text-left text-muted font-semibold px-4 py-2">Product</th>
+              <th className="text-center text-muted font-semibold px-3 py-2 w-16">Current</th>
               <th className="text-center text-muted font-semibold px-3 py-2 w-20">Qty</th>
               <th className="text-center text-muted font-semibold px-3 py-2 w-16">Type</th>
               <th className="text-right text-muted font-semibold px-3 py-2 w-24">Unit</th>
@@ -80,16 +82,19 @@ function VendorListModal({
           <tbody>
             {editLines.length === 0 ? (
               <tr>
-                <td colSpan={6} className="py-6 text-center text-muted text-sm">
+                <td colSpan={7} className="py-6 text-center text-muted text-sm">
                   All products removed from this vendor order.
                 </td>
               </tr>
             ) : (
               editLines.map((l, i) => {
                 const isCase = l.packType === 'CASE'
+                const product = products.find((p) => p.id === l.productId)
+                const currentStock = product?.stockQty ?? 0
                 return (
                   <tr key={`${l.productId}-${i}`} className="border-b border-surface-border/50 hover:bg-surface-hover/50">
                     <td className="px-4 py-1.5 text-fg">{l.productName}</td>
+                    <td className="px-3 py-1.5 text-center text-muted tabular-nums">{currentStock}</td>
                     <td className="px-3 py-1.5 text-center">
                       <input
                         type="number"
