@@ -27,6 +27,7 @@ export function AddProductModal({
   const products = useStore((s) => s.products)
   const settings = useStore((s) => s.settings)
   const addProduct = useStore((s) => s.addProduct)
+  const addProductsBatch = useStore((s) => s.addProductsBatch)
   const setMatch = useStore((s) => s.setMatch)
   const addActivity = useStore((s) => s.addActivity)
   const learnBrand = useCatalogMatchStore((s) => s.learnBrand)
@@ -108,9 +109,8 @@ export function AddProductModal({
     const keysAddedThisBatch = new Set<string>()
     const existingKeys = new Set(products.map((p) => matchKey(p.name, p.brand)))
 
-    // Collect all new products, matches, activity, and brands in memory first
-    const newProducts: { id: string; name: string; brand: string; sku?: string; category?: string; unitSize?: string; minStock: number }[] = []
-    const newMatches: Record<string, string> = {}
+    // Collect new products (without id — addProductsBatch generates them) and brands to learn
+    const productsToAdd: { name: string; brand: string; sku?: string; category?: string; unitSize?: string; minStock: number }[] = []
     const brandsToLearn: Record<string, string> = {}
     let skipped = 0
 
@@ -121,9 +121,7 @@ export function AddProductModal({
         continue
       }
       keysAddedThisBatch.add(key)
-      const id = Date.now().toString(36) + Math.random().toString(36).slice(2)
-      newProducts.push({
-        id,
+      productsToAdd.push({
         name: row.name,
         brand: row.brand,
         sku: (row.sku ?? '').trim() || undefined,
@@ -131,7 +129,6 @@ export function AddProductModal({
         unitSize: (row.unitSize ?? '').trim(),
         minStock: row.minStock ?? defaultMin,
       })
-      newMatches[key] = id
 
       if (row.brand) {
         const mergedDict = { ...DEFAULT_BRANDS, ...useCatalogMatchStore.getState().brandDict }
@@ -140,24 +137,15 @@ export function AddProductModal({
       }
     }
 
-    const added = newProducts.length
+    const added = productsToAdd.length
     if (added > 0) {
-      // Single store update: append products + matches + one activity summary
-      useStore.setState((s) => ({
-        products: [...s.products, ...newProducts],
-        matches: { ...s.matches, ...newMatches },
-        activity: [
-          {
-            id: Date.now().toString(36) + Math.random().toString(36).slice(2),
-            type: 'product_created',
-            description: `Bulk import: ${added} product${added !== 1 ? 's' : ''} added`,
-            date: new Date().toISOString(),
-          },
-          ...s.activity,
-        ].slice(0, 50),
-      }))
+      // Persist to Supabase via addProductsBatch (updates local state + upsertProducts)
+      const createdProducts = addProductsBatch(productsToAdd)
+      for (const p of createdProducts) {
+        setMatch(matchKey(p.name, p.brand), p.id)
+      }
+      addActivity('product_created', `Bulk import: ${added} product${added !== 1 ? 's' : ''} added`)
 
-      // Single brand dict update
       if (Object.keys(brandsToLearn).length > 0) {
         const catalogState = useCatalogMatchStore.getState()
         useCatalogMatchStore.setState({
