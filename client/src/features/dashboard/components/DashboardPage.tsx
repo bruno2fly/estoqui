@@ -21,7 +21,6 @@ export function DashboardPage() {
   const vendors = useStore((s) => s.vendors)
   const orders = useStore((s) => s.orders)
   const activity = useStore((s) => s.activity)
-  const matches = useStore((s) => s.matches)
   const settings = useStore((s) => s.settings)
   const lowStockCount = useStore(getLowStockCount)
   const commitStockImport = useStore((s) => s.commitStockImport)

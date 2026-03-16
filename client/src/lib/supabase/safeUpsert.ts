@@ -60,12 +60,33 @@ export async function safeUpsert(opts: UpsertOptions): Promise<void> {
 
     if (onConflict && (isConstraintIssue || isServerError)) {
       console.warn(`[safeUpsert] ${isServerError ? '500 error' : 'No unique constraint'} for "${onConflict}" on ${table}, falling back to insert`)
-      const { error: insertError } = await supabase.from(table).insert(data)
+      const rows = Array.isArray(data) ? data : [data]
+
+      // Try batch insert first — fastest path
+      const { error: insertError } = await supabase.from(table).insert(rows)
       if (!insertError) return
-      // If duplicate key on insert, that's fine — data already exists
+
+      // If batch insert fails with duplicates, fall back to row-by-row
       const insertMsg = insertError.message ?? ''
       if (insertMsg.includes('duplicate key') || insertMsg.includes('unique constraint') || insertMsg.includes('already exists')) {
-        console.warn(`[safeUpsert] Insert fallback hit duplicates on ${table}, skipping`)
+        console.warn(`[safeUpsert] Batch insert hit duplicates on ${table}, falling back to row-by-row (${rows.length} rows)`)
+        let inserted = 0
+        let skipped = 0
+        for (const row of rows) {
+          const { error: rowErr } = await supabase.from(table).insert(row)
+          if (!rowErr) {
+            inserted++
+          } else {
+            const rowMsg = rowErr.message ?? ''
+            if (rowMsg.includes('duplicate key') || rowMsg.includes('unique constraint') || rowMsg.includes('already exists')) {
+              skipped++
+            } else {
+              console.error(`[safeUpsert] Row insert error on ${table}:`, rowMsg)
+              skipped++
+            }
+          }
+        }
+        console.log(`[safeUpsert] Row-by-row on ${table}: ${inserted} inserted, ${skipped} skipped`)
         return
       }
       throw insertError
