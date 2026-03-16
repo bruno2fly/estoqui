@@ -14,6 +14,8 @@ import type {
   Activity,
   AppSettings,
   StockSnapshot,
+  PackType,
+  PriceBasis,
 } from '@/types'
 
 // ── helpers ─────────────────────────────────────────────────────────────
@@ -138,24 +140,39 @@ export function productFromDb(row: Record<string, unknown>): Product {
 
 // ─── VendorPrice Mappers ─────────────────────────────────────────────────
 
-// DB columns: id, user_id, vendor_id, product_id, price, updated_at
+// DB columns: id, user_id, vendor_id, product_id, price, updated_at,
+//              pack_type, units_per_case, unit_descriptor, price_basis, unit_cost
 export function vendorPriceToDb(vp: VendorPrice, userId: string) {
-  return {
+  return defined({
     user_id: userId,
     vendor_id: vp.vendorId,
     product_id: vp.productId,
     price: vp.unitPrice,
     updated_at: vp.updatedAt || new Date().toISOString(),
-  }
+    pack_type: vp.packType,
+    units_per_case: vp.unitsPerCase,
+    unit_descriptor: vp.unitDescriptor || undefined,
+    price_basis: vp.priceBasis,
+    unit_cost: vp.unitCost,
+  })
 }
 
 export function vendorPriceFromDb(row: Record<string, unknown>): VendorPrice {
-  return {
+  const packType = (row.pack_type as string as PackType) ?? undefined
+  const unitsPerCase = (row.units_per_case as number) ?? undefined
+  const priceBasis = (row.price_basis as string as PriceBasis) ?? undefined
+  const unitCost = (row.unit_cost as number) ?? undefined
+  return defined({
     vendorId: row.vendor_id as string,
     productId: row.product_id as string,
     unitPrice: (row.price as number) ?? (row.unit_price as number) ?? 0,
     updatedAt: (row.updated_at as string) ?? (row.created_at as string) ?? new Date().toISOString(),
-  }
+    packType,
+    unitsPerCase,
+    unitDescriptor: (row.unit_descriptor as string) ?? undefined,
+    priceBasis,
+    unitCost,
+  }) as VendorPrice
 }
 
 // ─── Order Mappers ───────────────────────────────────────────────────────
