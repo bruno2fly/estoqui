@@ -56,6 +56,48 @@ export function getInventoryActions(
     clearActiveOrderView() {
       set({ activeOrderView: null } as any)
     },
+
+    /** Update lines for a specific vendor in the active order (edit qty / remove items) */
+    updateOrderVendorLines(vendorId: string, updatedLines: OrderLine[]) {
+      const state = get()
+      const view = state.activeOrderView
+      if (!view) return
+
+      const newByVendor = { ...view.byVendor }
+      if (updatedLines.length === 0) {
+        // Vendor fully removed
+        delete newByVendor[vendorId]
+      } else {
+        const subtotal = updatedLines.reduce((s, l) => s + l.lineTotal, 0)
+        newByVendor[vendorId] = {
+          ...newByVendor[vendorId],
+          lines: updatedLines,
+          subtotal,
+        }
+      }
+
+      // Rebuild order totals
+      const allLines = Object.values(newByVendor).flatMap((g) => g.lines)
+      const totalsByVendor: Record<string, number> = {}
+      let total = 0
+      for (const [vid, group] of Object.entries(newByVendor)) {
+        totalsByVendor[vid] = group.subtotal
+        total += group.subtotal
+      }
+
+      const updatedOrder: Order = {
+        ...view.order,
+        lines: allLines,
+        total,
+        totalsByVendor,
+      }
+
+      // Update the order in the orders array too
+      set((s) => ({
+        orders: s.orders.map((o) => (o.id === updatedOrder.id ? updatedOrder : o)),
+        activeOrderView: { order: updatedOrder, byVendor: newByVendor },
+      } as any))
+    },
     buildReorderDraftFromSnapshot(snapshotId: string) {
       const state = get()
       const snapshot = state.stockSnapshots.find((s) => s.id === snapshotId)
