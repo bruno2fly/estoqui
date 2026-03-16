@@ -32,7 +32,7 @@ export function getReorderDraftActions(set: StateSetter, get: StateGetter) {
           const vp = state.vendorPrices.find(
             (p) => p.vendorId === vendorId && p.productId === line.productId
           )
-          const vpPackType = vp?.packType ?? 'UNIT'
+          const vpPackType = vp?.packType ?? 'CASE'
           const vpUnits = vp?.unitsPerCase ?? 1
           lines[lineIndex] = {
             ...line,

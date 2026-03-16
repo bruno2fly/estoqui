@@ -60,12 +60,6 @@ export function ReorderSection({
     return sum
   }, 0)
 
-  const handleRecalcQty = (idx: number) => {
-    const line = lines[idx]
-    if (!line) return
-    updateReorderLine(idx, 'suggestedQty', Math.max(0, line.minStock - line.currentStock))
-  }
-
   const handleCreateOrder = () => {
     const result = createOrderFromDraft()
     if (!result.success) {
@@ -122,7 +116,7 @@ export function ReorderSection({
           <table className="w-full border-collapse">
             <thead>
               <tr>
-                {['', 'Product', 'SKU', 'Current', 'Min', 'Qty', 'Vendor', 'Type', 'Unit', 'Total', 'Status'].map((h, i) => (
+                {['', 'Product', 'SKU', 'Current', 'Qty', 'Vendor', 'Type', 'Unit', 'Total', 'Status'].map((h, i) => (
                   <th key={i} className="text-left text-fg font-semibold text-[13px] px-3 py-3">
                     {i === 0 ? '\u2713' : h}
                   </th>
@@ -165,24 +159,6 @@ export function ReorderSection({
                         {product?.sku ?? '-'}
                       </td>
                       <td className="px-3 py-3 text-[13px] text-fg">{line.currentStock}</td>
-                      <td className="px-3 py-3">
-                        <input
-                          type="number"
-                          value={line.minStock}
-                          onChange={(e) =>
-                            updateReorderLine(idx, 'minStock', e.target.value)
-                          }
-                          className="w-14 bg-input-bg border border-input-border text-fg px-1.5 py-1 rounded-lg text-[12px]"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => handleRecalcQty(idx)}
-                          className="ml-1 text-xs px-1.5 py-0.5 rounded-lg bg-surface-border hover:bg-input-border transition-colors"
-                          title="Recalculate Qty"
-                        >
-                          ↻
-                        </button>
-                      </td>
                       <td className="px-3 py-3">
                         <input
                           type="number"
@@ -283,7 +259,6 @@ export function ReorderSection({
                       <td className="px-3 py-1.5 text-[11px] text-muted italic" colSpan={2}>
                         {lastOrder ? 'Last order' : 'No previous order'}
                       </td>
-                      <td className="px-3 py-1.5" />
                       <td className="px-3 py-1.5" />
                       {lastOrder ? (
                         <>

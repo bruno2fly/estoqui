@@ -85,7 +85,6 @@ export function getInventoryActions(
         const minStock = product.minStock ?? 10
         if (currentStock >= minStock) continue
 
-        const suggestedQty = minStock - currentStock
         const best = computeBestVendor(state, productId)
         const vp = best
           ? state.vendorPrices.find(
@@ -98,13 +97,13 @@ export function getInventoryActions(
           productId,
           currentStock,
           minStock,
-          suggestedQty,
+          suggestedQty: 1,
           chosenVendorId: best?.vendorId ?? null,
           unitPrice: vp ? vp.unitPrice : 0,
           priceUpdatedAt: vp ? vp.updatedAt : null,
           selected: true,
-          packType: vp?.packType,
-          unitsPerCase: vp?.unitsPerCase,
+          packType: vp?.packType ?? 'CASE',
+          unitsPerCase: vp?.unitsPerCase ?? 1,
           // Store original vendor pricing for CASE ↔ UNIT toggle
           vendorCasePrice: vp ? vp.unitPrice : 0,
           vendorUnitsPerCase: vp?.unitsPerCase,
