@@ -5,7 +5,7 @@ import { generateId } from '../lib/generateId'
 import type { StateSetter } from '../types'
 import type { PersistedState } from '@/types'
 import { supabase } from '@/lib/supabase'
-import { upsertProducts } from '@/lib/supabase/products'
+import { upsertProducts, insertNewProducts } from '@/lib/supabase/products'
 import { upsertStockSnapshot } from '@/lib/supabase/stockSnapshots'
 import { createActivity as dbCreateActivity } from '@/lib/supabase/activity'
 import { emitSupabaseError } from '@/lib/supabase/errorEmitter'
@@ -248,15 +248,32 @@ export function getInventoryActions(
       })
 
       // Persist to Supabase
-      getUid().then(uid => {
-        if (!uid) return
-        upsertStockSnapshot(snapshot, uid).catch((e) => emitSupabaseError('Inventory sync', e))
-        // Batch update patched products
+      console.log('[commitStockImport] Persisting snapshot to Supabase...')
+      getUid().then(async (uid) => {
+        if (!uid) {
+          console.error('[commitStockImport] No uid — cannot persist')
+          return
+        }
+        try {
+          await upsertStockSnapshot(snapshot, uid)
+          console.log('[commitStockImport] ✓ Snapshot persisted')
+        } catch (e) {
+          emitSupabaseError('Snapshot sync', e)
+        }
         const patchedProducts = updatedProducts.filter(p => payload.productPatches[p.id])
         if (patchedProducts.length > 0) {
-          upsertProducts(patchedProducts, uid).catch((e) => emitSupabaseError('Inventory sync', e))
+          try {
+            await upsertProducts(patchedProducts, uid)
+            console.log(`[commitStockImport] ✓ ${patchedProducts.length} patched products persisted`)
+          } catch (e) {
+            emitSupabaseError('Product patch sync', e)
+          }
         }
-        dbCreateActivity(activity, uid).catch((e) => emitSupabaseError('Inventory sync', e))
+        try {
+          await dbCreateActivity(activity, uid)
+        } catch (e) {
+          emitSupabaseError('Activity sync', e)
+        }
       })
 
       return snapshotId
@@ -314,12 +331,31 @@ export function getInventoryActions(
       })
 
       // Persist to Supabase
-      getUid().then(uid => {
-        if (!uid) return
-        upsertProducts(newProducts, uid).catch((e) => emitSupabaseError('Inventory sync', e))
-        const updatedSnap = updatedSnapshots.find(s => s.id === payload.snapshotId)
-        if (updatedSnap) upsertStockSnapshot(updatedSnap, uid).catch((e) => emitSupabaseError('Inventory sync', e))
-        dbCreateActivity(activity, uid).catch((e) => emitSupabaseError('Inventory sync', e))
+      console.log(`[bulkCreate] Persisting ${newProducts.length} new products to Supabase...`)
+      getUid().then(async (uid) => {
+        if (!uid) {
+          console.error('[bulkCreate] No uid — cannot persist to Supabase')
+          return
+        }
+        try {
+          const count = await insertNewProducts(newProducts, uid)
+          console.log(`[bulkCreate] ✓ ${count}/${newProducts.length} products persisted to Supabase`)
+        } catch (e) {
+          console.error('[bulkCreate] Product insert FAILED:', e)
+          emitSupabaseError('Bulk product create', e)
+        }
+        try {
+          const updatedSnap = updatedSnapshots.find(s => s.id === payload.snapshotId)
+          if (updatedSnap) await upsertStockSnapshot(updatedSnap, uid)
+          console.log('[bulkCreate] ✓ Stock snapshot persisted')
+        } catch (e) {
+          emitSupabaseError('Snapshot sync', e)
+        }
+        try {
+          await dbCreateActivity(activity, uid)
+        } catch (e) {
+          emitSupabaseError('Activity sync', e)
+        }
       })
     },
   }

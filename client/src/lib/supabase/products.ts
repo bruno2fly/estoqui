@@ -48,6 +48,50 @@ export async function upsertProducts(products: Product[], userId: string): Promi
   }
 }
 
+/**
+ * Insert brand-new products directly (no upsert/onConflict needed).
+ * Much faster than upsertProducts because it skips the broken upsert→500→fallback path.
+ * Duplicates within the batch are handled row-by-row.
+ */
+export async function insertNewProducts(products: Product[], userId: string): Promise<number> {
+  if (products.length === 0) return 0
+  const CHUNK = 200
+  let totalInserted = 0
+  for (let i = 0; i < products.length; i += CHUNK) {
+    const chunk = products.slice(i, i + CHUNK)
+    const rows = chunk.map((p) => productToDb(p, userId))
+    const { error } = await supabase.from('products').insert(rows)
+    if (!error) {
+      totalInserted += rows.length
+      console.log(`[insertNewProducts] Batch ${Math.floor(i / CHUNK) + 1}: ${rows.length} inserted (${totalInserted} total)`)
+      continue
+    }
+    const msg = error.message ?? ''
+    if (msg.includes('duplicate key') || msg.includes('unique constraint') || msg.includes('already exists')) {
+      // Row-by-row fallback for batches with duplicates
+      console.warn(`[insertNewProducts] Batch ${Math.floor(i / CHUNK) + 1} hit duplicates, falling back to row-by-row`)
+      let inserted = 0
+      let skipped = 0
+      for (const row of rows) {
+        const { error: rowErr } = await supabase.from('products').insert(row)
+        if (!rowErr) {
+          inserted++
+        } else {
+          console.warn(`[insertNewProducts] Skipped duplicate: ${(row as Record<string, unknown>).name}`)
+          skipped++
+        }
+      }
+      totalInserted += inserted
+      console.log(`[insertNewProducts] Row-by-row: ${inserted} inserted, ${skipped} skipped (${totalInserted} total)`)
+    } else {
+      console.error(`[insertNewProducts] Batch error:`, msg)
+      throw error
+    }
+  }
+  console.log(`[insertNewProducts] Done — ${totalInserted} total inserted`)
+  return totalInserted
+}
+
 export async function deleteProduct(id: string): Promise<void> {
   const { error } = await supabase.from('products').delete().eq('id', id)
   if (error) {
