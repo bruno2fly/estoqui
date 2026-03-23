@@ -64,6 +64,7 @@ export function VendorDetailModal({
     notFound?: string[]
   } | null>(null)
   const [showUploadHistory, setShowUploadHistory] = useState(false)
+  const [showRenewConfirm, setShowRenewConfirm] = useState(false)
 
   const vendorUploads = useMemo(() => {
     if (!vendor) return []
@@ -102,6 +103,16 @@ export function VendorDetailModal({
     toast.show('Price updated!')
   }
 
+  const handleRenewList = () => {
+    const oldCount = state.vendorPrices.filter((vp) => vp.vendorId === vendor.id).length
+    clearVendorPrices(vendor.id)
+    setShowRenewConfirm(false)
+    setCsvStatus(null)
+    setImportMode('csv')
+    addActivity('vendor_price_updated', `Vendor list renewed: ${vendor.name} — ${oldCount} old prices removed`)
+    toast.show(`Removed ${oldCount} prices. Now upload the new list.`)
+  }
+
   const handleRemovePrice = (productId: string) => {
     if (!window.confirm('Remove this product from price list?')) return
     removeVendorPrice(vendor.id, productId)
@@ -109,10 +120,6 @@ export function VendorDetailModal({
   }
 
   const applyPriceRows = (rows: VendorPriceRow[], source: 'csv_upload' | 'whatsapp_parse', fileName: string, parseStats?: { rowCount: number; validRowCount: number; invalidRowCount: number; hasSkuPercent: number; errors: { row: number; message: string }[] }) => {
-    // Weekly full replacement: remove ALL old prices before importing the new list
-    const oldPriceCount = state.vendorPrices.filter((vp) => vp.vendorId === vendor.id).length
-    clearVendorPrices(vendor.id)
-
     let priceAdded = 0
     let priceUpdated = 0
     let productsCreated = 0
@@ -196,17 +203,17 @@ export function VendorDetailModal({
     updateVendor(vendor.id, { score: newScore, status: newStatus })
 
     const parts = []
-    if (oldPriceCount) parts.push(`${oldPriceCount} old prices removed`)
     if (priceAdded) parts.push(`${priceAdded} prices added`)
+    if (priceUpdated) parts.push(`${priceUpdated} prices updated`)
     if (productsCreated) parts.push(`${productsCreated} new products created`)
 
     addActivity(
       'vendor_price_updated',
-      `Vendor weekly update: ${vendor.name} — ${parts.join(', ')}`
+      `Vendor import: ${vendor.name} — ${parts.join(', ')}`
     )
     setCsvStatus({
       type: 'success',
-      message: `List replaced! ${oldPriceCount ? `Removed ${oldPriceCount} old prices. ` : ''}Added ${priceAdded} prices.${productsCreated ? ` ${productsCreated} new products created.` : ''}`,
+      message: `Imported! Prices added: ${priceAdded} | Updated: ${priceUpdated}${productsCreated ? ` | New products: ${productsCreated}` : ''}`,
       errors: parseStats?.errors,
     })
     setImportMode(null)
@@ -417,6 +424,22 @@ export function VendorDetailModal({
 
           {/* Actions */}
           <div className="flex flex-wrap gap-2 items-center">
+            {prices.length > 0 && (
+              <Button
+                variant="secondary"
+                onClick={() => setShowRenewConfirm(true)}
+                className="!border-orange-400 !text-orange-600 dark:!text-orange-400 hover:!bg-orange-50 dark:hover:!bg-orange-900/20"
+              >
+                <span className="flex items-center gap-1.5">
+                  <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="23 4 23 10 17 10" />
+                    <polyline points="1 20 1 14 7 14" />
+                    <path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15" />
+                  </svg>
+                  Renew List
+                </span>
+              </Button>
+            )}
             <Button onClick={() => setAddProductOpen(true)}>+ Add Product</Button>
             <Button variant="secondary" onClick={() => setImportMode(importMode === 'csv' ? null : 'csv')}>
               Import CSV
@@ -676,6 +699,32 @@ export function VendorDetailModal({
         vendor={vendor}
         onAdded={() => setAddProductOpen(false)}
       />
+
+      {/* Renew List confirmation popup */}
+      {showRenewConfirm && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/40">
+          <div className="bg-surface border border-surface-border rounded-2xl p-6 max-w-md mx-4 shadow-xl">
+            <h3 className="text-lg font-semibold text-fg mb-2">Renew vendor list?</h3>
+            <p className="text-sm text-fg-secondary mb-1">
+              This will <strong>remove all {prices.length} products</strong> from {vendor.name}'s current list.
+            </p>
+            <p className="text-sm text-fg-secondary mb-4">
+              After clearing, you can upload the new weekly list via CSV or AI import.
+            </p>
+            <div className="flex gap-2 justify-end">
+              <Button variant="secondary" onClick={() => setShowRenewConfirm(false)}>
+                Cancel
+              </Button>
+              <Button
+                onClick={handleRenewList}
+                className="!bg-orange-500 hover:!bg-orange-600 !text-white"
+              >
+                Remove all & upload new
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   )
 }
