@@ -12,6 +12,7 @@ import {
   daysSinceUpdate,
   getScoreColor,
   getStatusBadge,
+  isUpdatedThisWeek,
 } from '../lib/vendorScore'
 import { stripPackFromName } from '@/lib/pack/parsePack'
 import { AddProductToVendorModal } from './AddProductToVendorModal'
@@ -43,6 +44,7 @@ export function VendorDetailModal({
   )
   const setVendorPrice = useStore((s) => s.setVendorPrice)
   const removeVendorPrice = useStore((s) => s.removeVendorPrice)
+  const clearVendorPrices = useStore((s) => s.clearVendorPrices)
   const addProduct = useStore((s) => s.addProduct)
   const setMatch = useStore((s) => s.setMatch)
   const addActivity = useStore((s) => s.addActivity)
@@ -107,6 +109,10 @@ export function VendorDetailModal({
   }
 
   const applyPriceRows = (rows: VendorPriceRow[], source: 'csv_upload' | 'whatsapp_parse', fileName: string, parseStats?: { rowCount: number; validRowCount: number; invalidRowCount: number; hasSkuPercent: number; errors: { row: number; message: string }[] }) => {
+    // Weekly full replacement: remove ALL old prices before importing the new list
+    const oldPriceCount = state.vendorPrices.filter((vp) => vp.vendorId === vendor.id).length
+    clearVendorPrices(vendor.id)
+
     let priceAdded = 0
     let priceUpdated = 0
     let productsCreated = 0
@@ -190,17 +196,17 @@ export function VendorDetailModal({
     updateVendor(vendor.id, { score: newScore, status: newStatus })
 
     const parts = []
+    if (oldPriceCount) parts.push(`${oldPriceCount} old prices removed`)
     if (priceAdded) parts.push(`${priceAdded} prices added`)
-    if (priceUpdated) parts.push(`${priceUpdated} prices updated`)
     if (productsCreated) parts.push(`${productsCreated} new products created`)
 
     addActivity(
       'vendor_price_updated',
-      `Vendor import: ${vendor.name} — ${parts.join(', ')}`
+      `Vendor weekly update: ${vendor.name} — ${parts.join(', ')}`
     )
     setCsvStatus({
       type: 'success',
-      message: `Imported! Prices added: ${priceAdded} | Updated: ${priceUpdated}${productsCreated ? ` | New products: ${productsCreated}` : ''}`,
+      message: `List replaced! ${oldPriceCount ? `Removed ${oldPriceCount} old prices. ` : ''}Added ${priceAdded} prices.${productsCreated ? ` ${productsCreated} new products created.` : ''}`,
       errors: parseStats?.errors,
     })
     setImportMode(null)
@@ -347,6 +353,25 @@ export function VendorDetailModal({
           {isStale && (
             <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/40 rounded-lg px-3 py-2 text-sm text-red-700 dark:text-red-300">
               Data is stale — last price list is {days}+ days old (threshold: {vendor.staleAfterDays ?? 7} days). Upload a fresh price list to restore Active status.
+            </div>
+          )}
+
+          {/* Weekly update notification */}
+          {isUpdatedThisWeek(vendor) ? (
+            <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800/40 rounded-lg px-3 py-2 text-sm text-green-700 dark:text-green-300 flex items-center gap-2">
+              <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="20 6 9 17 4 12" />
+              </svg>
+              Updated this week — list is current.
+            </div>
+          ) : (
+            <div className="bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800/40 rounded-lg px-3 py-2 text-sm text-orange-700 dark:text-orange-300 flex items-center gap-2">
+              <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="10" />
+                <line x1="12" y1="8" x2="12" y2="12" />
+                <line x1="12" y1="16" x2="12.01" y2="16" />
+              </svg>
+              Not updated this week — upload a new price list to replace the current one.
             </div>
           )}
 

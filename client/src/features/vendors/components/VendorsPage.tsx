@@ -10,6 +10,8 @@ import {
   daysSinceUpdate,
   getScoreColor,
   getStatusBadge,
+  isUpdatedThisWeek,
+  getWeeklyBadge,
 } from '../lib/vendorScore'
 import type { Vendor, VendorStatus } from '@/types'
 
@@ -114,16 +116,19 @@ export function VendorsPage() {
   const activeCount = vendorRows.filter((r) => r.status === 'active').length
   const probationCount = vendorRows.filter((r) => r.status === 'probation').length
   const inactiveCount = vendorRows.filter((r) => r.status === 'inactive').length
+  const updatedThisWeekCount = vendors.filter((v) => isUpdatedThisWeek(v)).length
+  const needsUpdateCount = vendors.length - updatedThisWeekCount
 
   return (
     <div className="space-y-6">
       {/* Summary cards */}
       {vendors.length > 0 && (
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
           <SummaryCard label="Avg Score" value={avgScore} color={getScoreColor(avgScore)} tip="The average quality score of all your vendors. Higher is better — based on how often they update prices and how complete their product lists are." />
           <SummaryCard label="Active" value={activeCount} color="text-green-600 dark:text-green-400" tip="Vendors who are up to date. Their price lists are recent and ready to use." />
           <SummaryCard label="Probation" value={probationCount} color="text-amber-600 dark:text-amber-400" tip="Vendors whose price lists are getting old. They need to send you an updated list soon." />
           <SummaryCard label="Inactive" value={inactiveCount} color="text-red-600 dark:text-red-400" tip="Vendors who haven't sent a price list in a long time. You may want to contact them or remove them." />
+          <SummaryCard label="Needs Update" value={needsUpdateCount} color={needsUpdateCount > 0 ? 'text-orange-600 dark:text-orange-400' : 'text-green-600 dark:text-green-400'} tip="Vendors who have NOT uploaded a new price list this week. Every vendor needs a full list replacement each week." />
         </div>
       )}
 
@@ -173,6 +178,9 @@ export function VendorsPage() {
                   <th className="text-left text-fg-secondary font-semibold text-[11px] uppercase px-3 py-3">
                     <span className="inline-flex items-center gap-1">Status <InfoTip text="Shows if this vendor is Active (up to date), on Probation (getting old), or Inactive (very outdated)." /></span>
                   </th>
+                  <th className="text-left text-fg-secondary font-semibold text-[11px] uppercase px-3 py-3">
+                    <span className="inline-flex items-center gap-1">This Week <InfoTip text="Shows if this vendor's price list has been updated during the current week (Monday to Sunday). Vendors need a fresh list every week." /></span>
+                  </th>
                   <SortHeader label="Score" sortKey="score" current={sortKey} dir={sortDir} onClick={toggleSort} sortIcon={sortIcon} />
                   <SortHeader label="Last Update" sortKey="lastUpdate" current={sortKey} dir={sortDir} onClick={toggleSort} sortIcon={sortIcon} />
                   <th className="text-left text-fg-secondary font-semibold text-[11px] uppercase px-3 py-3">
@@ -205,6 +213,16 @@ export function VendorsPage() {
                         <span className={`inline-block px-2 py-0.5 rounded-md text-[10px] font-semibold uppercase tracking-wide ${badge.className}`}>
                           {badge.label}
                         </span>
+                      </td>
+                      <td className="px-3 py-3">
+                        {(() => {
+                          const weekBadge = getWeeklyBadge(vendor)
+                          return (
+                            <span className={`inline-block px-2 py-0.5 rounded-md text-[10px] font-semibold uppercase tracking-wide ${weekBadge.className}`}>
+                              {weekBadge.label}
+                            </span>
+                          )
+                        })()}
                       </td>
                       <td className="px-3 py-3">
                         <span className={`text-xl font-bold tabular-nums ${getScoreColor(score)}`}>

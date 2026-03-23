@@ -50,6 +50,25 @@ export function getScoreColor(score: number): string {
   return 'text-red-600 dark:text-red-400'
 }
 
+/** Check if a vendor's price list was updated during the current week (Mon–Sun). */
+export function isUpdatedThisWeek(vendor: Vendor): boolean {
+  if (!vendor.lastPriceListAt) return false
+  const now = new Date()
+  // Get Monday of current week
+  const day = now.getDay() // 0=Sun, 1=Mon...
+  const diff = day === 0 ? 6 : day - 1 // days since Monday
+  const monday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - diff)
+  monday.setHours(0, 0, 0, 0)
+  return new Date(vendor.lastPriceListAt) >= monday
+}
+
+export function getWeeklyBadge(vendor: Vendor): { label: string; className: string } {
+  if (isUpdatedThisWeek(vendor)) {
+    return { label: 'Updated', className: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' }
+  }
+  return { label: 'Needs Update', className: 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400' }
+}
+
 export function getStatusBadge(status: VendorStatus | undefined): { label: string; className: string } {
   switch (status) {
     case 'active':

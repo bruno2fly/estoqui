@@ -59,3 +59,15 @@ export async function deleteVendorPrice(vendorId: string, productId: string): Pr
     throw error
   }
 }
+
+/** Delete ALL prices for a vendor (used for weekly full-list replacement). */
+export async function deleteAllVendorPrices(vendorId: string): Promise<void> {
+  const { error } = await supabase
+    .from('vendor_prices')
+    .delete()
+    .eq('vendor_id', vendorId)
+  if (error) {
+    console.error('[Supabase vendor_prices] deleteAll error:', error)
+    throw error
+  }
+}
