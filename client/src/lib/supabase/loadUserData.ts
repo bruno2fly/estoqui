@@ -37,15 +37,26 @@ export async function loadAllUserData(): Promise<PersistedState> {
   }
   const userId = user.id
 
+  // Fetch each table independently — if one fails, the rest still load.
+  // This prevents a single slow/broken table from wiping the entire dashboard.
+  async function safeFetch<T>(label: string, fn: () => Promise<T>, fallback: T): Promise<T> {
+    try {
+      return await fn()
+    } catch (err) {
+      console.warn(`[loadUserData] ${label} fetch failed — using fallback:`, err)
+      return fallback
+    }
+  }
+
   const [vendors, products, vendorPrices, orders, activity, settings, stockSnapshots] =
     await Promise.all([
-      fetchVendors(userId),
-      fetchProducts(userId),
-      fetchVendorPrices(userId),
-      fetchOrders(userId),
-      fetchActivity(userId),
-      fetchSettings(userId),
-      fetchStockSnapshots(userId),
+      safeFetch('vendors', () => fetchVendors(userId), []),
+      safeFetch('products', () => fetchProducts(userId), []),
+      safeFetch('vendorPrices', () => fetchVendorPrices(userId), []),
+      safeFetch('orders', () => fetchOrders(userId), []),
+      safeFetch('activity', () => fetchActivity(userId), []),
+      safeFetch('settings', () => fetchSettings(userId), null),
+      safeFetch('stockSnapshots', () => fetchStockSnapshots(userId), []),
     ])
 
   console.log('[loadUserData] Loaded:', {
