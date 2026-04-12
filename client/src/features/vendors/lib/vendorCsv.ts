@@ -41,7 +41,7 @@ export function parseVendorPriceCSV(
   let headerLineIdx = 0
   const isHeaderLine = (line: string) => {
     const lower = line.toLowerCase().replace(/_/g, ' ')
-    return /\b(name|product|nome|produto|price|preco|preço|sku|brand|marca|description|descricao|descrição|desc|item|cost|valor)\b/.test(lower)
+    return /\b(name|product|nome|produto|price|preco|preço|sku|brand|marca|description|descricao|descrição|desc|item|cost|valor|case|pack|quantity)\b/.test(lower)
   }
   for (let i = 0; i < Math.min(lines.length, 5); i++) {
     if (isHeaderLine(lines[i])) {
@@ -84,10 +84,11 @@ export function parseVendorPriceCSV(
     /\b(available|disponivel|disponível|active|ativo)\b/.test(h)
   )
 
-  if (nameIdx === -1 || priceIdx === -1) {
+  // Only require a product name column — price, sku, brand, etc. are all optional
+  if (nameIdx === -1) {
     return {
       error:
-        'File must have columns for Product Name and Price. Expected: product_name, name, or description + price, cost, or valor. Optional: sku/item, brand, unit_size, unit_type, available',
+        'File must have a column for Product Name. Expected: product_name, name, description, or desc. Optional: price/cost, sku/item, brand, unit_size, pack_size, case, available',
     }
   }
 
@@ -97,6 +98,11 @@ export function parseVendorPriceCSV(
   const dataStartIdx = headerLineIdx + 1
   const rowCount = lines.length - dataStartIdx
 
+  // Also detect "case" / "pack" / "pack_size" / "caixa" columns for case quantity
+  const caseIdx = headers.findIndex((h) =>
+    /\b(case|cases|pack|pack size|packsize|caixa|fardo|cx|qty|quantity)\b/.test(h) && !/\b(price|preco)\b/.test(h)
+  )
+
   for (let i = dataStartIdx; i < lines.length; i++) {
     const parts = parseCSVLine(lines[i], separator)
     const name = (parts[nameIdx] ?? '').trim().replace(/\s+/g, ' ')
@@ -105,11 +111,16 @@ export function parseVendorPriceCSV(
     const unitSize = unitSizeIdx >= 0 ? (parts[unitSizeIdx] ?? '').trim() : ''
     const unitType = unitTypeIdx >= 0 ? (parts[unitTypeIdx] ?? '').trim() : ''
 
-    const priceStr = (parts[priceIdx] ?? '0')
-      .trim()
-      .replace(/[R$]/g, '')
-      .replace(/,/g, '.')
-    const price = parseFloat(priceStr)
+    // Price is optional — default to 0 if column missing or empty
+    let price = 0
+    if (priceIdx >= 0) {
+      const priceStr = (parts[priceIdx] ?? '0')
+        .trim()
+        .replace(/[R$]/g, '')
+        .replace(/,/g, '.')
+      price = parseFloat(priceStr)
+      if (Number.isNaN(price)) price = 0
+    }
 
     let available = true
     if (availableIdx >= 0) {
@@ -121,25 +132,35 @@ export function parseVendorPriceCSV(
       errors.push({ row: i + 1, message: 'Missing product name' })
       continue
     }
-    if (Number.isNaN(price) || price <= 0) {
-      errors.push({ row: i + 1, message: `Invalid price for "${name}": ${parts[priceIdx]}` })
-      continue
-    }
 
     if (sku) skuCount++
+
+    // Detect pack/case info from name, size columns, or dedicated "case" column
     const packText = [name, unitSize, unitType].filter(Boolean).join(' ')
     const pack = parsePackFromText(packText)
+
+    // If there's a dedicated case column, use it (e.g. "24", "12", "6")
+    let unitsPerCase = pack.unitsPerCase
+    if (caseIdx >= 0) {
+      const caseVal = parseInt((parts[caseIdx] ?? '').trim(), 10)
+      if (!Number.isNaN(caseVal) && caseVal > 0) {
+        unitsPerCase = caseVal
+      }
+    }
+    const packType = unitsPerCase > 1 ? 'CASE' as const : 'UNIT' as const
+    const priceBasis = packType === 'CASE' ? 'PER_CASE' as const : 'PER_UNIT' as const
+
     prices.push({
       name, brand, sku, unitSize, unitType, price, available,
-      packType: pack.packType,
-      unitsPerCase: pack.unitsPerCase,
+      packType,
+      unitsPerCase,
       unitDescriptor: pack.unitDescriptor,
-      priceBasis: pack.priceBasis,
+      priceBasis,
     })
   }
 
   if (prices.length === 0) {
-    return { error: `No valid price entries found. ${errors.length} row(s) had errors.` }
+    return { error: `No valid products found. ${errors.length} row(s) had errors.` }
   }
 
   const validRowCount = prices.length
