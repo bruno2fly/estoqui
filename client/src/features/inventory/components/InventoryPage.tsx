@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useStore } from '@/store'
 import { matchKey } from '../lib/matching'
-import { FileUpload, ConfirmDialog } from '@/shared/components'
+import { FileUpload, ConfirmDialog, UploadOverlay } from '@/shared/components'
 import { useToast } from '@/shared/components'
 import { parseCSVStock } from '../lib/csvStock'
 import { parseStockWithOpenAI } from '../lib/aiStockParse'
@@ -33,6 +33,8 @@ export function InventoryPage() {
   const addVendor = useStore((s) => s.addVendor)
   const setVendorPricesBatch = useStore((s) => s.setVendorPricesBatch)
   const [confirmReset, setConfirmReset] = useState(false)
+  const [overlayStatus, setOverlayStatus] = useState<'loading' | 'success' | 'error' | null>(null)
+  const [overlayMessage, setOverlayMessage] = useState('')
 
   // Order state — persisted in Zustand store so it survives navigation
   const orderData = useStore((s) => s.activeOrderView)
@@ -209,11 +211,13 @@ export function InventoryPage() {
     }
 
     const vendorPriceCount = vendorRows.length
-    setUploadStatus('success')
-    setUploadMessage(
+    const resultText =
       `${rows.length} products imported (${matchedCount} matched, ${unmatched.length} new created)` +
       (vendorPriceCount > 0 ? ` · ${vendorPriceCount} vendor prices linked` : '')
-    )
+    setUploadStatus('success')
+    setUploadMessage(resultText)
+    setOverlayStatus('success')
+    setOverlayMessage(resultText)
     toast.show(`${rows.length} products imported`)
 
     // Always build reorder draft immediately
@@ -226,13 +230,16 @@ export function InventoryPage() {
     setUploadStatus('idle')
     setUploadMessage('')
     clearActiveOrderView()
+    setOverlayStatus('loading')
+    setOverlayMessage('')
 
     const reader = new FileReader()
     reader.onload = (e) => {
       const text = (e.target?.result as string) ?? ''
       const rows = parseCSVStock(text)
       if (rows.length === 0) {
-        toast.show('No products found in CSV. Check the format.', 'error')
+        setOverlayStatus('error')
+        setOverlayMessage('No products found in CSV. Check the file format.')
         setUploadStatus('error')
         setUploadMessage('No products found in CSV.')
         return
@@ -253,11 +260,14 @@ export function InventoryPage() {
     setUploadMessage('')
     clearActiveOrderView()
     setAiLoading(true)
+    setOverlayStatus('loading')
+    setOverlayMessage('')
 
     try {
       const result = await parseStockWithOpenAI(file, apiKey)
       if ('error' in result) {
-        toast.show(result.error, 'error')
+        setOverlayStatus('error')
+        setOverlayMessage(result.error)
         setUploadStatus('error')
         setUploadMessage(result.error)
         setAiLoading(false)
@@ -266,7 +276,8 @@ export function InventoryPage() {
       processStockRows(result.rows, file.name, 'ai')
     } catch (e) {
       const msg = e instanceof Error ? e.message : 'Failed to process file'
-      toast.show(msg, 'error')
+      setOverlayStatus('error')
+      setOverlayMessage(msg)
       setUploadStatus('error')
       setUploadMessage(msg)
     }
@@ -413,6 +424,13 @@ export function InventoryPage() {
         confirmLabel="Reset & Start New"
         cancelLabel="Cancel"
         variant="danger"
+      />
+
+      <UploadOverlay
+        status={overlayStatus}
+        loadingMessage="Processing your file..."
+        resultMessage={overlayMessage}
+        onClose={() => setOverlayStatus(null)}
       />
     </div>
   )

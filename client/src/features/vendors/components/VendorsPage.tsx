@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react'
 import { useStore } from '@/store'
-import { ConfirmDialog, InfoTip } from '@/shared/components'
+import { ConfirmDialog, InfoTip, SearchInput } from '@/shared/components'
 import { useToast } from '@/shared/components'
 import { VendorFormModal } from './VendorFormModal'
 import { VendorDetailModal } from './VendorDetailModal'
@@ -33,6 +33,7 @@ export function VendorsPage() {
   const [detailVendorId, setDetailVendorId] = useState<string | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<Vendor | null>(null)
   const [statusFilter, setStatusFilter] = useState<VendorStatus | 'all'>('all')
+  const [searchQuery, setSearchQuery] = useState('')
   const [sortKey, setSortKey] = useState<SortKey>('score')
   const [sortDir, setSortDir] = useState<SortDir>('desc')
 
@@ -52,6 +53,15 @@ export function VendorsPage() {
     if (statusFilter !== 'all') {
       rows = rows.filter((r) => r.status === statusFilter)
     }
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase().trim()
+      rows = rows.filter((r) =>
+        r.vendor.name.toLowerCase().includes(q) ||
+        (r.vendor.contactName ?? '').toLowerCase().includes(q) ||
+        (r.vendor.phone ?? '').toLowerCase().includes(q) ||
+        (r.vendor.notes ?? '').toLowerCase().includes(q)
+      )
+    }
     rows.sort((a, b) => {
       const dir = sortDir === 'asc' ? 1 : -1
       if (sortKey === 'name') return dir * a.vendor.name.localeCompare(b.vendor.name)
@@ -64,7 +74,7 @@ export function VendorsPage() {
       return 0
     })
     return rows
-  }, [vendorRows, statusFilter, sortKey, sortDir])
+  }, [vendorRows, statusFilter, searchQuery, sortKey, sortDir])
 
   const handleSaveVendor = (data: Partial<Vendor> & { name: string }) => {
     if (formModal === 'add') {
@@ -145,6 +155,12 @@ export function VendorsPage() {
             <span className="text-[13px] font-semibold text-fg">Vendor Compliance</span>
           </div>
           <div className="flex items-center gap-2 flex-wrap">
+            <SearchInput
+              value={searchQuery}
+              onChange={setSearchQuery}
+              placeholder="Search vendors..."
+              className="w-48"
+            />
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value as VendorStatus | 'all')}

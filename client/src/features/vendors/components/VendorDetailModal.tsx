@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react'
 import { useStore } from '@/store'
-import { Modal, Button, FileUpload, InfoTip } from '@/shared/components'
+import { Modal, Button, FileUpload, InfoTip, UploadOverlay } from '@/shared/components'
 import { useToast } from '@/shared/components'
 import { findProductByNameAndBrand, matchKey } from '@/shared/lib/matching'
 import { parseVendorPriceCSV, parseVendorPriceExcel, type VendorPriceRow } from '../lib/vendorCsv'
@@ -67,6 +67,8 @@ export function VendorDetailModal({
   } | null>(null)
   const [showUploadHistory, setShowUploadHistory] = useState(false)
   const [showRenewConfirm, setShowRenewConfirm] = useState(false)
+  const [overlayStatus, setOverlayStatus] = useState<'loading' | 'success' | 'error' | null>(null)
+  const [overlayMessage, setOverlayMessage] = useState('')
 
   const vendorUploads = useMemo(() => {
     if (!vendor) return []
@@ -213,11 +215,14 @@ export function VendorDetailModal({
       'vendor_price_updated',
       `Vendor import: ${vendor.name} — ${parts.join(', ')}`
     )
+    const resultText = `Imported! Prices added: ${priceAdded} | Updated: ${priceUpdated}${productsCreated ? ` | New products: ${productsCreated}` : ''}`
     setCsvStatus({
       type: 'success',
-      message: `Imported! Prices added: ${priceAdded} | Updated: ${priceUpdated}${productsCreated ? ` | New products: ${productsCreated}` : ''}`,
+      message: resultText,
       errors: parseStats?.errors,
     })
+    setOverlayStatus('success')
+    setOverlayMessage(resultText)
     setImportMode(null)
     setReviewRows(null)
   }
@@ -225,6 +230,8 @@ export function VendorDetailModal({
   const handleCsvFile = (file: File) => {
     setCsvLoading(true)
     setCsvStatus(null)
+    setOverlayStatus('loading')
+    setOverlayMessage('')
 
     const isExcel = /\.(xlsx?|xlsm)$/i.test(file.name) ||
       file.type === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' ||
@@ -237,6 +244,8 @@ export function VendorDetailModal({
         const result = parseVendorPriceExcel(data)
         if ('error' in result) {
           setCsvStatus({ type: 'error', message: result.error })
+          setOverlayStatus('error')
+          setOverlayMessage(result.error)
           setCsvLoading(false)
           return
         }
@@ -257,6 +266,8 @@ export function VendorDetailModal({
         const result = parseVendorPriceCSV(text)
         if ('error' in result) {
           setCsvStatus({ type: 'error', message: result.error })
+          setOverlayStatus('error')
+          setOverlayMessage(result.error)
           setCsvLoading(false)
           return
         }
@@ -282,10 +293,14 @@ export function VendorDetailModal({
 
     setImageLoading(true)
     setCsvStatus(null)
+    setOverlayStatus('loading')
+    setOverlayMessage('')
     try {
       const result = await parseVendorPriceImageWithOpenAI(file, apiKey)
       if ('error' in result) {
         toast.show(result.error, 'error')
+        setOverlayStatus('error')
+        setOverlayMessage(result.error)
         setImageLoading(false)
         return
       }
@@ -301,8 +316,12 @@ export function VendorDetailModal({
         }
       })
       setReviewRows(rows)
+      setOverlayStatus(null)
     } catch (e) {
-      toast.show(e instanceof Error ? e.message : 'Failed to process image', 'error')
+      const msg = e instanceof Error ? e.message : 'Failed to process image'
+      toast.show(msg, 'error')
+      setOverlayStatus('error')
+      setOverlayMessage(msg)
     }
     setImageLoading(false)
   }
@@ -796,6 +815,13 @@ export function VendorDetailModal({
           </div>
         </div>
       )}
+
+      <UploadOverlay
+        status={overlayStatus}
+        loadingMessage="Processing vendor file..."
+        resultMessage={overlayMessage}
+        onClose={() => setOverlayStatus(null)}
+      />
     </>
   )
 }
