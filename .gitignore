@@ -23,3 +23,8 @@ Thumbs.db
 # Logs
 *.log
 npm-debug.log*
+
+# Temp files
+*.patch
+*.csv
+!client/src/**/*.csv
