@@ -87,12 +87,15 @@ STRICT RULES
 * do not hallucinate SKU
 * do not include categories
 * do not merge rows
+* CRITICAL: extract EVERY SINGLE product row visible. Do not stop early. If there are 50 products, return all 50. If there are 200 products, return all 200. Never truncate the list.
 
 OUTPUT
-Return only JSON:
-{"products":[{"raw_text":"","source_code":"","sku":"","product_name":"","brand":"","size_value":null,"size_unit":"","case_quantity":null,"price":null,"confidence":""}]}
+Return ONLY a JSON array (no wrapper object, no markdown). Use SHORT keys to save tokens:
+[{"r":"raw text","sc":"source code","s":"sku","n":"product name","b":"brand","sv":null,"su":"","cq":null,"p":null,"cf":"high"}]
 
-If you cannot find any products, return: {"products":[]}`
+Key mapping: r=raw_text, sc=source_code, s=sku, n=product_name, b=brand, sv=size_value, su=size_unit, cq=case_quantity, p=price, cf=confidence
+
+If you cannot find any products, return: []`
 
 /**
  * Send any file (image, PDF, CSV, TXT, etc.) to OpenAI GPT-4o and extract vendor price data.
@@ -111,16 +114,15 @@ export async function parseVendorPriceImageWithOpenAI(
   )
   if ('error' in result) return result
 
-  // The new prompt returns { "products": [...] } instead of a bare array
+  // Parse response — supports bare array (short keys) or {products:[...]} wrapper
   let items: Record<string, unknown>[]
   const content = result.content.replace(/^```(?:json)?\s*/, '').replace(/\s*```$/, '').trim()
   try {
     const obj = JSON.parse(content)
-    if (obj && Array.isArray(obj.products)) {
-      items = obj.products as Record<string, unknown>[]
-    } else if (Array.isArray(obj)) {
-      // Fallback: bare array (in case model ignores wrapper)
+    if (Array.isArray(obj)) {
       items = obj as Record<string, unknown>[]
+    } else if (obj && Array.isArray(obj.products)) {
+      items = obj.products as Record<string, unknown>[]
     } else {
       return { error: 'Response is not in expected format.' }
     }
@@ -135,33 +137,34 @@ export async function parseVendorPriceImageWithOpenAI(
 
   const prices: VendorPriceRow[] = items
     .map((item) => {
+      // Support both short keys (n, p, s, b, sv, su, cq, r) and long keys
       // --- Price ---
-      const priceRaw = item.price ?? 0
+      const priceRaw = item.p ?? item.price ?? 0
       const price = typeof priceRaw === 'number'
         ? priceRaw
         : parseFloat(String(priceRaw).replace(/[R$,]/g, '.').replace(/\.(?=.*\.)/g, ''))
 
-      // --- Name (prefer product_name from new prompt, fallback to name) ---
-      const name = String(item.product_name ?? item.name ?? '').trim()
+      // --- Name ---
+      const name = String(item.n ?? item.product_name ?? item.name ?? '').trim()
 
-      // --- SKU (new prompt returns "missing" when not valid 8-12 chars) ---
-      const rawSku = String(item.sku ?? '').trim()
+      // --- SKU ---
+      const rawSku = String(item.s ?? item.sku ?? '').trim()
       const sku = rawSku === 'missing' ? '' : rawSku
 
       // --- Brand ---
-      const brand = String(item.brand ?? '').trim()
+      const brand = String(item.b ?? item.brand ?? '').trim()
 
-      // --- Size: new prompt returns size_value (number) and size_unit (normalized) ---
-      const sizeVal = item.size_value ?? item.sizeValue ?? null
-      const sizeUnit = String(item.size_unit ?? item.sizeUnit ?? '').trim()
+      // --- Size ---
+      const sizeVal = item.sv ?? item.size_value ?? item.sizeValue ?? null
+      const sizeUnit = String(item.su ?? item.size_unit ?? item.sizeUnit ?? '').trim()
       const unitSize = sizeVal != null && sizeUnit
         ? `${sizeVal}${sizeUnit}`
         : sizeUnit || ''
 
-      // --- Case quantity: new prompt returns case_quantity directly ---
-      const aiCaseQty = Number(item.case_quantity ?? item.caseQuantity ?? 0)
+      // --- Case quantity ---
+      const aiCaseQty = Number(item.cq ?? item.case_quantity ?? item.caseQuantity ?? 0)
       // Fallback to regex detection from the full product name / raw_text
-      const rawText = String(item.raw_text ?? item.rawText ?? name)
+      const rawText = String(item.r ?? item.raw_text ?? item.rawText ?? name)
       const pack = parsePackFromText(rawText)
       const unitsPerCase = aiCaseQty > 0 ? aiCaseQty : pack.unitsPerCase
       const packType = unitsPerCase > 1 ? 'CASE' as const : 'UNIT' as const
