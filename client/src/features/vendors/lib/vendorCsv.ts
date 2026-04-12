@@ -41,7 +41,7 @@ export function parseVendorPriceCSV(
   let headerLineIdx = 0
   const isHeaderLine = (line: string) => {
     const lower = line.toLowerCase().replace(/_/g, ' ')
-    return /\b(name|product|nome|produto|price|preco|preço|sku|brand|marca)\b/.test(lower)
+    return /\b(name|product|nome|produto|price|preco|preço|sku|brand|marca|description|descricao|descrição|desc|item|cost|valor)\b/.test(lower)
   }
   for (let i = 0; i < Math.min(lines.length, 5); i++) {
     if (isHeaderLine(lines[i])) {
@@ -59,12 +59,12 @@ export function parseVendorPriceCSV(
     h.replace(/\([^)]*\)/g, '').replace(/[^a-z0-9]/g, '')
 
   const nameIdx = headers.findIndex((h) =>
-    /\b(name|produto|nome|product)\b/.test(h)
+    /\b(name|produto|nome|product|description|descricao|descrição|desc)\b/.test(h)
   )
   const brandIdx = headers.findIndex((h) => /\b(brand|marca)\b/.test(h))
   const skuIdx = (() => {
     const preferred = headers.findIndex((h) =>
-      /^(sku|itemsku|productcode|productsku|plu|itemcode|code|codigo)$/.test(normalizeHeader(h))
+      /^(sku|itemsku|productcode|productsku|plu|itemcode|code|codigo|item|itemno|itemnum|itemnumber|itemid|ref|referencia)$/.test(normalizeHeader(h))
     )
     if (preferred >= 0) return preferred
     return headers.findIndex((h) =>
@@ -72,7 +72,7 @@ export function parseVendorPriceCSV(
     )
   })()
   const priceIdx = headers.findIndex((h) =>
-    /\b(price|preco|preço|unit price|unit)\b/.test(h)
+    /\b(price|preco|preço|unit price|cost|valor|value)\b/.test(h)
   )
   const unitSizeIdx = headers.findIndex((h) =>
     /\b(unit size|size|tamanho|peso|weight)\b/.test(h)
@@ -87,7 +87,7 @@ export function parseVendorPriceCSV(
   if (nameIdx === -1 || priceIdx === -1) {
     return {
       error:
-        'CSV must have columns for Product Name and Price. Expected: product_name (or Name), price (or Unit Price). Optional: sku, brand, unit_size, unit_type, available',
+        'File must have columns for Product Name and Price. Expected: product_name, name, or description + price, cost, or valor. Optional: sku/item, brand, unit_size, unit_type, available',
     }
   }
 
