@@ -1,6 +1,7 @@
 import { parseCSVLine, detectSeparator } from '@/features/inventory/lib/csvStock'
 import { normalize } from '@/shared/lib/matching'
 import { parsePackFromText } from '@/lib/pack/parsePack'
+import * as XLSX from 'xlsx'
 import type { PackType, PriceBasis } from '@/types'
 
 export interface VendorPriceRow {
@@ -152,5 +153,29 @@ export function parseVendorPriceCSV(
     invalidRowCount,
     hasSkuPercent,
     errors,
+  }
+}
+
+/**
+ * Parse an Excel (.xlsx / .xls) file into vendor price rows.
+ * Reads the first sheet, converts to CSV, then reuses the CSV parser.
+ */
+export function parseVendorPriceExcel(
+  data: ArrayBuffer
+): VendorCsvParseResult | { error: string } {
+  try {
+    const workbook = XLSX.read(data, { type: 'array' })
+    const firstSheet = workbook.SheetNames[0]
+    if (!firstSheet) return { error: 'Excel file has no sheets.' }
+
+    const sheet = workbook.Sheets[firstSheet]
+    const csvText = XLSX.utils.sheet_to_csv(sheet, { FS: ',', RS: '\n' })
+    if (!csvText.trim()) return { error: 'Excel sheet is empty.' }
+
+    return parseVendorPriceCSV(csvText)
+  } catch (err) {
+    return {
+      error: `Failed to read Excel file: ${err instanceof Error ? err.message : 'Unknown error'}`,
+    }
   }
 }

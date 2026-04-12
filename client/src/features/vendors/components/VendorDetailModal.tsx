@@ -3,7 +3,7 @@ import { useStore } from '@/store'
 import { Modal, Button, FileUpload, InfoTip } from '@/shared/components'
 import { useToast } from '@/shared/components'
 import { findProductByNameAndBrand, matchKey } from '@/shared/lib/matching'
-import { parseVendorPriceCSV, type VendorPriceRow } from '../lib/vendorCsv'
+import { parseVendorPriceCSV, parseVendorPriceExcel, type VendorPriceRow } from '../lib/vendorCsv'
 import { parseVendorPriceImageWithOpenAI } from '../lib/vendorImageParse'
 import { downloadVendorCsvTemplate } from '../lib/vendorCsvTemplate'
 import {
@@ -225,25 +225,52 @@ export function VendorDetailModal({
   const handleCsvFile = (file: File) => {
     setCsvLoading(true)
     setCsvStatus(null)
-    const reader = new FileReader()
-    reader.onload = () => {
-      const text = (reader.result as string) ?? ''
-      const result = parseVendorPriceCSV(text)
-      if ('error' in result) {
-        setCsvStatus({ type: 'error', message: result.error })
+
+    const isExcel = /\.(xlsx?|xlsm)$/i.test(file.name) ||
+      file.type === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' ||
+      file.type === 'application/vnd.ms-excel'
+
+    if (isExcel) {
+      const reader = new FileReader()
+      reader.onload = () => {
+        const data = reader.result as ArrayBuffer
+        const result = parseVendorPriceExcel(data)
+        if ('error' in result) {
+          setCsvStatus({ type: 'error', message: result.error })
+          setCsvLoading(false)
+          return
+        }
+        applyPriceRows(result.prices, 'csv_upload', file.name, {
+          rowCount: result.rowCount,
+          validRowCount: result.validRowCount,
+          invalidRowCount: result.invalidRowCount,
+          hasSkuPercent: result.hasSkuPercent,
+          errors: result.errors,
+        })
         setCsvLoading(false)
-        return
       }
-      applyPriceRows(result.prices, 'csv_upload', file.name, {
-        rowCount: result.rowCount,
-        validRowCount: result.validRowCount,
-        invalidRowCount: result.invalidRowCount,
-        hasSkuPercent: result.hasSkuPercent,
-        errors: result.errors,
-      })
-      setCsvLoading(false)
+      reader.readAsArrayBuffer(file)
+    } else {
+      const reader = new FileReader()
+      reader.onload = () => {
+        const text = (reader.result as string) ?? ''
+        const result = parseVendorPriceCSV(text)
+        if ('error' in result) {
+          setCsvStatus({ type: 'error', message: result.error })
+          setCsvLoading(false)
+          return
+        }
+        applyPriceRows(result.prices, 'csv_upload', file.name, {
+          rowCount: result.rowCount,
+          validRowCount: result.validRowCount,
+          invalidRowCount: result.invalidRowCount,
+          hasSkuPercent: result.hasSkuPercent,
+          errors: result.errors,
+        })
+        setCsvLoading(false)
+      }
+      reader.readAsText(file, 'UTF-8')
     }
-    reader.readAsText(file, 'UTF-8')
   }
 
   const handleImageFile = async (file: File) => {
@@ -462,7 +489,7 @@ export function VendorDetailModal({
             )}
             <Button onClick={() => setAddProductOpen(true)}>+ Add Product</Button>
             <Button variant="secondary" onClick={() => setImportMode(importMode === 'csv' ? null : 'csv')}>
-              Import CSV
+              Import CSV / Excel
             </Button>
             <Button variant="secondary" onClick={() => setImportMode(importMode === 'image' ? null : 'image')}>
               Import from File (AI)
@@ -519,17 +546,17 @@ export function VendorDetailModal({
           {importMode && importMode !== 'bulk' && !reviewRows && (
             <div className="border border-surface-border rounded-xl p-4 space-y-3">
               <div className="flex gap-2 border-b border-surface-border pb-2">
-                <TabBtn label="CSV" mode="csv" active={importMode} onClick={(m) => { setImportMode(m); setReviewRows(null); setCsvStatus(null) }} />
+                <TabBtn label="CSV / Excel" mode="csv" active={importMode} onClick={(m) => { setImportMode(m); setReviewRows(null); setCsvStatus(null) }} />
                 <TabBtn label="File (AI)" mode="image" active={importMode} onClick={(m) => { setImportMode(m); setReviewRows(null); setCsvStatus(null) }} />
               </div>
 
               {importMode === 'csv' ? (
                 <>
                   <FileUpload
-                    accept=".csv"
+                    accept=".csv,.xlsx,.xls,.xlsm"
                     onFile={handleCsvFile}
-                    label="Drag a CSV file or click to select"
-                    hint="Columns: product_name, price (required). Optional: sku, brand, unit_size, unit_type, available"
+                    label="Drag a CSV or Excel file or click to select"
+                    hint="Supports .csv, .xlsx, .xls — Columns: product_name, price (required). Optional: sku, brand, unit_size, unit_type, available"
                   />
                   {csvLoading && <p className="text-sm text-muted">Processing CSV...</p>}
                 </>

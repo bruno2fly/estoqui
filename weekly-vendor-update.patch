@@ -1,0 +1,215 @@
+diff --git a/client/src/features/vendors/components/VendorDetailModal.tsx b/client/src/features/vendors/components/VendorDetailModal.tsx
+index aac9a62..92d3c67 100644
+--- a/client/src/features/vendors/components/VendorDetailModal.tsx
++++ b/client/src/features/vendors/components/VendorDetailModal.tsx
+@@ -12,6 +12,7 @@ import {
+   daysSinceUpdate,
+   getScoreColor,
+   getStatusBadge,
++  isUpdatedThisWeek,
+ } from '../lib/vendorScore'
+ import { stripPackFromName } from '@/lib/pack/parsePack'
+ import { AddProductToVendorModal } from './AddProductToVendorModal'
+@@ -43,6 +44,7 @@ export function VendorDetailModal({
+   )
+   const setVendorPrice = useStore((s) => s.setVendorPrice)
+   const removeVendorPrice = useStore((s) => s.removeVendorPrice)
++  const clearVendorPrices = useStore((s) => s.clearVendorPrices)
+   const addProduct = useStore((s) => s.addProduct)
+   const setMatch = useStore((s) => s.setMatch)
+   const addActivity = useStore((s) => s.addActivity)
+@@ -107,6 +109,10 @@ export function VendorDetailModal({
+   }
+ 
+   const applyPriceRows = (rows: VendorPriceRow[], source: 'csv_upload' | 'whatsapp_parse', fileName: string, parseStats?: { rowCount: number; validRowCount: number; invalidRowCount: number; hasSkuPercent: number; errors: { row: number; message: string }[] }) => {
++    // Weekly full replacement: remove ALL old prices before importing the new list
++    const oldPriceCount = state.vendorPrices.filter((vp) => vp.vendorId === vendor.id).length
++    clearVendorPrices(vendor.id)
++
+     let priceAdded = 0
+     let priceUpdated = 0
+     let productsCreated = 0
+@@ -190,17 +196,17 @@ export function VendorDetailModal({
+     updateVendor(vendor.id, { score: newScore, status: newStatus })
+ 
+     const parts = []
++    if (oldPriceCount) parts.push(`${oldPriceCount} old prices removed`)
+     if (priceAdded) parts.push(`${priceAdded} prices added`)
+-    if (priceUpdated) parts.push(`${priceUpdated} prices updated`)
+     if (productsCreated) parts.push(`${productsCreated} new products created`)
+ 
+     addActivity(
+       'vendor_price_updated',
+-      `Vendor import: ${vendor.name} — ${parts.join(', ')}`
++      `Vendor weekly update: ${vendor.name} — ${parts.join(', ')}`
+     )
+     setCsvStatus({
+       type: 'success',
+-      message: `Imported! Prices added: ${priceAdded} | Updated: ${priceUpdated}${productsCreated ? ` | New products: ${productsCreated}` : ''}`,
++      message: `List replaced! ${oldPriceCount ? `Removed ${oldPriceCount} old prices. ` : ''}Added ${priceAdded} prices.${productsCreated ? ` ${productsCreated} new products created.` : ''}`,
+       errors: parseStats?.errors,
+     })
+     setImportMode(null)
+@@ -350,6 +356,25 @@ export function VendorDetailModal({
+             </div>
+           )}
+ 
++          {/* Weekly update notification */}
++          {isUpdatedThisWeek(vendor) ? (
++            <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800/40 rounded-lg px-3 py-2 text-sm text-green-700 dark:text-green-300 flex items-center gap-2">
++              <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
++                <polyline points="20 6 9 17 4 12" />
++              </svg>
++              Updated this week — list is current.
++            </div>
++          ) : (
++            <div className="bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800/40 rounded-lg px-3 py-2 text-sm text-orange-700 dark:text-orange-300 flex items-center gap-2">
++              <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
++                <circle cx="12" cy="12" r="10" />
++                <line x1="12" y1="8" x2="12" y2="12" />
++                <line x1="12" y1="16" x2="12.01" y2="16" />
++              </svg>
++              Not updated this week — upload a new price list to replace the current one.
++            </div>
++          )}
++
+           {/* Vendor Info */}
+           <div className="flex items-start justify-between gap-4">
+             <div className="text-sm text-fg space-y-0.5">
+diff --git a/client/src/features/vendors/components/VendorsPage.tsx b/client/src/features/vendors/components/VendorsPage.tsx
+index e282369..48c08bc 100644
+--- a/client/src/features/vendors/components/VendorsPage.tsx
++++ b/client/src/features/vendors/components/VendorsPage.tsx
+@@ -10,6 +10,8 @@ import {
+   daysSinceUpdate,
+   getScoreColor,
+   getStatusBadge,
++  isUpdatedThisWeek,
++  getWeeklyBadge,
+ } from '../lib/vendorScore'
+ import type { Vendor, VendorStatus } from '@/types'
+ 
+@@ -114,16 +116,19 @@ export function VendorsPage() {
+   const activeCount = vendorRows.filter((r) => r.status === 'active').length
+   const probationCount = vendorRows.filter((r) => r.status === 'probation').length
+   const inactiveCount = vendorRows.filter((r) => r.status === 'inactive').length
++  const updatedThisWeekCount = vendors.filter((v) => isUpdatedThisWeek(v)).length
++  const needsUpdateCount = vendors.length - updatedThisWeekCount
+ 
+   return (
+     <div className="space-y-6">
+       {/* Summary cards */}
+       {vendors.length > 0 && (
+-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
++        <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+           <SummaryCard label="Avg Score" value={avgScore} color={getScoreColor(avgScore)} tip="The average quality score of all your vendors. Higher is better — based on how often they update prices and how complete their product lists are." />
+           <SummaryCard label="Active" value={activeCount} color="text-green-600 dark:text-green-400" tip="Vendors who are up to date. Their price lists are recent and ready to use." />
+           <SummaryCard label="Probation" value={probationCount} color="text-amber-600 dark:text-amber-400" tip="Vendors whose price lists are getting old. They need to send you an updated list soon." />
+           <SummaryCard label="Inactive" value={inactiveCount} color="text-red-600 dark:text-red-400" tip="Vendors who haven't sent a price list in a long time. You may want to contact them or remove them." />
++          <SummaryCard label="Needs Update" value={needsUpdateCount} color={needsUpdateCount > 0 ? 'text-orange-600 dark:text-orange-400' : 'text-green-600 dark:text-green-400'} tip="Vendors who have NOT uploaded a new price list this week. Every vendor needs a full list replacement each week." />
+         </div>
+       )}
+ 
+@@ -173,6 +178,9 @@ export function VendorsPage() {
+                   <th className="text-left text-fg-secondary font-semibold text-[11px] uppercase px-3 py-3">
+                     <span className="inline-flex items-center gap-1">Status <InfoTip text="Shows if this vendor is Active (up to date), on Probation (getting old), or Inactive (very outdated)." /></span>
+                   </th>
++                  <th className="text-left text-fg-secondary font-semibold text-[11px] uppercase px-3 py-3">
++                    <span className="inline-flex items-center gap-1">This Week <InfoTip text="Shows if this vendor's price list has been updated during the current week (Monday to Sunday). Vendors need a fresh list every week." /></span>
++                  </th>
+                   <SortHeader label="Score" sortKey="score" current={sortKey} dir={sortDir} onClick={toggleSort} sortIcon={sortIcon} />
+                   <SortHeader label="Last Update" sortKey="lastUpdate" current={sortKey} dir={sortDir} onClick={toggleSort} sortIcon={sortIcon} />
+                   <th className="text-left text-fg-secondary font-semibold text-[11px] uppercase px-3 py-3">
+@@ -206,6 +214,16 @@ export function VendorsPage() {
+                           {badge.label}
+                         </span>
+                       </td>
++                      <td className="px-3 py-3">
++                        {(() => {
++                          const weekBadge = getWeeklyBadge(vendor)
++                          return (
++                            <span className={`inline-block px-2 py-0.5 rounded-md text-[10px] font-semibold uppercase tracking-wide ${weekBadge.className}`}>
++                              {weekBadge.label}
++                            </span>
++                          )
++                        })()}
++                      </td>
+                       <td className="px-3 py-3">
+                         <span className={`text-xl font-bold tabular-nums ${getScoreColor(score)}`}>
+                           {score}
+diff --git a/client/src/features/vendors/lib/vendorScore.ts b/client/src/features/vendors/lib/vendorScore.ts
+index 75f02b1..24bd702 100644
+--- a/client/src/features/vendors/lib/vendorScore.ts
++++ b/client/src/features/vendors/lib/vendorScore.ts
+@@ -50,6 +50,25 @@ export function getScoreColor(score: number): string {
+   return 'text-red-600 dark:text-red-400'
+ }
+ 
++/** Check if a vendor's price list was updated during the current week (Mon–Sun). */
++export function isUpdatedThisWeek(vendor: Vendor): boolean {
++  if (!vendor.lastPriceListAt) return false
++  const now = new Date()
++  // Get Monday of current week
++  const day = now.getDay() // 0=Sun, 1=Mon...
++  const diff = day === 0 ? 6 : day - 1 // days since Monday
++  const monday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - diff)
++  monday.setHours(0, 0, 0, 0)
++  return new Date(vendor.lastPriceListAt) >= monday
++}
++
++export function getWeeklyBadge(vendor: Vendor): { label: string; className: string } {
++  if (isUpdatedThisWeek(vendor)) {
++    return { label: 'Updated', className: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' }
++  }
++  return { label: 'Needs Update', className: 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400' }
++}
++
+ export function getStatusBadge(status: VendorStatus | undefined): { label: string; className: string } {
+   switch (status) {
+     case 'active':
+diff --git a/client/src/lib/supabase/vendorPrices.ts b/client/src/lib/supabase/vendorPrices.ts
+index e912efc..3599d9a 100644
+--- a/client/src/lib/supabase/vendorPrices.ts
++++ b/client/src/lib/supabase/vendorPrices.ts
+@@ -59,3 +59,15 @@ export async function deleteVendorPrice(vendorId: string, productId: string): Pr
+     throw error
+   }
+ }
++
++/** Delete ALL prices for a vendor (used for weekly full-list replacement). */
++export async function deleteAllVendorPrices(vendorId: string): Promise<void> {
++  const { error } = await supabase
++    .from('vendor_prices')
++    .delete()
++    .eq('vendor_id', vendorId)
++  if (error) {
++    console.error('[Supabase vendor_prices] deleteAll error:', error)
++    throw error
++  }
++}
+diff --git a/client/src/store/slices/vendorPricesSlice.ts b/client/src/store/slices/vendorPricesSlice.ts
+index 6ae0410..f4e0a30 100644
+--- a/client/src/store/slices/vendorPricesSlice.ts
++++ b/client/src/store/slices/vendorPricesSlice.ts
+@@ -1,7 +1,7 @@
+ import type { VendorPrice } from '@/types'
+ import type { StateSetter, StateGetter } from '../types'
+ import { supabase } from '@/lib/supabase'
+-import { upsertVendorPrice, deleteVendorPrice as dbDeleteVendorPrice, upsertVendorPrices } from '@/lib/supabase/vendorPrices'
++import { upsertVendorPrice, deleteVendorPrice as dbDeleteVendorPrice, upsertVendorPrices, deleteAllVendorPrices as dbDeleteAllVendorPrices } from '@/lib/supabase/vendorPrices'
+ import { emitSupabaseError } from '@/lib/supabase/errorEmitter'
+ 
+ export const initialVendorPricesState = {
+@@ -45,5 +45,12 @@ export function getVendorPricesActions(set: StateSetter, _get: StateGetter) {
+     setVendorPrices: (prices: VendorPrice[]) => {
+       set(() => ({ vendorPrices: prices }))
+     },
++    /** Remove all prices for a vendor from state + DB (weekly full replacement). */
++    clearVendorPrices: (vendorId: string) => {
++      set((s) => ({
++        vendorPrices: s.vendorPrices.filter((p) => p.vendorId !== vendorId),
++      }))
++      dbDeleteAllVendorPrices(vendorId).catch((e) => emitSupabaseError('Clear vendor prices', e))
++    },
+   }
+ }
