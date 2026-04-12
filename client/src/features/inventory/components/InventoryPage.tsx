@@ -31,7 +31,7 @@ export function InventoryPage() {
   const [aiLoading, setAiLoading] = useState(false)
   const bulkCreateProductsFromSnapshot = useStore((s) => s.bulkCreateProductsFromSnapshot)
   const addVendor = useStore((s) => s.addVendor)
-  const setVendorPrice = useStore((s) => s.setVendorPrice)
+  const setVendorPricesBatch = useStore((s) => s.setVendorPricesBatch)
   const [confirmReset, setConfirmReset] = useState(false)
 
   // Order state — persisted in Zustand store so it survives navigation
@@ -171,6 +171,7 @@ export function InventoryPage() {
 
       let newVendorCount = 0
       const resolvedVendors: Record<string, string> = {}
+      const batchPrices: { vendorId: string; productId: string; unitPrice: number; updatedAt: string }[] = []
 
       for (const row of vendorRows) {
         const vendorName = row.rawVendor!.trim()
@@ -189,15 +190,17 @@ export function InventoryPage() {
           }
         }
 
-        const vendorId = resolvedVendors[vendorKey]
-        const productId = row.matchedProductId!
-
-        setVendorPrice({
-          vendorId,
-          productId,
+        batchPrices.push({
+          vendorId: resolvedVendors[vendorKey],
+          productId: row.matchedProductId!,
           unitPrice: row.unitCost!,
           updatedAt: new Date().toISOString(),
         })
+      }
+
+      // Single batch update instead of individual calls — prevents UI freeze
+      if (batchPrices.length > 0) {
+        setVendorPricesBatch(batchPrices as any)
       }
 
       if (newVendorCount > 0) {
