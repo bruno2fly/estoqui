@@ -35,8 +35,10 @@ export function getVendorPricesActions(set: StateSetter, _get: StateGetter) {
     },
         setVendorPricesBatch: (prices: VendorPrice[]) => {
       set((s) => {
+        // Use a Set for O(1) lookup instead of O(n*m) .some()
+        const keySet = new Set(prices.map((np) => `${np.vendorId}|${np.productId}`))
         const rest = s.vendorPrices.filter(
-          (p) => !prices.some((np) => np.vendorId === p.vendorId && np.productId === p.productId)
+          (p) => !keySet.has(`${p.vendorId}|${p.productId}`)
         )
         return { vendorPrices: [...rest, ...prices] }
       })

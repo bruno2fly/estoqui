@@ -244,7 +244,18 @@ export function InventoryPage() {
         setUploadMessage('No products found in CSV.')
         return
       }
-      processStockRows(rows, file.name, 'csv')
+      // Use setTimeout to let the overlay render before heavy processing
+      setTimeout(() => {
+        try {
+          processStockRows(rows, file.name, 'csv')
+        } catch (err) {
+          const msg = err instanceof Error ? err.message : 'Failed to process CSV'
+          setOverlayStatus('error')
+          setOverlayMessage(msg)
+          setUploadStatus('error')
+          setUploadMessage(msg)
+        }
+      }, 50)
     }
     reader.readAsText(file)
   }
@@ -273,6 +284,8 @@ export function InventoryPage() {
         setAiLoading(false)
         return
       }
+      // Use setTimeout to let the overlay render before heavy processing
+      await new Promise((r) => setTimeout(r, 50))
       processStockRows(result.rows, file.name, 'ai')
     } catch (e) {
       const msg = e instanceof Error ? e.message : 'Failed to process file'
