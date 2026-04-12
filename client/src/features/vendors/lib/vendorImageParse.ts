@@ -75,6 +75,7 @@ price
 * numeric only
 * convert comma decimals
 * if missing → null
+* IMPORTANT: some vendor documents are catalogs/inventory lists WITHOUT prices. Still extract the products — set price to null. Do NOT confuse stock quantity, "on hand", "qty", or inventory counts with price.
 
 confidence
 * high: clear structured row
@@ -129,7 +130,7 @@ export async function parseVendorPriceImageWithOpenAI(
     items = parsed as Record<string, unknown>[]
   }
 
-  if (items.length === 0) return { error: 'No products with prices found in the file.' }
+  if (items.length === 0) return { error: 'No products found in the file.' }
 
   const prices: VendorPriceRow[] = items
     .map((item) => {
@@ -179,8 +180,9 @@ export async function parseVendorPriceImageWithOpenAI(
         priceBasis,
       }
     })
-    .filter((p) => p.name.length > 0 && p.price > 0)
+    // Only require a name — products without prices are still valid (catalog imports)
+    .filter((p) => p.name.length > 0)
 
-  if (prices.length === 0) return { error: 'No valid products with prices extracted from the file.' }
+  if (prices.length === 0) return { error: 'No valid products extracted from the file.' }
   return { prices }
 }

@@ -79,6 +79,7 @@ price
 * numeric only
 * convert comma decimals
 * if missing → null
+* IMPORTANT: some vendor documents are catalogs/inventory lists WITHOUT prices. Still extract the products — set price to null. Do NOT confuse stock quantity, "on hand", "qty", or inventory counts with price.
 
 confidence
 * high: clear structured row
@@ -202,7 +203,7 @@ async function processBatch(
           : parseFloat(String(priceRaw).replace(/[R$,]/g, '.').replace(/\.(?=.*\.)/g, ''))
 
       const name = String(item.product_name ?? item.name ?? '').trim()
-      if (!name || (Number.isNaN(price) ? 0 : price) <= 0) return null
+      if (!name) return null
 
       const rawSku = String(item.sku ?? '').trim()
       const sku = rawSku === 'missing' ? '' : rawSku

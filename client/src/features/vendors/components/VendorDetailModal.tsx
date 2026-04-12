@@ -334,7 +334,7 @@ export function VendorDetailModal({
 
   const handleReviewImport = () => {
     if (!reviewRows) return
-    const selected = reviewRows.filter((r) => r.selected && r.name.trim() && r.price > 0)
+    const selected = reviewRows.filter((r) => r.selected && r.name.trim())
     if (selected.length === 0) {
       toast.show('No valid rows selected', 'error')
       return
