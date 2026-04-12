@@ -106,7 +106,8 @@ export async function parseVendorPriceImageWithOpenAI(
     file,
     apiKey,
     SYSTEM_PROMPT,
-    'Extract all products and their prices from this vendor price list / catalog.'
+    'Extract all products and their prices from this vendor price list / catalog.',
+    16384 // Large token limit to handle vendor lists with 100+ products
   )
   if ('error' in result) return result
 

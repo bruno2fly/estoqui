@@ -76,7 +76,8 @@ export async function callOpenAIVision(
   file: File,
   apiKey: string,
   systemPrompt: string,
-  userPrompt: string
+  userPrompt: string,
+  maxTokens?: number
 ): Promise<{ content: string } | { error: string }> {
   if (!apiKey.trim()) {
     return { error: 'OpenAI API key is required. Add it in Settings.' }
@@ -95,7 +96,7 @@ export async function callOpenAIVision(
     },
   ]
 
-  return callOpenAIRaw(apiKey, messages)
+  return callOpenAIRaw(apiKey, messages, maxTokens)
 }
 
 /**
@@ -106,14 +107,15 @@ export async function callOpenAIDocument(
   file: File,
   apiKey: string,
   systemPrompt: string,
-  userPrompt: string
+  userPrompt: string,
+  maxTokens?: number
 ): Promise<{ content: string } | { error: string }> {
   if (!apiKey.trim()) {
     return { error: 'OpenAI API key is required. Add it in Settings.' }
   }
 
   if (isImageFile(file)) {
-    return callOpenAIVision(file, apiKey, systemPrompt, userPrompt)
+    return callOpenAIVision(file, apiKey, systemPrompt, userPrompt, maxTokens)
   }
 
   // PDFs are binary — send as base64 to the vision endpoint
@@ -132,7 +134,7 @@ export async function callOpenAIDocument(
         ],
       },
     ]
-    return callOpenAIRaw(apiKey, messages)
+    return callOpenAIRaw(apiKey, messages, maxTokens)
   }
 
   // Text-based file: read as text and send inline
@@ -152,7 +154,7 @@ export async function callOpenAIDocument(
     },
   ]
 
-  return callOpenAIRaw(apiKey, messages)
+  return callOpenAIRaw(apiKey, messages, maxTokens)
 }
 
 /**
