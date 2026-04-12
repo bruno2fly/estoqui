@@ -16,8 +16,10 @@ import {
 } from '../lib/vendorScore'
 import { stripPackFromName } from '@/lib/pack/parsePack'
 import { AddProductToVendorModal } from './AddProductToVendorModal'
+import { BulkScreenshotImport } from './BulkScreenshotImport'
+import type { BulkExtractedRow } from '../lib/vendorBulkParse'
 
-type ImportMode = 'csv' | 'image'
+type ImportMode = 'csv' | 'image' | 'bulk'
 
 interface ReviewRow extends VendorPriceRow {
   selected: boolean
@@ -313,6 +315,24 @@ export function VendorDetailModal({
     applyPriceRows(selected, 'whatsapp_parse', 'AI import')
   }
 
+  const handleBulkImport = (rows: BulkExtractedRow[]) => {
+    const priceRows: VendorPriceRow[] = rows.map((r) => ({
+      sku: r.sku,
+      name: r.name,
+      brand: r.brand,
+      unitSize: r.unitSize,
+      unitType: r.unitType,
+      price: r.price,
+      available: r.available,
+      packType: r.packType,
+      unitsPerCase: r.unitsPerCase,
+      unitDescriptor: r.unitDescriptor,
+      priceBasis: r.priceBasis,
+    }))
+    applyPriceRows(priceRows, 'whatsapp_parse', `Bulk import (${rows.length} products)`)
+    setImportMode(null)
+  }
+
   const selectedCount = reviewRows?.filter((r) => r.selected).length ?? 0
 
   return (
@@ -447,6 +467,21 @@ export function VendorDetailModal({
             <Button variant="secondary" onClick={() => setImportMode(importMode === 'image' ? null : 'image')}>
               Import from File (AI)
             </Button>
+            <Button
+              variant="secondary"
+              onClick={() => setImportMode(importMode === 'bulk' ? null : 'bulk')}
+              className="!border-purple-400 !text-purple-600 dark:!text-purple-400 hover:!bg-purple-50 dark:hover:!bg-purple-900/20"
+            >
+              <span className="flex items-center gap-1.5">
+                <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="3" y="3" width="7" height="7" />
+                  <rect x="14" y="3" width="7" height="7" />
+                  <rect x="3" y="14" width="7" height="7" />
+                  <rect x="14" y="14" width="7" height="7" />
+                </svg>
+                Bulk Screenshots (AI)
+              </span>
+            </Button>
             <Button variant="secondary" onClick={downloadVendorCsvTemplate}>
               Download CSV Template
             </Button>
@@ -480,8 +515,8 @@ export function VendorDetailModal({
             </div>
           )}
 
-          {/* Import section */}
-          {importMode && !reviewRows && (
+          {/* Import section (CSV / single file AI) */}
+          {importMode && importMode !== 'bulk' && !reviewRows && (
             <div className="border border-surface-border rounded-xl p-4 space-y-3">
               <div className="flex gap-2 border-b border-surface-border pb-2">
                 <TabBtn label="CSV" mode="csv" active={importMode} onClick={(m) => { setImportMode(m); setReviewRows(null); setCsvStatus(null) }} />
@@ -525,6 +560,15 @@ export function VendorDetailModal({
                 Close
               </Button>
             </div>
+          )}
+
+          {/* Bulk screenshot import */}
+          {importMode === 'bulk' && !reviewRows && (
+            <BulkScreenshotImport
+              apiKey={settings?.openaiApiKey ?? ''}
+              onImport={handleBulkImport}
+              onCancel={() => setImportMode(null)}
+            />
           )}
 
           {/* Review rows */}
