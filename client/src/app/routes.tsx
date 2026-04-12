@@ -9,6 +9,7 @@ import { VendorsPage } from '@/features/vendors'
 import { HistoryPage } from '@/features/history'
 import { SettingsPage } from '@/features/settings'
 import { HelpPage } from '@/features/help'
+import { ConverterPage } from '@/features/converter'
 import { NeedsSkuQueuePage } from '@/features/import'
 
 export function AppRoutes() {
@@ -22,6 +23,7 @@ export function AppRoutes() {
           <Route path="catalog" element={<CatalogPage />} />
           <Route path="vendors" element={<VendorsPage />} />
           <Route path="catalog/needs-sku" element={<NeedsSkuQueuePage />} />
+          <Route path="converter" element={<ConverterPage />} />
           <Route path="history" element={<HistoryPage />} />
           <Route path="settings" element={<SettingsPage />} />
           <Route path="help" element={<HelpPage />} />

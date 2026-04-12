@@ -8,6 +8,7 @@ const mainNavItems = [
   { to: '/inventory', label: 'Inventory', icon: InventoryIcon },
   { to: '/vendors', label: 'Vendors', icon: VendorsIcon },
   { to: '/catalog', label: 'Catalog', icon: CatalogIcon },
+  { to: '/converter', label: 'File Converter', icon: ConverterIcon },
   { to: '/history', label: 'History', icon: HistoryIcon },
 ] as const
 
@@ -21,6 +22,7 @@ const pathToTitle: Record<string, string> = {
   '/inventory': 'Inventory',
   '/catalog': 'Catalog',
   '/vendors': 'Vendors',
+  '/converter': 'File Converter',
   '/catalog/needs-sku': 'Needs SKU',
   '/history': 'History',
   '/settings': 'Settings',
@@ -332,6 +334,18 @@ function LogoutIcon({ className }: { className?: string }) {
       <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4" />
       <polyline points="16 17 21 12 16 7" />
       <line x1="21" y1="12" x2="9" y2="12" />
+    </svg>
+  )
+}
+
+function ConverterIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <polyline points="16 3 21 3 21 8" />
+      <line x1="4" y1="20" x2="21" y2="3" />
+      <polyline points="21 16 21 21 16 21" />
+      <line x1="15" y1="15" x2="21" y2="21" />
+      <line x1="4" y1="4" x2="9" y2="9" />
     </svg>
   )
 }
