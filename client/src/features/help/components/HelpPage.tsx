@@ -62,10 +62,18 @@ export function HelpPage() {
   const [openFaq, setOpenFaq] = useState<number | null>(null)
 
   return (
-    <div className="space-y-5 max-w-3xl">
+    <div className="space-y-6 max-w-3xl">
       {/* Getting Started */}
-      <div className="bg-surface border border-surface-border rounded-2xl p-6">
-        <h2 className="text-fg font-semibold text-lg mb-3">Getting Started</h2>
+      <div className="bg-surface border border-surface-border rounded-2xl p-6 shadow-sm">
+        <div className="flex items-center gap-2.5 mb-3">
+          <span className="flex size-9 items-center justify-center rounded-xl bg-accent text-accent-foreground">
+            <svg className="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2z" />
+              <path d="M22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z" />
+            </svg>
+          </span>
+          <h2 className="text-fg font-semibold text-lg">Getting Started</h2>
+        </div>
         <div className="space-y-3 text-[13px] text-fg-secondary leading-relaxed">
           <p>
             Welcome to <span className="font-semibold text-fg">Estoqui</span> — your inventory management system for small markets and grocery stores. Here's how to get up and running:
@@ -81,27 +89,46 @@ export function HelpPage() {
       </div>
 
       {/* Quick Links */}
-      <div className="bg-surface border border-surface-border rounded-2xl p-6">
-        <h2 className="text-fg font-semibold text-lg mb-3">Quick Links</h2>
+      <div className="bg-surface border border-surface-border rounded-2xl p-6 shadow-sm">
+        <div className="flex items-center gap-2.5 mb-4">
+          <span className="flex size-9 items-center justify-center rounded-xl bg-accent text-accent-foreground">
+            <svg className="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71" />
+              <path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71" />
+            </svg>
+          </span>
+          <h2 className="text-fg font-semibold text-lg">Quick Links</h2>
+        </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
           {quickLinks.map((link) => (
             <a
               key={link.path}
               href={link.path}
-              className="flex items-start gap-3 p-3 rounded-xl border border-surface-border hover:bg-surface-hover transition-colors"
+              className="group flex items-center gap-3 p-3.5 rounded-xl border border-surface-border bg-background/40 hover:border-primary/40 hover:bg-surface-hover transition-colors"
             >
-              <div className="min-w-0">
+              <div className="min-w-0 flex-1">
                 <p className="text-[13px] font-medium text-fg">{link.label}</p>
                 <p className="text-[11px] text-muted mt-0.5">{link.description}</p>
               </div>
+              <svg className="size-4 shrink-0 text-muted transition-transform group-hover:translate-x-0.5 group-hover:text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="9 18 15 12 9 6" />
+              </svg>
             </a>
           ))}
         </div>
       </div>
 
       {/* FAQ */}
-      <div className="bg-surface border border-surface-border rounded-2xl p-6">
-        <h2 className="text-fg font-semibold text-lg mb-3">Frequently Asked Questions</h2>
+      <div className="bg-surface border border-surface-border rounded-2xl p-6 shadow-sm">
+        <div className="flex items-center gap-2.5 mb-2">
+          <span className="flex size-9 items-center justify-center rounded-xl bg-accent text-accent-foreground">
+            <svg className="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9" />
+              <circle cx="12" cy="13" r="0.5" fill="currentColor" />
+            </svg>
+          </span>
+          <h2 className="text-fg font-semibold text-lg">Frequently Asked Questions</h2>
+        </div>
         <div className="divide-y divide-surface-border">
           {faqs.map((faq, i) => (
             <div key={i}>
@@ -134,23 +161,31 @@ export function HelpPage() {
       </div>
 
       {/* Contact */}
-      <div className="bg-surface border border-surface-border rounded-2xl p-6">
-        <h2 className="text-fg font-semibold text-lg mb-3">Need More Help?</h2>
-        <div className="space-y-3 text-[13px] text-fg-secondary leading-relaxed">
-          <p>
+      <div className="relative overflow-hidden bg-primary text-primary-foreground rounded-2xl p-6 shadow-sm">
+        <div className="pointer-events-none absolute -right-10 -top-14 size-44 rounded-full bg-primary-foreground/10 blur-2xl" />
+        <div className="relative">
+          <span className="flex size-10 items-center justify-center rounded-xl bg-primary-foreground/15">
+            <svg className="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="10" />
+              <path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3" />
+              <line x1="12" y1="17" x2="12.01" y2="17" />
+            </svg>
+          </span>
+          <h2 className="font-semibold text-lg mt-4">Need More Help?</h2>
+          <p className="text-[13px] text-primary-foreground/80 leading-relaxed mt-1">
             If you can't find what you're looking for, reach out to the Estoqui team:
           </p>
-          <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-2.5 mt-4 text-[13px]">
             <div className="flex items-center gap-2.5">
-              <MailIcon className="w-4 h-4 text-fg-secondary shrink-0" />
-              <a href="mailto:support@2fly.digital" className="text-primary hover:underline">support@2fly.digital</a>
+              <MailIcon className="w-4 h-4 text-primary-foreground/70 shrink-0" />
+              <a href="mailto:support@2fly.digital" className="font-medium underline-offset-2 hover:underline">support@2fly.digital</a>
             </div>
-            <div className="flex items-center gap-2.5">
-              <PhoneIcon className="w-4 h-4 text-fg-secondary shrink-0" />
+            <div className="flex items-center gap-2.5 text-primary-foreground/80">
+              <PhoneIcon className="w-4 h-4 text-primary-foreground/70 shrink-0" />
               <span>WhatsApp: Contact your administrator</span>
             </div>
           </div>
-          <p className="text-[11px] text-muted mt-4">
+          <p className="text-[11px] text-primary-foreground/60 mt-5">
             Estoqui v1.0 — Built by 2Fly Digital
           </p>
         </div>

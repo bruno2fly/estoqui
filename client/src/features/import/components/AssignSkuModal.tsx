@@ -67,13 +67,13 @@ export function AssignSkuModal({ open, onClose, row, onResolved }: AssignSkuModa
             value={sku}
             onChange={(e) => setSku(e.target.value)}
             placeholder="Enter SKU"
-            className="w-full bg-input-bg border border-input-border text-fg px-3 py-2 rounded-lg text-[13px] focus:outline-none focus:border-primary"
+            className="w-full bg-input-bg border border-input-border text-fg px-3 py-2 rounded-lg text-[13px] focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
           />
           {skuExists && (
-            <p className="text-[12px] text-emerald-600 mt-1">Will link to existing product</p>
+            <p className="text-[12px] text-success mt-1">Will link to existing product</p>
           )}
           {sku.trim() && !skuExists && (
-            <p className="text-[12px] text-amber-600 mt-1">Will create new product with this SKU</p>
+            <p className="text-[12px] text-warning mt-1">Will create new product with this SKU</p>
           )}
         </div>
 
@@ -91,7 +91,7 @@ export function AssignSkuModal({ open, onClose, row, onResolved }: AssignSkuModa
           <button
             type="button"
             onClick={handleClose}
-            className="px-4 py-2 rounded-lg text-[13px] text-fg-secondary hover:bg-surface-hover"
+            className="px-4 py-2 rounded-xl border border-surface-border text-[13px] text-fg-secondary hover:bg-surface-hover transition-colors"
           >
             Cancel
           </button>
@@ -99,7 +99,7 @@ export function AssignSkuModal({ open, onClose, row, onResolved }: AssignSkuModa
             type="button"
             onClick={handleSave}
             disabled={!skuValid}
-            className="px-4 py-2 rounded-lg bg-fg text-background text-[13px] font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:opacity-90"
+            className="px-4 py-2 rounded-xl bg-primary text-primary-foreground text-[13px] font-medium shadow-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-primary-hover transition-colors"
           >
             Save
           </button>

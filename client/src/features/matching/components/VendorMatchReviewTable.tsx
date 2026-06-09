@@ -83,7 +83,7 @@ export function VendorMatchReviewTable() {
               onClick={() => setFilterStatus(key)}
               className={`px-2.5 py-1 rounded-lg text-[11px] font-medium transition-colors ${
                 filterStatus === key
-                  ? 'bg-fg text-background'
+                  ? 'bg-primary text-primary-foreground shadow-sm'
                   : 'text-fg-secondary hover:bg-surface-hover'
               }`}
             >
@@ -96,13 +96,13 @@ export function VendorMatchReviewTable() {
           placeholder="Search product name..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="bg-input-bg border border-input-border text-fg px-3 py-1.5 rounded-lg text-[12px] w-52"
+          className="bg-input-bg border border-input-border text-fg px-3 py-1.5 rounded-lg text-[12px] w-52 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
         />
         {brands.length > 0 && (
           <select
             value={brandFilter}
             onChange={(e) => setBrandFilter(e.target.value)}
-            className="bg-input-bg border border-input-border text-fg px-2 py-1.5 rounded-lg text-[12px]"
+            className="bg-input-bg border border-input-border text-fg px-2 py-1.5 rounded-lg text-[12px] focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
           >
             <option value="">All brands</option>
             {brands.map((b) => (
@@ -119,7 +119,7 @@ export function VendorMatchReviewTable() {
             <thead>
               <tr>
                 {['Vendor Product', 'Brand', 'Pack', 'Unit Size', 'Case Price', 'Unit Cost', 'Confidence', 'Match', 'Actions'].map((h) => (
-                  <th key={h} className="text-left text-fg font-semibold text-[12px] px-4 py-3 whitespace-nowrap">
+                  <th key={h} className="text-left text-muted font-semibold text-[11px] uppercase tracking-wider px-4 py-3 whitespace-nowrap bg-surface-hover/40 border-b border-surface-border">
                     {h}
                   </th>
                 ))}
@@ -177,14 +177,14 @@ function MatchRow({
   const confidencePct = Math.round(result.confidence * 100)
   const confidenceColor =
     confidencePct >= 88 ? 'text-success' :
-    confidencePct >= 60 ? 'text-amber-500' :
+    confidencePct >= 60 ? 'text-warning' :
     'text-danger'
 
   const statusBadge = {
-    auto: { label: 'Auto', cls: 'bg-success/10 text-success' },
-    confirmed: { label: 'Confirmed', cls: 'bg-primary/10 text-primary' },
-    needs_review: { label: 'Review', cls: 'bg-amber-500/10 text-amber-600' },
-    new_product: { label: 'New', cls: 'bg-purple-500/10 text-purple-600' },
+    auto: { label: 'Auto', cls: 'bg-success-bg text-success' },
+    confirmed: { label: 'Confirmed', cls: 'bg-accent text-accent-foreground' },
+    needs_review: { label: 'Review', cls: 'bg-warning-bg text-warning' },
+    new_product: { label: 'New', cls: 'bg-accent text-primary' },
   }[result.status]
 
   const handleBrandBlur = () => {
@@ -209,7 +209,7 @@ function MatchRow({
           value={editBrand}
           onChange={(e) => setEditBrand(e.target.value)}
           onBlur={handleBrandBlur}
-          className="bg-input-bg border border-input-border text-fg px-2 py-1 rounded-md text-[11px] w-24"
+          className="bg-input-bg border border-input-border text-fg px-2 py-1 rounded-md text-[11px] w-24 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
           placeholder="Brand"
           title="Edit to teach the system this brand"
         />
@@ -238,7 +238,7 @@ function MatchRow({
           <select
             value={selectedId}
             onChange={(e) => setSelectedId(e.target.value)}
-            className="bg-input-bg border border-input-border text-fg px-2 py-1.5 rounded-lg text-[11px] min-w-[200px]"
+            className="bg-input-bg border border-input-border text-fg px-2 py-1.5 rounded-lg text-[11px] min-w-[200px] focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
           >
             <option value="">Select match...</option>
             {result.candidates.map((c) => {
@@ -268,14 +268,14 @@ function MatchRow({
               type="button"
               disabled={!selectedId}
               onClick={() => { if (selectedId) onConfirm(result.vendorRowId, selectedId) }}
-              className="px-2.5 py-1.5 rounded-md bg-fg text-background text-[11px] font-medium hover:opacity-80 transition-opacity disabled:opacity-40"
+              className="px-2.5 py-1.5 rounded-lg bg-primary text-primary-foreground text-[11px] font-medium shadow-sm hover:bg-primary-hover transition-colors disabled:opacity-40"
             >
               Confirm
             </button>
             <button
               type="button"
               onClick={() => onCreateNew(result.vendorRowId)}
-              className="px-2.5 py-1.5 rounded-md border border-surface-border text-[11px] font-medium text-fg-secondary hover:bg-surface-hover transition-colors"
+              className="px-2.5 py-1.5 rounded-lg border border-surface-border text-[11px] font-medium text-fg-secondary hover:bg-surface-hover transition-colors"
             >
               New
             </button>

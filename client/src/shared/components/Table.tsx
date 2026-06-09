@@ -21,7 +21,7 @@ export function Table({
             {headers.map((h, i) => (
               <th
                 key={i}
-                className="text-fg-secondary font-semibold text-xs uppercase px-3 py-3 text-left border-b border-surface-border"
+                className="text-muted font-semibold text-[11px] uppercase tracking-wider px-3 py-3 text-left border-b border-surface-border bg-surface-hover/40"
               >
                 {h}
               </th>

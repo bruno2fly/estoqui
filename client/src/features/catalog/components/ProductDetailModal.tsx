@@ -93,20 +93,21 @@ export function ProductDetailModal({
 
         <div>
           <h3 className="text-fg font-semibold mb-3">Vendor Prices</h3>
-          <div className="overflow-x-auto">
+          <div className="border border-surface-border rounded-xl overflow-hidden">
+            <div className="overflow-x-auto">
             <table className="w-full border-collapse text-sm">
               <thead>
-                <tr className="border-b border-surface-border">
-                  <th className="text-left text-muted font-semibold py-2">Vendor</th>
-                  <th className="text-left text-muted font-semibold py-2">Unit Price</th>
-                  <th className="text-left text-muted font-semibold py-2">Updated</th>
-                  <th className="text-left text-muted font-semibold py-2">Status</th>
+                <tr>
+                  <th className="text-left text-muted font-semibold text-[11px] uppercase tracking-wider px-3 py-2.5 bg-surface-hover/40 border-b border-surface-border">Vendor</th>
+                  <th className="text-left text-muted font-semibold text-[11px] uppercase tracking-wider px-3 py-2.5 bg-surface-hover/40 border-b border-surface-border">Unit Price</th>
+                  <th className="text-left text-muted font-semibold text-[11px] uppercase tracking-wider px-3 py-2.5 bg-surface-hover/40 border-b border-surface-border">Updated</th>
+                  <th className="text-left text-muted font-semibold text-[11px] uppercase tracking-wider px-3 py-2.5 bg-surface-hover/40 border-b border-surface-border">Status</th>
                 </tr>
               </thead>
               <tbody>
                 {sortedPrices.length === 0 ? (
                   <tr>
-                    <td colSpan={4} className="py-4 text-center text-muted text-sm">
+                    <td colSpan={4} className="py-8 text-center text-muted text-sm">
                       No prices registered
                     </td>
                   </tr>
@@ -120,14 +121,14 @@ export function ProductDetailModal({
                     return (
                       <tr
                         key={`${vp.vendorId}-${vp.productId}`}
-                        className="border-b border-surface-border"
+                        className="border-t border-surface-border hover:bg-surface-hover transition-colors"
                       >
-                        <td className="py-2">{vp.vendor?.name ?? '-'}</td>
-                        <td className="py-2">
+                        <td className="px-3 py-2.5 text-fg">{vp.vendor?.name ?? '-'}</td>
+                        <td className="px-3 py-2.5 text-fg tabular-nums font-medium">
                           $ {vp.unitPrice.toFixed(2)}
                         </td>
-                        <td className="py-2">{daysAgo} days ago</td>
-                        <td className="py-2">
+                        <td className="px-3 py-2.5 text-fg-secondary tabular-nums">{daysAgo} days ago</td>
+                        <td className="px-3 py-2.5">
                           <Badge variant={isFresh ? 'fresh' : 'stale'}>
                             {isFresh ? 'FRESH' : 'STALE'}
                           </Badge>
@@ -138,6 +139,7 @@ export function ProductDetailModal({
                 )}
               </tbody>
             </table>
+            </div>
           </div>
         </div>
       </div>

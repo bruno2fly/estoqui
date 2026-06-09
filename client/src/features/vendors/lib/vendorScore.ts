@@ -45,9 +45,9 @@ export function daysSinceUpdate(vendor: Vendor): number | null {
 }
 
 export function getScoreColor(score: number): string {
-  if (score >= 70) return 'text-green-600 dark:text-green-400'
-  if (score >= 40) return 'text-amber-600 dark:text-amber-400'
-  return 'text-red-600 dark:text-red-400'
+  if (score >= 70) return 'text-success'
+  if (score >= 40) return 'text-warning'
+  return 'text-danger'
 }
 
 /** Check if a vendor's price list was updated during the current week (Mon–Sun). */
@@ -64,19 +64,19 @@ export function isUpdatedThisWeek(vendor: Vendor): boolean {
 
 export function getWeeklyBadge(vendor: Vendor): { label: string; className: string } {
   if (isUpdatedThisWeek(vendor)) {
-    return { label: 'Updated', className: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' }
+    return { label: 'Updated', className: 'bg-success-bg text-success border border-success/30' }
   }
-  return { label: 'Needs Update', className: 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400' }
+  return { label: 'Needs Update', className: 'bg-warning-bg text-warning border border-warning/30' }
 }
 
 export function getStatusBadge(status: VendorStatus | undefined): { label: string; className: string } {
   switch (status) {
     case 'active':
-      return { label: 'Active', className: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' }
+      return { label: 'Active', className: 'bg-success-bg text-success border border-success/30' }
     case 'probation':
-      return { label: 'Probation', className: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400' }
+      return { label: 'Probation', className: 'bg-warning-bg text-warning border border-warning/30' }
     case 'inactive':
     default:
-      return { label: 'Inactive', className: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' }
+      return { label: 'Inactive', className: 'bg-danger-bg text-danger border border-danger/30' }
   }
 }

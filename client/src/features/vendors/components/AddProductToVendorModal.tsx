@@ -120,7 +120,7 @@ export function AddProductToVendorModal({
               required={useExisting}
               value={existingProductId}
               onChange={(e) => setExistingProductId(e.target.value)}
-              className="w-full bg-input-bg border border-input-border text-fg px-2.5 py-2 rounded-lg text-sm"
+              className="w-full bg-input-bg border border-input-border text-fg px-2.5 py-2 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
             >
               <option value="">Select...</option>
               {products.map((p) => (

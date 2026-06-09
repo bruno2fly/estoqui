@@ -20,11 +20,12 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
           id={inputId}
           className={`
             w-full bg-input-bg border border-input-border text-fg
-            px-2.5 py-2 rounded-lg text-sm resize-y min-h-[80px]
+            px-3 py-2 rounded-xl text-sm resize-y min-h-[80px]
             placeholder:text-muted
-            focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/30
+            transition-colors
+            focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20
             disabled:opacity-50 disabled:cursor-not-allowed
-            ${error ? 'border-danger' : ''}
+            ${error ? 'border-danger focus:border-danger focus:ring-danger/20' : ''}
             ${className}
           `}
           {...props}

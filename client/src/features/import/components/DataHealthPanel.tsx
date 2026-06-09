@@ -31,22 +31,32 @@ export function DataHealthPanel() {
   }
 
   return (
-    <div className="bg-surface border border-surface-border rounded-2xl p-5">
-      <h3 className="text-[15px] font-semibold text-fg mb-4">Data Health</h3>
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-4">
-        <div className="bg-surface-hover rounded-xl p-4">
+    <div className="bg-surface border border-surface-border rounded-2xl p-6 shadow-sm">
+      <div className="flex items-center gap-3 mb-5">
+        <span className="flex size-10 items-center justify-center rounded-xl bg-accent text-accent-foreground">
+          <svg className="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
+          </svg>
+        </span>
+        <div>
+          <h2 className="text-base font-semibold text-fg">Data Health</h2>
+          <p className="text-xs text-fg-secondary">Catalog quality at a glance</p>
+        </div>
+      </div>
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-5">
+        <div className="bg-surface border border-surface-border rounded-xl p-4">
           <div className="text-2xl font-bold tabular-nums text-fg">{missingBarcode}</div>
           <div className="text-[11px] text-muted uppercase tracking-wide mt-1">Products missing barcode</div>
         </div>
-        <div className="bg-surface-hover rounded-xl p-4">
-          <div className="text-2xl font-bold tabular-nums text-amber-600">{unresolvedCount}</div>
+        <div className="bg-surface border border-surface-border rounded-xl p-4">
+          <div className="text-2xl font-bold tabular-nums text-warning">{unresolvedCount}</div>
           <div className="text-[11px] text-muted uppercase tracking-wide mt-1">Unresolved rows</div>
         </div>
-        <div className="bg-surface-hover rounded-xl p-4">
-          <div className="text-2xl font-bold tabular-nums text-red-500">{duplicateBarcodeConflicts}</div>
+        <div className="bg-surface border border-surface-border rounded-xl p-4">
+          <div className="text-2xl font-bold tabular-nums text-danger">{duplicateBarcodeConflicts}</div>
           <div className="text-[11px] text-muted uppercase tracking-wide mt-1">Duplicate barcode conflicts</div>
         </div>
-        <div className="bg-surface-hover rounded-xl p-4">
+        <div className="bg-surface border border-surface-border rounded-xl p-4">
           <div className="text-2xl font-bold tabular-nums text-fg">{products.length}</div>
           <div className="text-[11px] text-muted uppercase tracking-wide mt-1">Catalog products</div>
         </div>
@@ -55,14 +65,14 @@ export function DataHealthPanel() {
         <button
           type="button"
           onClick={handleExportCatalog}
-          className="px-3 py-1.5 rounded-lg bg-fg text-background text-[12px] font-medium hover:opacity-80"
+          className="px-4 py-2 rounded-xl bg-primary text-primary-foreground text-[12px] font-medium shadow-sm hover:bg-primary-hover transition-colors"
         >
           Export catalog CSV
         </button>
         <button
           type="button"
           onClick={handleExportPrices}
-          className="px-3 py-1.5 rounded-lg bg-surface-hover text-fg text-[12px] font-medium hover:bg-surface-border"
+          className="px-4 py-2 rounded-xl bg-surface border border-surface-border text-fg text-[12px] font-medium hover:bg-surface-hover transition-colors"
         >
           Export vendor prices CSV
         </button>

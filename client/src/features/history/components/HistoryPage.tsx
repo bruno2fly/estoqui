@@ -9,13 +9,18 @@ export function HistoryPage() {
 
   return (
     <div className="space-y-6">
-      <div className="bg-surface border border-surface-border rounded-2xl p-5">
-        <div className="flex items-center gap-2 mb-4">
-          <svg className="w-4 h-4 text-fg-secondary" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-            <circle cx="12" cy="12" r="10" />
-            <polyline points="12 6 12 12 16 14" />
-          </svg>
-          <span className="text-[13px] font-semibold text-fg">Order History</span>
+      <div className="bg-surface border border-surface-border rounded-2xl p-6 shadow-sm">
+        <div className="flex items-center gap-3 mb-5">
+          <span className="flex size-10 items-center justify-center rounded-xl bg-accent text-accent-foreground">
+            <svg className="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="10" />
+              <polyline points="12 6 12 12 16 14" />
+            </svg>
+          </span>
+          <div>
+            <h2 className="text-base font-semibold text-fg">Order History</h2>
+            <p className="text-xs text-fg-secondary">Every purchase order you've created</p>
+          </div>
         </div>
 
         {orders.length === 0 ? (
@@ -26,7 +31,7 @@ export function HistoryPage() {
               <thead>
                 <tr>
                   {['Date', 'Items', 'Vendors', 'Total', ''].map((h, i) => (
-                    <th key={i} className="text-left text-fg font-semibold text-[13px] px-4 py-3">
+                    <th key={i} className="text-left text-muted font-semibold text-[11px] uppercase tracking-wider px-4 py-3 bg-surface-hover/40 border-b border-surface-border">
                       {h}
                     </th>
                   ))}
@@ -43,27 +48,27 @@ export function HistoryPage() {
                       key={order.id}
                       className="border-t border-surface-border hover:bg-surface-hover transition-colors"
                     >
-                      <td className="px-4 py-3 text-[13px] text-fg">
+                      <td className="px-4 py-3.5 text-[13px] text-fg">
                         {date.toLocaleDateString('pt-BR')}{' '}
                         {date.toLocaleTimeString('pt-BR', {
                           hour: '2-digit',
                           minute: '2-digit',
                         })}
                       </td>
-                      <td className="px-4 py-3 text-[13px] text-fg">
+                      <td className="px-4 py-3.5 text-[13px] text-fg-secondary tabular-nums">
                         {order.lines.length}
                       </td>
-                      <td className="px-4 py-3 text-[13px] text-fg">
+                      <td className="px-4 py-3.5 text-[13px] text-fg-secondary tabular-nums">
                         {vendorCount}
                       </td>
-                      <td className="px-4 py-3 text-[13px] text-fg">
+                      <td className="px-4 py-3.5 text-[13px] font-medium text-fg tabular-nums">
                         $ {order.total.toFixed(2)}
                       </td>
-                      <td className="px-4 py-3 text-right">
+                      <td className="px-4 py-3.5 text-right">
                         <button
                           type="button"
                           onClick={() => setDetailOrderId(order.id)}
-                          className="px-3 py-1.5 rounded-md bg-fg text-background text-[11px] font-medium hover:opacity-80 transition-opacity"
+                          className="px-3 py-1.5 rounded-lg border border-surface-border bg-surface text-[12px] font-medium text-fg hover:bg-surface-hover hover:border-primary/40 transition-colors"
                         >
                           View Details
                         </button>

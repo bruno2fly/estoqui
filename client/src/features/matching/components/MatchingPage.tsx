@@ -149,15 +149,20 @@ export function MatchingPage() {
       </div>
 
       {/* Import section */}
-      <div className="bg-surface border border-surface-border rounded-2xl p-5">
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-2">
-            <svg className="w-4 h-4 text-fg-secondary" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
-              <polyline points="17 8 12 3 7 8" />
-              <line x1="12" y1="3" x2="12" y2="15" />
-            </svg>
-            <span className="text-[13px] font-semibold text-fg">Import & Match</span>
+      <div className="bg-surface border border-surface-border rounded-2xl p-6 shadow-sm">
+        <div className="flex items-center justify-between mb-5">
+          <div className="flex items-center gap-3">
+            <span className="flex size-10 items-center justify-center rounded-xl bg-accent text-accent-foreground">
+              <svg className="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
+                <polyline points="17 8 12 3 7 8" />
+                <line x1="12" y1="3" x2="12" y2="15" />
+              </svg>
+            </span>
+            <div>
+              <h2 className="text-base font-semibold text-fg">Import &amp; Match</h2>
+              <p className="text-xs text-fg-secondary">Import POS and vendor lists, then resolve matches</p>
+            </div>
           </div>
           {matchResults.length > 0 && (
             <button
@@ -175,7 +180,7 @@ export function MatchingPage() {
             type="button"
             onClick={() => setMode('pos')}
             className={`px-3 py-1.5 rounded-lg text-[12px] font-medium transition-colors ${
-              mode === 'pos' ? 'bg-fg text-background' : 'text-muted hover:text-fg'
+              mode === 'pos' ? 'bg-primary text-primary-foreground shadow-sm' : 'text-fg-secondary hover:text-fg hover:bg-surface-hover'
             }`}
           >
             1. Import POS / Master Catalog
@@ -184,7 +189,7 @@ export function MatchingPage() {
             type="button"
             onClick={() => setMode('vendor')}
             className={`px-3 py-1.5 rounded-lg text-[12px] font-medium transition-colors ${
-              mode === 'vendor' ? 'bg-fg text-background' : 'text-muted hover:text-fg'
+              mode === 'vendor' ? 'bg-primary text-primary-foreground shadow-sm' : 'text-fg-secondary hover:text-fg hover:bg-surface-hover'
             }`}
           >
             2. Import Vendor Price List
@@ -213,12 +218,17 @@ export function MatchingPage() {
 
       {/* Review table */}
       {matchResults.length > 0 && (
-        <div className="bg-surface border border-surface-border rounded-2xl p-5">
-          <div className="flex items-center gap-2 mb-4">
-            <svg className="w-4 h-4 text-fg-secondary" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-              <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
-            </svg>
-            <span className="text-[13px] font-semibold text-fg">Match Review</span>
+        <div className="bg-surface border border-surface-border rounded-2xl p-6 shadow-sm">
+          <div className="flex items-center gap-3 mb-5">
+            <span className="flex size-10 items-center justify-center rounded-xl bg-accent text-accent-foreground">
+              <svg className="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+              </svg>
+            </span>
+            <div>
+              <h2 className="text-base font-semibold text-fg">Match Review</h2>
+              <p className="text-xs text-fg-secondary">Confirm vendor items against your master catalog</p>
+            </div>
           </div>
           <VendorMatchReviewTable />
         </div>
@@ -229,9 +239,9 @@ export function MatchingPage() {
 
 function StatCard({ label, value, highlight }: { label: string; value: number; highlight?: boolean }) {
   return (
-    <div className="border border-surface-border rounded-xl p-3.5">
+    <div className="bg-surface border border-surface-border rounded-2xl p-4 shadow-sm transition-shadow hover:shadow-md">
       <p className="text-[11px] text-fg-secondary leading-tight">{label}</p>
-      <p className={`text-[22px] font-bold leading-none tabular-nums mt-0.5 ${highlight ? 'text-amber-500' : 'text-fg'}`}>
+      <p className={`text-[22px] font-bold leading-none tabular-nums mt-0.5 ${highlight ? 'text-warning' : 'text-fg'}`}>
         {String(value).padStart(2, '0')}
       </p>
     </div>

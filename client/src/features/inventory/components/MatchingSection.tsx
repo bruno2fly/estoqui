@@ -108,22 +108,27 @@ export function MatchingSection({
   }
 
   return (
-    <div className="bg-surface border border-surface-border rounded-2xl p-5">
-      <div className="flex items-center gap-2 mb-3">
-        <svg className="w-4 h-4 text-fg-secondary" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-          <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
-        </svg>
-        <span className="text-[13px] font-semibold text-fg">Map Products</span>
+    <div className="bg-surface border border-surface-border rounded-2xl p-6 shadow-sm">
+      <div className="flex items-center gap-3 mb-5">
+        <span className="flex size-10 items-center justify-center rounded-xl bg-accent text-accent-foreground">
+          <svg className="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+          </svg>
+        </span>
+        <div>
+          <h2 className="text-base font-semibold text-fg">Map Products</h2>
+          <p className="text-xs text-fg-secondary">Match imported items to your catalog or create new ones</p>
+        </div>
       </div>
       <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
-        <p className="text-muted text-[12px]">
+        <p className="text-fg-secondary text-sm">
           Unmatched items ({unmatched.length}). Map to existing products or create new ones.
         </p>
         <button
           type="button"
           disabled={bulkCreating}
           onClick={handleCreateAll}
-          className="px-4 py-2 rounded-lg bg-primary text-white text-[12px] font-medium hover:opacity-90 transition-opacity disabled:opacity-50"
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-primary text-primary-foreground text-sm font-medium shadow-sm hover:bg-primary-hover transition-colors disabled:opacity-50"
         >
           {bulkCreating
             ? 'Creating…'
@@ -136,7 +141,7 @@ export function MatchingSection({
             <thead>
               <tr>
                 {['SKU (CSV)', 'Name (CSV)', 'Brand (CSV)', 'Stock', 'Category', 'Action'].map((h) => (
-                  <th key={h} className="text-left text-fg font-semibold text-[13px] px-4 py-3">
+                  <th key={h} className="text-left text-muted font-semibold text-[11px] uppercase tracking-wider px-4 py-3 bg-surface-hover/40 border-b border-surface-border">
                     {h}
                   </th>
                 ))}
@@ -148,12 +153,12 @@ export function MatchingSection({
                   <td className="px-4 py-3 text-[13px] text-fg font-mono">{row.rawSku || '-'}</td>
                   <td className="px-4 py-3 text-[13px] text-fg">{row.rawName}</td>
                   <td className="px-4 py-3 text-[13px] text-fg">{row.rawBrand || '-'}</td>
-                  <td className="px-4 py-3 text-[13px] text-fg">{row.stockQty}</td>
+                  <td className="px-4 py-3 text-[13px] text-fg tabular-nums">{row.stockQty}</td>
                   <td className="px-4 py-3 text-[13px] text-muted">{row.category || '-'}</td>
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-2 flex-wrap">
                       <select
-                        className="bg-input-bg border border-input-border text-fg px-2 py-1.5 rounded-lg text-[12px] min-w-[180px]"
+                        className="bg-input-bg border border-input-border text-fg px-2 py-1.5 rounded-lg text-[12px] min-w-[180px] focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
                         value=""
                         onChange={(e) =>
                           handleMapToProduct(snapshotRowIndex, e.target.value)
@@ -168,7 +173,7 @@ export function MatchingSection({
                       <button
                         type="button"
                         onClick={() => handleCreateProduct(snapshotRowIndex)}
-                        className="px-3 py-1.5 rounded-md bg-fg text-background text-[11px] font-medium hover:opacity-80 transition-opacity"
+                        className="px-3 py-1.5 rounded-lg bg-surface border border-surface-border text-fg text-[11px] font-medium hover:bg-surface-hover hover:border-primary/40 transition-colors"
                       >
                         Create Product
                       </button>

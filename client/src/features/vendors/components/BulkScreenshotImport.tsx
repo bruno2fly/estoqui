@@ -128,7 +128,7 @@ export function BulkScreenshotImport({ apiKey, onImport, onCancel }: BulkScreens
 
       {/* WhatsApp Help Instructions */}
       {showHelp && (
-        <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800/40 rounded-lg px-4 py-3 space-y-3 text-sm text-green-800 dark:text-green-200">
+        <div className="bg-success-bg border border-success/30 rounded-lg px-4 py-3 space-y-3 text-sm text-success">
           <p className="font-semibold">How to download all images from WhatsApp:</p>
 
           <div className="space-y-2">
@@ -259,7 +259,7 @@ export function BulkScreenshotImport({ apiKey, onImport, onCancel }: BulkScreens
                 ))}
               </div>
 
-              <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800/40 rounded-lg px-3 py-2 text-xs text-blue-700 dark:text-blue-300">
+              <div className="bg-accent border border-primary/20 rounded-lg px-3 py-2 text-xs text-accent-foreground">
                 <strong>Estimated:</strong>{' '}
                 {Math.ceil(files.length / 5)} API calls{' '}
                 ({Math.ceil(files.length / 5) * 5 > files.length
@@ -321,7 +321,7 @@ export function BulkScreenshotImport({ apiKey, onImport, onCancel }: BulkScreens
           </div>
 
           {errors.length > 0 && (
-            <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/40 rounded-lg px-3 py-2 text-xs text-amber-700 dark:text-amber-300">
+            <div className="bg-warning-bg border border-warning/30 rounded-lg px-3 py-2 text-xs text-warning">
               <p className="font-medium mb-1">{errors.length} batch error(s) — processing continued:</p>
               {errors.map((e, i) => (
                 <p key={i}>{e}</p>
@@ -336,30 +336,30 @@ export function BulkScreenshotImport({ apiKey, onImport, onCancel }: BulkScreens
         <div className="space-y-3">
           {/* Summary cards */}
           <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
-            <div className="bg-surface-hover rounded-lg p-2.5 text-center">
-              <p className="text-lg font-bold text-fg">{results.length}</p>
+            <div className="bg-surface border border-surface-border rounded-xl p-2.5 text-center">
+              <p className="text-lg font-bold text-fg tabular-nums">{results.length}</p>
               <p className="text-[10px] text-muted uppercase">Total Products</p>
             </div>
-            <div className="bg-surface-hover rounded-lg p-2.5 text-center">
-              <p className="text-lg font-bold text-green-600">{highCount}</p>
+            <div className="bg-surface border border-surface-border rounded-xl p-2.5 text-center">
+              <p className="text-lg font-bold text-success tabular-nums">{highCount}</p>
               <p className="text-[10px] text-muted uppercase">High Confidence</p>
             </div>
-            <div className="bg-surface-hover rounded-lg p-2.5 text-center">
-              <p className="text-lg font-bold text-amber-600">{medCount}</p>
+            <div className="bg-surface border border-surface-border rounded-xl p-2.5 text-center">
+              <p className="text-lg font-bold text-warning tabular-nums">{medCount}</p>
               <p className="text-[10px] text-muted uppercase">Medium</p>
             </div>
-            <div className="bg-surface-hover rounded-lg p-2.5 text-center">
-              <p className="text-lg font-bold text-red-600">{lowCount}</p>
+            <div className="bg-surface border border-surface-border rounded-xl p-2.5 text-center">
+              <p className="text-lg font-bold text-danger tabular-nums">{lowCount}</p>
               <p className="text-[10px] text-muted uppercase">Low / Uncertain</p>
             </div>
-            <div className="bg-surface-hover rounded-lg p-2.5 text-center">
-              <p className="text-lg font-bold text-fg">{selectedRows.size}</p>
+            <div className="bg-surface border border-surface-border rounded-xl p-2.5 text-center">
+              <p className="text-lg font-bold text-fg tabular-nums">{selectedRows.size}</p>
               <p className="text-[10px] text-muted uppercase">Selected</p>
             </div>
           </div>
 
           {errors.length > 0 && (
-            <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/40 rounded-lg px-3 py-2 text-xs text-amber-700 dark:text-amber-300">
+            <div className="bg-warning-bg border border-warning/30 rounded-lg px-3 py-2 text-xs text-warning">
               {errors.length} batch(es) had errors — some products may be missing.
             </div>
           )}
@@ -368,8 +368,8 @@ export function BulkScreenshotImport({ apiKey, onImport, onCancel }: BulkScreens
           <div className="max-h-[400px] overflow-y-auto border border-surface-border rounded-lg">
             <table className="w-full border-collapse text-xs">
               <thead className="sticky top-0 bg-surface z-10">
-                <tr className="border-b border-surface-border">
-                  <th className="py-2 px-2 text-left">
+                <tr>
+                  <th className="py-2.5 px-2 text-left bg-surface-hover/40 border-b border-surface-border">
                     <input
                       type="checkbox"
                       checked={selectedRows.size === results.length}
@@ -377,24 +377,24 @@ export function BulkScreenshotImport({ apiKey, onImport, onCancel }: BulkScreens
                       className="accent-primary"
                     />
                   </th>
-                  <th className="py-2 px-2 text-left text-fg-secondary font-semibold">#</th>
-                  <th className="py-2 px-2 text-left text-fg-secondary font-semibold">SKU</th>
-                  <th className="py-2 px-2 text-left text-fg-secondary font-semibold">Product</th>
-                  <th className="py-2 px-2 text-left text-fg-secondary font-semibold">Brand</th>
-                  <th className="py-2 px-2 text-left text-fg-secondary font-semibold">Size</th>
-                  <th className="py-2 px-2 text-right text-fg-secondary font-semibold">Price</th>
-                  <th className="py-2 px-2 text-center text-fg-secondary font-semibold">Conf.</th>
+                  <th className="py-2.5 px-2 text-left text-muted font-semibold text-[11px] uppercase tracking-wider bg-surface-hover/40 border-b border-surface-border">#</th>
+                  <th className="py-2.5 px-2 text-left text-muted font-semibold text-[11px] uppercase tracking-wider bg-surface-hover/40 border-b border-surface-border">SKU</th>
+                  <th className="py-2.5 px-2 text-left text-muted font-semibold text-[11px] uppercase tracking-wider bg-surface-hover/40 border-b border-surface-border">Product</th>
+                  <th className="py-2.5 px-2 text-left text-muted font-semibold text-[11px] uppercase tracking-wider bg-surface-hover/40 border-b border-surface-border">Brand</th>
+                  <th className="py-2.5 px-2 text-left text-muted font-semibold text-[11px] uppercase tracking-wider bg-surface-hover/40 border-b border-surface-border">Size</th>
+                  <th className="py-2.5 px-2 text-right text-muted font-semibold text-[11px] uppercase tracking-wider bg-surface-hover/40 border-b border-surface-border">Price</th>
+                  <th className="py-2.5 px-2 text-center text-muted font-semibold text-[11px] uppercase tracking-wider bg-surface-hover/40 border-b border-surface-border">Conf.</th>
                 </tr>
               </thead>
               <tbody>
                 {results.map((row, i) => (
                   <tr
                     key={i}
-                    className={`border-b border-surface-border ${
+                    className={`border-t border-surface-border ${
                       selectedRows.has(i) ? '' : 'opacity-40'
                     } ${
                       row.confidence === 'low'
-                        ? 'bg-red-50/50 dark:bg-red-900/10'
+                        ? 'bg-danger-bg/50'
                         : ''
                     }`}
                   >
@@ -415,22 +415,22 @@ export function BulkScreenshotImport({ apiKey, onImport, onCancel }: BulkScreens
                     <td className="py-1.5 px-2 text-fg-secondary whitespace-nowrap">
                       {row.unitSize || '-'}
                       {row.packType === 'CASE' && (
-                        <span className="ml-1 text-[10px] text-blue-600 dark:text-blue-400 font-bold">
+                        <span className="ml-1 text-[10px] text-primary font-bold">
                           x{row.unitsPerCase}
                         </span>
                       )}
                     </td>
-                    <td className="py-1.5 px-2 text-right text-fg font-medium">
+                    <td className="py-1.5 px-2 text-right text-fg font-medium tabular-nums">
                       ${row.price.toFixed(2)}
                     </td>
                     <td className="py-1.5 px-2 text-center">
                       <span
                         className={`inline-block px-1.5 py-0.5 rounded text-[10px] font-bold uppercase ${
                           row.confidence === 'high'
-                            ? 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300'
+                            ? 'bg-success-bg text-success'
                             : row.confidence === 'medium'
-                              ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300'
-                              : 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300'
+                              ? 'bg-warning-bg text-warning'
+                              : 'bg-danger-bg text-danger'
                         }`}
                       >
                         {row.confidence}

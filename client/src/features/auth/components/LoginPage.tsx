@@ -72,16 +72,22 @@ export function LoginPage() {
   }
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center bg-gradient-to-br from-slate-800 via-blue-900 to-slate-900 px-4 w-full">
-      <div className="w-full max-w-[420px] bg-white rounded-2xl shadow-2xl p-10">
+    <div className="fixed inset-0 flex items-center justify-center bg-background px-4 w-full overflow-hidden">
+      {/* Subtle purple glow accents */}
+      <div className="pointer-events-none absolute -top-24 -left-24 size-80 rounded-full bg-primary/10 blur-3xl" />
+      <div className="pointer-events-none absolute -bottom-32 -right-16 size-96 rounded-full bg-primary/10 blur-3xl" />
+
+      <div className="relative w-full max-w-[420px] bg-surface border border-surface-border rounded-2xl shadow-2xl p-8 md:p-10">
         {/* Branding */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-14 h-14 rounded-xl bg-blue-100 mb-4">
-            <WarehouseIcon className="w-8 h-8 text-blue-600" />
+          <div className="inline-flex items-center justify-center size-14 rounded-2xl bg-primary text-primary-foreground shadow-sm mb-4">
+            <WarehouseIcon className="size-7" />
           </div>
-          <h1 className="text-2xl font-bold text-slate-800 tracking-tight">ESTOQUI</h1>
-          <p className="text-gray-400 mt-1">Inventory Management</p>
-          <p className="text-sm text-gray-500 mt-3 mb-8">
+          <h1 className="text-2xl font-extrabold tracking-tight text-fg">
+            <span className="text-primary">ESTOQUI</span>
+          </h1>
+          <p className="text-muted mt-1 text-sm">Inventory Management</p>
+          <p className="text-sm text-fg-secondary mt-3">
             {isRegister
               ? 'Create your account to get started.'
               : 'Streamline your stock, vendors, and orders in one place.'}
@@ -89,8 +95,8 @@ export function LoginPage() {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label htmlFor="email" className="block text-sm font-medium text-slate-700 mb-1.5">
+          <div className="flex flex-col gap-1.5">
+            <label htmlFor="email" className="text-sm font-medium text-fg-secondary">
               Email
             </label>
             <input
@@ -102,12 +108,12 @@ export function LoginPage() {
               autoComplete="email"
               autoFocus
               required
-              className="w-full py-3 px-4 rounded-lg border border-gray-300 bg-white text-slate-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
+              className="w-full py-2.5 px-3.5 rounded-xl border border-input-border bg-input-bg text-fg placeholder:text-muted transition-colors focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
             />
           </div>
 
-          <div>
-            <label htmlFor="password" className="block text-sm font-medium text-slate-700 mb-1.5">
+          <div className="flex flex-col gap-1.5">
+            <label htmlFor="password" className="text-sm font-medium text-fg-secondary">
               Password
             </label>
             <div className="relative">
@@ -120,31 +126,31 @@ export function LoginPage() {
                 autoComplete={isRegister ? 'new-password' : 'current-password'}
                 required
                 minLength={isRegister ? 6 : undefined}
-                className="w-full py-3 px-4 pr-12 rounded-lg border border-gray-300 bg-white text-slate-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
+                className="w-full py-2.5 px-3.5 pr-12 rounded-xl border border-input-border bg-input-bg text-fg placeholder:text-muted transition-colors focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 text-gray-400 hover:text-gray-600 transition-colors rounded"
+                className="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 text-muted hover:text-fg transition-colors rounded-lg"
                 aria-label={showPassword ? 'Hide password' : 'Show password'}
               >
                 {showPassword ? (
-                  <EyeOffIcon className="w-5 h-5" />
+                  <EyeOffIcon className="size-5" />
                 ) : (
-                  <EyeIcon className="w-5 h-5" />
+                  <EyeIcon className="size-5" />
                 )}
               </button>
             </div>
           </div>
 
           {error && (
-            <p className="text-sm text-red-600 text-center bg-red-50 py-2 px-3 rounded-lg">
+            <p className="text-sm text-danger text-center bg-danger-bg py-2 px-3 rounded-xl">
               {error}
             </p>
           )}
 
           {successMsg && (
-            <p className="text-sm text-green-700 text-center bg-green-50 py-2 px-3 rounded-lg">
+            <p className="text-sm text-success text-center bg-success-bg py-2 px-3 rounded-xl">
               {successMsg}
             </p>
           )}
@@ -152,7 +158,7 @@ export function LoginPage() {
           <button
             type="submit"
             disabled={loading || !email || !password}
-            className="w-full py-3 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold transition-colors disabled:bg-slate-400 disabled:hover:bg-slate-400 disabled:cursor-not-allowed"
+            className="w-full py-2.5 rounded-xl bg-primary hover:bg-primary-hover text-primary-foreground font-semibold shadow-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {loading
               ? (isRegister ? 'Creating account...' : 'Signing in...')
@@ -162,13 +168,13 @@ export function LoginPage() {
           <button
             type="button"
             onClick={() => { setIsRegister(!isRegister); setError(''); setSuccessMsg('') }}
-            className="block w-full text-center text-sm text-blue-600 hover:text-blue-700 transition-colors"
+            className="block w-full text-center text-sm font-medium text-primary hover:underline transition-colors"
           >
             {isRegister ? 'Already have an account? Sign in' : "Don't have an account? Create one"}
           </button>
         </form>
 
-        <p className="text-xs text-gray-400 text-center mt-8">By 2Fly</p>
+        <p className="text-xs text-muted text-center mt-8">By 2Fly</p>
       </div>
     </div>
   )

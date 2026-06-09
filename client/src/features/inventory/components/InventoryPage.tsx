@@ -325,8 +325,8 @@ export function InventoryPage() {
       onClick={() => { setUploadMode(tabMode); setUploadStatus('idle') }}
       className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
         uploadMode === tabMode
-          ? 'bg-primary text-white'
-          : 'text-muted hover:text-fg'
+          ? 'bg-primary text-primary-foreground shadow-sm'
+          : 'text-fg-secondary hover:text-fg hover:bg-surface-hover'
       }`}
     >
       {label}
@@ -337,21 +337,26 @@ export function InventoryPage() {
     <div className="space-y-6">
       {/* Upload section — hide when order cards are showing */}
       {!showOrderCards && (
-        <div className="bg-surface border border-surface-border rounded-2xl p-5">
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-2">
-              <svg className="w-3.5 h-3.5 text-fg-secondary" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
-                <polyline points="17 8 12 3 7 8" />
-                <line x1="12" y1="3" x2="12" y2="15" />
-              </svg>
-              <span className="text-[13px] font-semibold text-fg">Upload POS Report</span>
+        <div className="bg-surface border border-surface-border rounded-2xl p-6 shadow-sm">
+          <div className="flex items-center justify-between mb-5">
+            <div className="flex items-center gap-3">
+              <span className="flex size-10 items-center justify-center rounded-xl bg-accent text-accent-foreground">
+                <svg className="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
+                  <polyline points="17 8 12 3 7 8" />
+                  <line x1="12" y1="3" x2="12" y2="15" />
+                </svg>
+              </span>
+              <div>
+                <h2 className="text-base font-semibold text-fg">Upload POS Report</h2>
+                <p className="text-xs text-fg-secondary">Import a stock snapshot to build your reorder list</p>
+              </div>
             </div>
             {hasActiveSession && (
               <button
                 type="button"
                 onClick={() => setConfirmReset(true)}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-medium text-danger border border-danger/30 hover:bg-danger/10 transition-colors"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-medium text-danger border border-danger/30 hover:bg-danger-bg transition-colors"
               >
                 <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <polyline points="1 4 1 10 7 10" />
@@ -377,7 +382,7 @@ export function InventoryPage() {
           ) : (
             <>
               {!settings?.openaiApiKey && (
-                <div className="bg-amber-50 dark:bg-yellow-900/30 border border-amber-200 dark:border-yellow-700/50 rounded-lg px-3 py-2 text-sm text-amber-700 dark:text-yellow-200 mb-3">
+                <div className="bg-warning-bg border border-warning/30 rounded-lg px-3 py-2 text-sm text-warning mb-3">
                   OpenAI API key required. Go to <strong>Settings → AI / Image Import</strong> to add your key.
                 </div>
               )}

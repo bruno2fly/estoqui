@@ -404,9 +404,9 @@ export function VendorDetailModal({
             <ComplianceCard
               label="Last Update"
               value={
-                <span className={`text-sm font-medium ${isStale ? 'text-red-500' : 'text-fg'}`}>
+                <span className={`text-sm font-medium tabular-nums ${isStale ? 'text-danger' : 'text-fg'}`}>
                   {days !== null ? (days === 0 ? 'Today' : `${days}d ago`) : 'Never'}
-                  {isStale && <span className="block text-[10px] text-red-500 font-semibold">STALE</span>}
+                  {isStale && <span className="block text-[10px] text-danger font-semibold">STALE</span>}
                 </span>
               }
               tip="How long ago this vendor sent their last price list. If it says 'STALE', the prices may no longer be accurate."
@@ -424,21 +424,21 @@ export function VendorDetailModal({
           </div>
 
           {isStale && (
-            <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/40 rounded-lg px-3 py-2 text-sm text-red-700 dark:text-red-300">
+            <div className="bg-danger-bg border border-danger/30 rounded-lg px-3 py-2 text-sm text-danger">
               Data is stale — last price list is {days}+ days old (threshold: {vendor.staleAfterDays ?? 7} days). Upload a fresh price list to restore Active status.
             </div>
           )}
 
           {/* Weekly update notification */}
           {isUpdatedThisWeek(vendor) ? (
-            <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800/40 rounded-lg px-3 py-2 text-sm text-green-700 dark:text-green-300 flex items-center gap-2">
+            <div className="bg-success-bg border border-success/30 rounded-lg px-3 py-2 text-sm text-success flex items-center gap-2">
               <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                 <polyline points="20 6 9 17 4 12" />
               </svg>
               Updated this week — list is current.
             </div>
           ) : (
-            <div className="bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800/40 rounded-lg px-3 py-2 text-sm text-orange-700 dark:text-orange-300 flex items-center gap-2">
+            <div className="bg-warning-bg border border-warning/30 rounded-lg px-3 py-2 text-sm text-warning flex items-center gap-2">
               <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                 <circle cx="12" cy="12" r="10" />
                 <line x1="12" y1="8" x2="12" y2="12" />
@@ -476,7 +476,7 @@ export function VendorDetailModal({
                 <button
                   type="button"
                   onClick={() => onDelete(vendor)}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-medium border border-danger/30 text-danger hover:bg-danger/10 transition-colors"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-medium border border-danger/30 text-danger hover:bg-danger-bg transition-colors"
                 >
                   <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <polyline points="3 6 5 6 21 6" />
@@ -494,7 +494,7 @@ export function VendorDetailModal({
               <Button
                 variant="secondary"
                 onClick={() => setShowRenewConfirm(true)}
-                className="!border-orange-400 !text-orange-600 dark:!text-orange-400 hover:!bg-orange-50 dark:hover:!bg-orange-900/20"
+                className="!border-warning/40 !text-warning hover:!bg-warning-bg"
               >
                 <span className="flex items-center gap-1.5">
                   <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -516,7 +516,7 @@ export function VendorDetailModal({
             <Button
               variant="secondary"
               onClick={() => setImportMode(importMode === 'bulk' ? null : 'bulk')}
-              className="!border-purple-400 !text-purple-600 dark:!text-purple-400 hover:!bg-purple-50 dark:hover:!bg-purple-900/20"
+              className="!border-primary/40 !text-primary hover:!bg-accent"
             >
               <span className="flex items-center gap-1.5">
                 <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -582,7 +582,7 @@ export function VendorDetailModal({
               ) : (
                 <>
                   {!state.settings?.openaiApiKey && (
-                    <div className="bg-amber-50 dark:bg-yellow-900/30 border border-amber-200 dark:border-yellow-700/50 rounded-lg px-3 py-2 text-sm text-amber-700 dark:text-yellow-200">
+                    <div className="bg-warning-bg border border-warning/30 rounded-lg px-3 py-2 text-sm text-warning">
                       OpenAI API key required. Go to <strong>Settings</strong> to add your key.
                     </div>
                   )}
@@ -635,21 +635,21 @@ export function VendorDetailModal({
                       <input type="checkbox" checked={row.selected} onChange={() => handleReviewToggle(i)} className="accent-primary" />
                       <span className="text-xs text-muted">#{i + 1}</span>
                       {row.matchedProductName ? (
-                        <span className="text-xs text-green-600 dark:text-green-400">Matched: {row.matchedProductName}</span>
+                        <span className="text-xs text-success">Matched: {row.matchedProductName}</span>
                       ) : (
-                        <span className="text-xs text-amber-600 dark:text-amber-400">New product (will be created)</span>
+                        <span className="text-xs text-warning">New product (will be created)</span>
                       )}
-                      <button type="button" onClick={() => handleRemoveRow(i)} className="ml-auto text-xs text-red-500 hover:text-red-600">Remove</button>
+                      <button type="button" onClick={() => handleRemoveRow(i)} className="ml-auto text-xs text-danger hover:opacity-80">Remove</button>
                     </div>
                     <div className="grid grid-cols-4 gap-2">
-                      <input className="bg-input-bg border border-input-border text-fg px-2 py-1 rounded-lg text-sm w-full" placeholder="Product Name" value={row.name} onChange={(e) => handleReviewRowChange(i, 'name', e.target.value)} />
-                      <input className="bg-input-bg border border-input-border text-fg px-2 py-1 rounded-lg text-sm w-full" placeholder="Brand" value={row.brand} onChange={(e) => handleReviewRowChange(i, 'brand', e.target.value)} />
-                      <input className="bg-input-bg border border-input-border text-fg px-2 py-1 rounded-lg text-sm w-full" placeholder="SKU" value={row.sku} onChange={(e) => handleReviewRowChange(i, 'sku', e.target.value)} />
-                      <input className="bg-input-bg border border-input-border text-fg px-2 py-1 rounded-lg text-sm w-full" placeholder="Price" type="number" step="0.01" value={row.price || ''} onChange={(e) => handleReviewRowChange(i, 'price', e.target.value)} />
+                      <input className="bg-input-bg border border-input-border text-fg px-2 py-1 rounded-lg text-sm w-full focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary" placeholder="Product Name" value={row.name} onChange={(e) => handleReviewRowChange(i, 'name', e.target.value)} />
+                      <input className="bg-input-bg border border-input-border text-fg px-2 py-1 rounded-lg text-sm w-full focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary" placeholder="Brand" value={row.brand} onChange={(e) => handleReviewRowChange(i, 'brand', e.target.value)} />
+                      <input className="bg-input-bg border border-input-border text-fg px-2 py-1 rounded-lg text-sm w-full focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary" placeholder="SKU" value={row.sku} onChange={(e) => handleReviewRowChange(i, 'sku', e.target.value)} />
+                      <input className="bg-input-bg border border-input-border text-fg px-2 py-1 rounded-lg text-sm w-full tabular-nums focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary" placeholder="Price" type="number" step="0.01" value={row.price || ''} onChange={(e) => handleReviewRowChange(i, 'price', e.target.value)} />
                     </div>
                     {row.packType === 'CASE' && (
                       <div className="mt-1.5 flex items-center gap-2">
-                        <span className="inline-block px-1.5 py-0.5 rounded text-[10px] font-bold uppercase bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300">CASE</span>
+                        <span className="inline-block px-1.5 py-0.5 rounded text-[10px] font-bold uppercase bg-accent text-accent-foreground">CASE</span>
                         <span className="text-[11px] text-muted">{row.unitsPerCase} units/case{row.unitDescriptor ? ` · ${row.unitDescriptor}` : ''}</span>
                         <span className="text-[11px] text-fg-secondary">Unit cost: $ {((row.priceBasis === 'PER_CASE' && (row.unitsPerCase ?? 1) > 0) ? row.price / (row.unitsPerCase ?? 1) : row.price).toFixed(2)}</span>
                       </div>
@@ -670,7 +670,7 @@ export function VendorDetailModal({
               <p>{csvStatus.message}</p>
               {csvStatus.errors && csvStatus.errors.length > 0 && (
                 <details className="mt-2">
-                  <summary className="cursor-pointer text-amber-600 dark:text-amber-500">
+                  <summary className="cursor-pointer text-warning">
                     {csvStatus.errors.length} row error(s)
                   </summary>
                   <ul className="list-disc pl-5 mt-1 text-xs">
@@ -685,19 +685,20 @@ export function VendorDetailModal({
           )}
 
           {/* Price list table */}
+          <div className="border border-surface-border rounded-xl overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full border-collapse text-sm">
               <thead>
-                <tr className="border-b border-surface-border">
+                <tr>
                   {['Product', 'Case Qty', 'Unit Size', 'Type', 'Brand', 'SKU', 'Price', 'Unit Cost', 'Updated', ''].map((h) => (
-                    <th key={h} className="text-left text-fg-secondary font-semibold text-xs uppercase py-2 px-1.5 first:pl-0">{h}</th>
+                    <th key={h} className="text-left text-muted font-semibold text-[11px] uppercase tracking-wider py-2.5 px-3 bg-surface-hover/40 border-b border-surface-border">{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
                 {prices.length === 0 ? (
                   <tr>
-                    <td colSpan={10} className="py-4 text-center text-muted text-sm">
+                    <td colSpan={10} className="py-8 text-center text-muted text-sm">
                       No prices registered. Add products or import CSV / image.
                     </td>
                   </tr>
@@ -712,13 +713,13 @@ export function VendorDetailModal({
                     const cleanName = stripPackFromName(product.name) || product.name
                     const unitSize = vp.unitDescriptor || product.unitSize || '-'
                     return (
-                      <tr key={`${vp.vendorId}-${vp.productId}`} className="border-b border-surface-border">
+                      <tr key={`${vp.vendorId}-${vp.productId}`} className="border-t border-surface-border hover:bg-surface-hover transition-colors">
                         {/* Product — clean name without pack notation */}
-                        <td className="py-2 px-1.5 pl-0 text-fg font-medium max-w-[220px]">
+                        <td className="py-2.5 px-3 text-fg font-medium max-w-[220px]">
                           <span className="line-clamp-2">{cleanName}</span>
                         </td>
                         {/* Case Qty */}
-                        <td className="py-2 px-1.5 text-center text-fg">
+                        <td className="py-2.5 px-3 text-center text-fg tabular-nums">
                           {isCase ? (
                             <span className="font-semibold">{vp.unitsPerCase ?? '-'}</span>
                           ) : (
@@ -726,26 +727,26 @@ export function VendorDetailModal({
                           )}
                         </td>
                         {/* Unit Size */}
-                        <td className="py-2 px-1.5 text-fg text-[13px]">{unitSize}</td>
+                        <td className="py-2.5 px-3 text-fg text-[13px]">{unitSize}</td>
                         {/* Sell Type */}
-                        <td className="py-2 px-1.5">
+                        <td className="py-2.5 px-3">
                           {isCase ? (
-                            <span className="inline-block px-1.5 py-0.5 rounded text-[10px] font-bold uppercase bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300">CASE</span>
+                            <span className="inline-block px-1.5 py-0.5 rounded text-[10px] font-bold uppercase bg-accent text-accent-foreground">CASE</span>
                           ) : (
-                            <span className="inline-block px-1.5 py-0.5 rounded text-[10px] font-bold uppercase bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400">UNIT</span>
+                            <span className="inline-block px-1.5 py-0.5 rounded text-[10px] font-bold uppercase bg-surface-hover text-muted">UNIT</span>
                           )}
                         </td>
                         {/* Brand */}
-                        <td className="py-2 px-1.5 text-fg text-[13px]">{product.brand || '-'}</td>
+                        <td className="py-2.5 px-3 text-fg text-[13px]">{product.brand || '-'}</td>
                         {/* SKU */}
-                        <td className="py-2 px-1.5 text-muted text-[12px]">{product.sku || '-'}</td>
+                        <td className="py-2.5 px-3 text-muted text-[12px]">{product.sku || '-'}</td>
                         {/* Price */}
-                        <td className="py-2 px-1.5">
+                        <td className="py-2.5 px-3">
                           <div className="flex items-center gap-1">
                             <input
                               type="number"
                               step="0.01"
-                              className="w-20 bg-input-bg border border-input-border text-fg px-1.5 py-1 rounded-lg text-sm"
+                              className="w-20 bg-input-bg border border-input-border text-fg px-1.5 py-1 rounded-lg text-sm tabular-nums focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
                               value={vp.unitPrice}
                               onChange={(e) => handlePriceChange(vp.productId, e.target.value)}
                             />
@@ -753,14 +754,14 @@ export function VendorDetailModal({
                           </div>
                         </td>
                         {/* Unit Cost */}
-                        <td className="py-2 px-1.5 text-[13px] text-fg-secondary whitespace-nowrap">
+                        <td className="py-2.5 px-3 text-[13px] text-fg-secondary whitespace-nowrap tabular-nums">
                           $ {effectiveCost.toFixed(2)}
                           {isCase && <span className="text-[10px] text-muted ml-0.5">/ea</span>}
                         </td>
                         {/* Updated */}
-                        <td className="py-2 px-1.5 text-[12px] text-fg-secondary whitespace-nowrap">{daysAgo === 0 ? 'Today' : `${daysAgo}d`}</td>
+                        <td className="py-2.5 px-3 text-[12px] text-fg-secondary whitespace-nowrap tabular-nums">{daysAgo === 0 ? 'Today' : `${daysAgo}d`}</td>
                         {/* Actions */}
-                        <td className="py-2 px-1.5">
+                        <td className="py-2.5 px-3">
                           <button
                             type="button"
                             onClick={() => handleRemovePrice(vp.productId)}
@@ -779,6 +780,7 @@ export function VendorDetailModal({
                 )}
               </tbody>
             </table>
+          </div>
           </div>
         </div>
       </Modal>
@@ -807,7 +809,7 @@ export function VendorDetailModal({
               </Button>
               <Button
                 onClick={handleRenewList}
-                className="!bg-orange-500 hover:!bg-orange-600 !text-white"
+                className="!bg-warning hover:!opacity-90 !text-warning-foreground"
               >
                 Remove all & upload new
               </Button>
@@ -828,7 +830,7 @@ export function VendorDetailModal({
 
 function ComplianceCard({ label, value, tip }: { label: string; value: React.ReactNode; tip?: string }) {
   return (
-    <div className="bg-surface-hover rounded-lg p-3 text-center">
+    <div className="bg-surface border border-surface-border rounded-xl p-3 text-center">
       <div className="mb-1">{value}</div>
       <div className="flex items-center justify-center gap-1">
         <span className="text-[10px] text-muted uppercase tracking-wide">{label}</span>
@@ -844,7 +846,7 @@ function TabBtn({ label, mode, active, onClick }: { label: string; mode: ImportM
       type="button"
       onClick={() => onClick(mode)}
       className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-        active === mode ? 'bg-primary text-white' : 'text-muted hover:text-fg'
+        active === mode ? 'bg-primary text-primary-foreground shadow-sm' : 'text-fg-secondary hover:text-fg hover:bg-surface-hover'
       }`}
     >
       {label}

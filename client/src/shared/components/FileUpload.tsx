@@ -52,21 +52,23 @@ export function FileUpload({
           }
         }}
         className={`
-          border border-surface-border rounded-xl px-5 py-4 cursor-pointer transition-colors
+          flex flex-col items-center justify-center gap-3 border-2 border-dashed rounded-2xl px-5 py-8 cursor-pointer transition-colors text-center
           ${dragging
             ? 'border-primary bg-primary/5'
-            : 'hover:border-primary/40 hover:bg-surface-hover'}
+            : 'border-surface-border hover:border-primary/40 hover:bg-surface-hover'}
         `}
       >
-        <div className="flex items-center justify-center gap-2">
-          <svg className="w-4 h-4 text-muted shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <span className="flex size-11 items-center justify-center rounded-2xl bg-accent text-accent-foreground">
+          <svg className="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
             <polyline points="17 8 12 3 7 8" />
             <line x1="12" y1="3" x2="12" y2="15" />
           </svg>
-          <p className="text-[13px] text-fg-secondary">{label}</p>
+        </span>
+        <div>
+          <p className="text-sm font-medium text-fg">{label}</p>
+          {hint && <p className="text-xs text-muted mt-1">{hint}</p>}
         </div>
-        {hint && <p className="text-[11px] text-muted mt-1.5 text-center">{hint}</p>}
       </div>
       <input
         ref={inputRef}

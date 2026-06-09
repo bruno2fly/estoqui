@@ -253,18 +253,36 @@ export function ConverterPage() {
   return (
     <div className="max-w-5xl mx-auto space-y-6">
       {/* Page header */}
-      <div>
-        <p className="text-sm text-fg-secondary mt-1">
-          Drop any vendor file (screenshot, PDF, Excel, image) and convert it to a clean CSV or Excel file ready for import.
-        </p>
+      <div className="flex items-start gap-3">
+        <span className="flex size-11 shrink-0 items-center justify-center rounded-2xl bg-accent text-accent-foreground">
+          <svg className="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="16 3 21 3 21 8" />
+            <line x1="4" y1="20" x2="21" y2="3" />
+            <polyline points="21 16 21 21 16 21" />
+            <line x1="15" y1="15" x2="21" y2="21" />
+            <line x1="4" y1="4" x2="9" y2="9" />
+          </svg>
+        </span>
+        <div>
+          <h1 className="text-lg font-semibold tracking-tight text-fg">File Converter</h1>
+          <p className="text-sm text-fg-secondary mt-0.5">
+            Drop any vendor file (screenshot, PDF, Excel, image) and convert it to a clean CSV or Excel file ready for import.
+          </p>
+        </div>
       </div>
 
       {/* API key warning */}
       {!apiKey && (
-        <div className="bg-amber-50 dark:bg-yellow-900/30 border border-amber-200 dark:border-yellow-700/50 rounded-lg px-4 py-3 text-sm text-amber-700 dark:text-yellow-200">
-          OpenAI API key required for image/PDF conversion. Go to <strong>Settings</strong> to add your key.
-          <br />
-          <span className="text-xs text-muted">Excel and CSV files don't need AI — they'll be converted directly.</span>
+        <div className="flex items-start gap-3 bg-warning-bg border border-warning/40 rounded-xl px-4 py-3 text-sm text-warning-foreground">
+          <svg className="size-5 shrink-0 mt-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+            <line x1="12" y1="9" x2="12" y2="13" />
+            <line x1="12" y1="17" x2="12.01" y2="17" />
+          </svg>
+          <div>
+            OpenAI API key required for image/PDF conversion. Go to <strong>Settings</strong> to add your key.
+            <span className="block text-xs opacity-80 mt-0.5">Excel and CSV files don't need AI — they'll be converted directly.</span>
+          </div>
         </div>
       )}
 
@@ -285,19 +303,21 @@ export function ConverterPage() {
               }
             }}
             className={`
-              border-2 border-dashed rounded-xl px-6 py-12 cursor-pointer transition-colors text-center
+              flex flex-col items-center justify-center border-2 border-dashed rounded-2xl px-6 py-12 cursor-pointer transition-colors text-center
               ${dragging
                 ? 'border-primary bg-primary/5'
                 : 'border-surface-border hover:border-primary/40 hover:bg-surface-hover'}
             `}
           >
-            <svg className="w-10 h-10 text-muted mx-auto mb-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
-              <polyline points="14 2 14 8 20 8" />
-              <line x1="12" y1="18" x2="12" y2="12" />
-              <polyline points="9 15 12 12 15 15" />
-            </svg>
-            <p className="text-base text-fg font-medium">
+            <span className="flex size-14 items-center justify-center rounded-2xl bg-accent text-accent-foreground mb-4">
+              <svg className="size-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
+                <polyline points="14 2 14 8 20 8" />
+                <line x1="12" y1="18" x2="12" y2="12" />
+                <polyline points="9 15 12 12 15 15" />
+              </svg>
+            </span>
+            <p className="text-base text-fg font-semibold">
               Drop any vendor file here
             </p>
             <p className="text-sm text-muted mt-1">
@@ -313,12 +333,14 @@ export function ConverterPage() {
           />
 
           {file && (
-            <div className="bg-surface-hover rounded-lg px-4 py-3 flex items-center justify-between">
+            <div className="bg-surface border border-surface-border rounded-xl px-4 py-3 flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <svg className="w-5 h-5 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
-                  <polyline points="14 2 14 8 20 8" />
-                </svg>
+                <span className="flex size-9 items-center justify-center rounded-lg bg-accent text-accent-foreground">
+                  <svg className="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
+                    <polyline points="14 2 14 8 20 8" />
+                  </svg>
+                </span>
                 <div>
                   <p className="text-sm font-medium text-fg">{file.name}</p>
                   <p className="text-xs text-muted">{(file.size / 1024).toFixed(0)} KB</p>
@@ -327,7 +349,7 @@ export function ConverterPage() {
               <button
                 type="button"
                 onClick={() => setFile(null)}
-                className="text-xs text-danger hover:text-danger/80"
+                className="text-xs font-medium text-danger hover:text-danger/80 px-2.5 py-1 rounded-lg hover:bg-danger-bg transition-colors"
               >
                 Remove
               </button>
@@ -335,7 +357,7 @@ export function ConverterPage() {
           )}
 
           {errorMsg && (
-            <div className="bg-danger-bg text-danger text-sm p-3 rounded-lg">
+            <div className="bg-danger-bg border border-danger/30 text-danger text-sm p-3 rounded-xl">
               {errorMsg}
             </div>
           )}
@@ -347,21 +369,21 @@ export function ConverterPage() {
           </div>
 
           {/* How it works */}
-          <div className="bg-surface-hover rounded-xl p-5 space-y-3">
+          <div className="bg-surface border border-surface-border rounded-2xl p-6 shadow-sm space-y-4">
             <h3 className="text-sm font-semibold text-fg">How it works</h3>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs text-fg-secondary">
-              <div className="space-y-1">
-                <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary font-bold text-sm">1</div>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 text-xs text-fg-secondary">
+              <div className="space-y-2">
+                <div className="size-8 rounded-xl bg-accent flex items-center justify-center text-accent-foreground font-bold text-sm">1</div>
                 <p className="font-medium text-fg">Upload any file</p>
                 <p>Screenshot from WhatsApp, PDF price list, Excel spreadsheet, or any image with product data.</p>
               </div>
-              <div className="space-y-1">
-                <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary font-bold text-sm">2</div>
+              <div className="space-y-2">
+                <div className="size-8 rounded-xl bg-accent flex items-center justify-center text-accent-foreground font-bold text-sm">2</div>
                 <p className="font-medium text-fg">AI extracts the data</p>
                 <p>GPT-4o reads the file and pulls out product codes, names, brands, sizes, packs, and prices.</p>
               </div>
-              <div className="space-y-1">
-                <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary font-bold text-sm">3</div>
+              <div className="space-y-2">
+                <div className="size-8 rounded-xl bg-accent flex items-center justify-center text-accent-foreground font-bold text-sm">3</div>
                 <p className="font-medium text-fg">Review & download</p>
                 <p>Edit any mistakes in the table, then download as CSV or Excel. Import it into any vendor.</p>
               </div>
@@ -372,13 +394,13 @@ export function ConverterPage() {
 
       {/* STEP 2: Processing */}
       {step === 'processing' && (
-        <div className="space-y-4 py-10 text-center">
-          <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-primary/10">
-            <svg className="w-6 h-6 text-primary animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+        <div className="space-y-4 py-12 text-center bg-surface border border-surface-border rounded-2xl shadow-sm">
+          <div className="inline-flex items-center justify-center size-14 rounded-2xl bg-accent">
+            <svg className="size-6 text-accent-foreground animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
               <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" />
             </svg>
           </div>
-          <p className="text-lg font-medium text-fg">Analyzing your file...</p>
+          <p className="text-lg font-semibold text-fg">Analyzing your file...</p>
           <p className="text-sm text-muted">AI is reading {file?.name} and extracting product data</p>
           <div className="max-w-xs mx-auto h-1.5 bg-surface-border rounded-full overflow-hidden">
             <div className="h-full bg-primary rounded-full animate-pulse" style={{ width: '100%' }} />
@@ -404,19 +426,19 @@ export function ConverterPage() {
             </div>
           </div>
 
-          <div className="border border-surface-border rounded-lg overflow-hidden">
+          <div className="border border-surface-border rounded-2xl overflow-hidden shadow-sm">
             <div className="max-h-[500px] overflow-y-auto">
               <table className="w-full border-collapse text-xs">
-                <thead className="sticky top-0 bg-surface z-10">
+                <thead className="sticky top-0 bg-surface-hover/80 backdrop-blur z-10">
                   <tr className="border-b border-surface-border">
-                    <th className="py-2 px-2 text-left text-fg-secondary font-semibold w-8">#</th>
-                    <th className="py-2 px-2 text-left text-fg-secondary font-semibold w-[100px]">Code</th>
-                    <th className="py-2 px-2 text-left text-fg-secondary font-semibold">Product Name</th>
-                    <th className="py-2 px-2 text-left text-fg-secondary font-semibold w-[120px]">Brand</th>
-                    <th className="py-2 px-2 text-left text-fg-secondary font-semibold w-[80px]">Size</th>
-                    <th className="py-2 px-2 text-left text-fg-secondary font-semibold w-[80px]">Pack</th>
-                    <th className="py-2 px-2 text-right text-fg-secondary font-semibold w-[80px]">Price</th>
-                    <th className="py-2 px-2 w-8" />
+                    <th className="py-2.5 px-2 text-left text-muted font-semibold uppercase tracking-wider w-8">#</th>
+                    <th className="py-2.5 px-2 text-left text-muted font-semibold uppercase tracking-wider w-[100px]">Code</th>
+                    <th className="py-2.5 px-2 text-left text-muted font-semibold uppercase tracking-wider">Product Name</th>
+                    <th className="py-2.5 px-2 text-left text-muted font-semibold uppercase tracking-wider w-[120px]">Brand</th>
+                    <th className="py-2.5 px-2 text-left text-muted font-semibold uppercase tracking-wider w-[80px]">Size</th>
+                    <th className="py-2.5 px-2 text-left text-muted font-semibold uppercase tracking-wider w-[80px]">Pack</th>
+                    <th className="py-2.5 px-2 text-right text-muted font-semibold uppercase tracking-wider w-[80px]">Price</th>
+                    <th className="py-2.5 px-2 w-8" />
                   </tr>
                 </thead>
                 <tbody>
@@ -425,35 +447,35 @@ export function ConverterPage() {
                       <td className="py-1 px-2 text-muted">{i + 1}</td>
                       <td className="py-1 px-1">
                         <input
-                          className="w-full bg-transparent border border-transparent hover:border-surface-border focus:border-primary text-fg px-1.5 py-1 rounded text-xs outline-none"
+                          className="w-full bg-transparent border border-transparent hover:border-surface-border focus:border-primary text-fg px-1.5 py-1 rounded-md text-xs outline-none transition-colors"
                           value={row.code}
                           onChange={(e) => updateCell(i, 'code', e.target.value)}
                         />
                       </td>
                       <td className="py-1 px-1">
                         <input
-                          className="w-full bg-transparent border border-transparent hover:border-surface-border focus:border-primary text-fg px-1.5 py-1 rounded text-xs outline-none"
+                          className="w-full bg-transparent border border-transparent hover:border-surface-border focus:border-primary text-fg px-1.5 py-1 rounded-md text-xs outline-none transition-colors"
                           value={row.name}
                           onChange={(e) => updateCell(i, 'name', e.target.value)}
                         />
                       </td>
                       <td className="py-1 px-1">
                         <input
-                          className="w-full bg-transparent border border-transparent hover:border-surface-border focus:border-primary text-fg px-1.5 py-1 rounded text-xs outline-none"
+                          className="w-full bg-transparent border border-transparent hover:border-surface-border focus:border-primary text-fg px-1.5 py-1 rounded-md text-xs outline-none transition-colors"
                           value={row.brand}
                           onChange={(e) => updateCell(i, 'brand', e.target.value)}
                         />
                       </td>
                       <td className="py-1 px-1">
                         <input
-                          className="w-full bg-transparent border border-transparent hover:border-surface-border focus:border-primary text-fg px-1.5 py-1 rounded text-xs outline-none"
+                          className="w-full bg-transparent border border-transparent hover:border-surface-border focus:border-primary text-fg px-1.5 py-1 rounded-md text-xs outline-none transition-colors"
                           value={row.size}
                           onChange={(e) => updateCell(i, 'size', e.target.value)}
                         />
                       </td>
                       <td className="py-1 px-1">
                         <input
-                          className="w-full bg-transparent border border-transparent hover:border-surface-border focus:border-primary text-fg px-1.5 py-1 rounded text-xs outline-none"
+                          className="w-full bg-transparent border border-transparent hover:border-surface-border focus:border-primary text-fg px-1.5 py-1 rounded-md text-xs outline-none transition-colors"
                           value={row.packSize}
                           onChange={(e) => updateCell(i, 'packSize', e.target.value)}
                         />
@@ -516,13 +538,13 @@ export function ConverterPage() {
 
       {/* STEP 4: Done */}
       {step === 'done' && (
-        <div className="text-center py-10 space-y-4">
-          <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-green-100 dark:bg-green-900/30">
-            <svg className="w-7 h-7 text-green-600 dark:text-green-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+        <div className="text-center py-12 space-y-4 bg-surface border border-surface-border rounded-2xl shadow-sm">
+          <div className="inline-flex items-center justify-center size-14 rounded-2xl bg-success-bg">
+            <svg className="size-7 text-success" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <polyline points="20 6 9 17 4 12" />
             </svg>
           </div>
-          <p className="text-lg font-medium text-fg">File converted successfully!</p>
+          <p className="text-lg font-semibold text-fg">File converted successfully!</p>
           <p className="text-sm text-muted">
             {rows.length} products exported. You can now import this file in the Vendors page using "Import CSV / Excel".
           </p>

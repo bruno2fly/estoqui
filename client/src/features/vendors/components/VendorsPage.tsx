@@ -135,24 +135,29 @@ export function VendorsPage() {
       {vendors.length > 0 && (
         <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
           <SummaryCard label="Avg Score" value={avgScore} color={getScoreColor(avgScore)} tip="The average quality score of all your vendors. Higher is better — based on how often they update prices and how complete their product lists are." />
-          <SummaryCard label="Active" value={activeCount} color="text-green-600 dark:text-green-400" tip="Vendors who are up to date. Their price lists are recent and ready to use." />
-          <SummaryCard label="Probation" value={probationCount} color="text-amber-600 dark:text-amber-400" tip="Vendors whose price lists are getting old. They need to send you an updated list soon." />
-          <SummaryCard label="Inactive" value={inactiveCount} color="text-red-600 dark:text-red-400" tip="Vendors who haven't sent a price list in a long time. You may want to contact them or remove them." />
-          <SummaryCard label="Needs Update" value={needsUpdateCount} color={needsUpdateCount > 0 ? 'text-orange-600 dark:text-orange-400' : 'text-green-600 dark:text-green-400'} tip="Vendors who have NOT uploaded a new price list this week. Every vendor needs a full list replacement each week." />
+          <SummaryCard label="Active" value={activeCount} color="text-success" tip="Vendors who are up to date. Their price lists are recent and ready to use." />
+          <SummaryCard label="Probation" value={probationCount} color="text-warning" tip="Vendors whose price lists are getting old. They need to send you an updated list soon." />
+          <SummaryCard label="Inactive" value={inactiveCount} color="text-danger" tip="Vendors who haven't sent a price list in a long time. You may want to contact them or remove them." />
+          <SummaryCard label="Needs Update" value={needsUpdateCount} color={needsUpdateCount > 0 ? 'text-warning' : 'text-success'} tip="Vendors who have NOT uploaded a new price list this week. Every vendor needs a full list replacement each week." />
         </div>
       )}
 
       {/* Vendor table */}
-      <div className="bg-surface border border-surface-border rounded-2xl p-5">
-        <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
-          <div className="flex items-center gap-2">
-            <svg className="w-4 h-4 text-fg-secondary" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" />
-              <circle cx="9" cy="7" r="4" />
-              <path d="M23 21v-2a4 4 0 00-3-3.87" />
-              <path d="M16 3.13a4 4 0 010 7.75" />
-            </svg>
-            <span className="text-[13px] font-semibold text-fg">Vendor Compliance</span>
+      <div className="bg-surface border border-surface-border rounded-2xl p-6 shadow-sm">
+        <div className="flex items-center justify-between mb-5 flex-wrap gap-3">
+          <div className="flex items-center gap-3">
+            <span className="flex size-10 items-center justify-center rounded-xl bg-accent text-accent-foreground">
+              <svg className="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" />
+                <circle cx="9" cy="7" r="4" />
+                <path d="M23 21v-2a4 4 0 00-3-3.87" />
+                <path d="M16 3.13a4 4 0 010 7.75" />
+              </svg>
+            </span>
+            <div>
+              <h2 className="text-base font-semibold text-fg">Vendor Compliance</h2>
+              <p className="text-xs text-fg-secondary">Track price-list freshness and coverage per vendor</p>
+            </div>
           </div>
           <div className="flex items-center gap-2 flex-wrap">
             <SearchInput
@@ -164,7 +169,7 @@ export function VendorsPage() {
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value as VendorStatus | 'all')}
-              className="bg-input-bg border border-input-border text-fg px-2.5 py-1.5 rounded-lg text-[12px] focus:outline-none focus:border-primary"
+              className="bg-input-bg border border-input-border text-fg px-2.5 py-2 rounded-lg text-[12px] focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
             >
               <option value="all">All Status</option>
               <option value="active">Active</option>
@@ -174,9 +179,13 @@ export function VendorsPage() {
             <button
               type="button"
               onClick={() => { setFormModal('add'); setEditingVendor(null) }}
-              className="px-3.5 py-1.5 rounded-lg bg-fg text-background text-[12px] font-medium hover:opacity-80 transition-opacity"
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-primary text-primary-foreground text-[12px] font-medium shadow-sm hover:bg-primary-hover transition-colors"
             >
-              + Add Vendor
+              <svg className="size-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="12" y1="5" x2="12" y2="19" />
+                <line x1="5" y1="12" x2="19" y2="12" />
+              </svg>
+              Add Vendor
             </button>
           </div>
         </div>
@@ -191,22 +200,22 @@ export function VendorsPage() {
               <thead>
                 <tr>
                   <SortHeader label="Vendor" sortKey="name" current={sortKey} dir={sortDir} onClick={toggleSort} sortIcon={sortIcon} />
-                  <th className="text-left text-fg-secondary font-semibold text-[11px] uppercase px-3 py-3">
+                  <th className="text-left text-muted font-semibold text-[11px] uppercase tracking-wider px-3 py-3 bg-surface-hover/40 border-b border-surface-border">
                     <span className="inline-flex items-center gap-1">Status <InfoTip text="Shows if this vendor is Active (up to date), on Probation (getting old), or Inactive (very outdated)." /></span>
                   </th>
-                  <th className="text-left text-fg-secondary font-semibold text-[11px] uppercase px-3 py-3">
+                  <th className="text-left text-muted font-semibold text-[11px] uppercase tracking-wider px-3 py-3 bg-surface-hover/40 border-b border-surface-border">
                     <span className="inline-flex items-center gap-1">This Week <InfoTip text="Shows if this vendor's price list has been updated during the current week (Monday to Sunday). Vendors need a fresh list every week." /></span>
                   </th>
                   <SortHeader label="Score" sortKey="score" current={sortKey} dir={sortDir} onClick={toggleSort} sortIcon={sortIcon} />
                   <SortHeader label="Last Update" sortKey="lastUpdate" current={sortKey} dir={sortDir} onClick={toggleSort} sortIcon={sortIcon} />
-                  <th className="text-left text-fg-secondary font-semibold text-[11px] uppercase px-3 py-3">
+                  <th className="text-left text-muted font-semibold text-[11px] uppercase tracking-wider px-3 py-3 bg-surface-hover/40 border-b border-surface-border">
                     <span className="inline-flex items-center gap-1">Coverage <InfoTip text="How much of this vendor's product list matched your catalog. 100% means every item they sent was found in your products." /></span>
                   </th>
-                  <th className="text-left text-fg-secondary font-semibold text-[11px] uppercase px-3 py-3">
+                  <th className="text-left text-muted font-semibold text-[11px] uppercase tracking-wider px-3 py-3 bg-surface-hover/40 border-b border-surface-border">
                     <span className="inline-flex items-center gap-1">SKU% <InfoTip text="How many products from this vendor have a barcode (SKU). Barcodes help match products correctly." /></span>
                   </th>
-                  <th className="text-left text-fg-secondary font-semibold text-[11px] uppercase px-3 py-3">Products</th>
-                  <th className="text-right text-fg-secondary font-semibold text-[11px] uppercase px-3 py-3"></th>
+                  <th className="text-left text-muted font-semibold text-[11px] uppercase tracking-wider px-3 py-3 bg-surface-hover/40 border-b border-surface-border">Products</th>
+                  <th className="text-right text-muted font-semibold text-[11px] uppercase tracking-wider px-3 py-3 bg-surface-hover/40 border-b border-surface-border"></th>
                 </tr>
               </thead>
               <tbody>
@@ -247,9 +256,9 @@ export function VendorsPage() {
                       </td>
                       <td className="px-3 py-3">
                         {days !== null ? (
-                          <div className={stale ? 'text-red-500' : 'text-fg'}>
-                            <span className="text-[13px]">{days === 0 ? 'Today' : `${days}d ago`}</span>
-                            {stale && <span className="block text-[10px] text-red-500">STALE</span>}
+                          <div className={stale ? 'text-danger' : 'text-fg'}>
+                            <span className="text-[13px] tabular-nums">{days === 0 ? 'Today' : `${days}d ago`}</span>
+                            {stale && <span className="block text-[10px] text-danger">STALE</span>}
                           </div>
                         ) : (
                           <span className="text-[13px] text-muted">Never</span>
@@ -268,7 +277,7 @@ export function VendorsPage() {
                         <button
                           type="button"
                           onClick={() => setDetailVendorId(vendor.id)}
-                          className="px-3 py-1.5 rounded-md bg-fg text-background text-[11px] font-medium hover:opacity-80 transition-opacity"
+                          className="px-3 py-1.5 rounded-lg bg-surface border border-surface-border text-fg text-[11px] font-medium hover:bg-surface-hover hover:border-primary/40 transition-colors"
                         >
                           Open
                         </button>
@@ -334,7 +343,7 @@ export function VendorsPage() {
 
 function SummaryCard({ label, value, color, tip }: { label: string; value: number; color: string; tip?: string }) {
   return (
-    <div className="bg-surface border border-surface-border rounded-xl p-4 text-center">
+    <div className="bg-surface border border-surface-border rounded-2xl p-4 text-center shadow-sm transition-shadow hover:shadow-md">
       <div className={`text-2xl font-bold tabular-nums ${color}`}>{value}</div>
       <div className="flex items-center justify-center gap-1.5 mt-1">
         <span className="text-[11px] text-muted uppercase tracking-wide">{label}</span>
@@ -359,7 +368,7 @@ function SortHeader({
 }) {
   return (
     <th
-      className="text-left text-fg-secondary font-semibold text-[11px] uppercase px-3 py-3 cursor-pointer select-none hover:text-fg transition-colors"
+      className="text-left text-muted font-semibold text-[11px] uppercase tracking-wider px-3 py-3 bg-surface-hover/40 border-b border-surface-border cursor-pointer select-none hover:text-fg transition-colors"
       onClick={() => onClick(key)}
     >
       {label}{sortIcon(key)}

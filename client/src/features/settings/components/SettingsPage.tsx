@@ -88,35 +88,48 @@ export function SettingsPage() {
     <div className="space-y-6">
       <form onSubmit={handleSave} className="space-y-5">
         {/* General */}
-        <div className="bg-surface border border-surface-border rounded-2xl p-5">
-          <div className="flex items-center gap-2 mb-4">
-            <svg className="w-4 h-4 text-fg-secondary" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="12" cy="12" r="3" />
-              <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z" />
-            </svg>
-            <span className="text-[13px] font-semibold text-fg">General</span>
+        <div className="bg-surface border border-surface-border rounded-2xl p-6 shadow-sm">
+          <div className="flex items-center gap-3 mb-1">
+            <span className="flex size-10 items-center justify-center rounded-xl bg-accent text-accent-foreground">
+              <svg className="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="3" />
+                <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z" />
+              </svg>
+            </span>
+            <div>
+              <h2 className="text-base font-semibold text-fg">General</h2>
+              <p className="text-xs text-fg-secondary">Store identity and branding</p>
+            </div>
           </div>
+          <div className="mt-5">
           <Input
             label="Store Name"
             value={storeName}
             onChange={(e) => setStoreName(e.target.value)}
             placeholder="e.g. Adriana's Market"
           />
-          <p className="text-muted text-xs mt-1">
+          <p className="text-muted text-xs mt-1.5">
             Appears in sidebar and WhatsApp order messages
           </p>
+          </div>
         </div>
 
         {/* Inventory / Reorder */}
-        <div className="bg-surface border border-surface-border rounded-2xl p-5">
-          <div className="flex items-center gap-2 mb-4">
-            <svg className="w-4 h-4 text-fg-secondary" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z" />
-              <polyline points="3.27 6.96 12 12.01 20.73 6.96" />
-              <line x1="12" y1="22.08" x2="12" y2="12" />
-            </svg>
-            <span className="text-[13px] font-semibold text-fg">Inventory / Reorder</span>
+        <div className="bg-surface border border-surface-border rounded-2xl p-6 shadow-sm">
+          <div className="flex items-center gap-3 mb-1">
+            <span className="flex size-10 items-center justify-center rounded-xl bg-accent text-accent-foreground">
+              <svg className="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z" />
+                <polyline points="3.27 6.96 12 12.01 20.73 6.96" />
+                <line x1="12" y1="22.08" x2="12" y2="12" />
+              </svg>
+            </span>
+            <div>
+              <h2 className="text-base font-semibold text-fg">Inventory / Reorder</h2>
+              <p className="text-xs text-fg-secondary">Stock thresholds and price freshness</p>
+            </div>
           </div>
+          <div className="mt-5">
           <Input
             label="Price Staleness Threshold (days)"
             type="number"
@@ -137,20 +150,26 @@ export function SettingsPage() {
               min={1}
             />
           </div>
-          <p className="text-muted text-xs mt-1">
+          <p className="text-muted text-xs mt-1.5">
             Used when creating new products. Default: 10
           </p>
+          </div>
         </div>
 
         {/* AI / Image Import */}
-        <div className="bg-surface border border-surface-border rounded-2xl p-5">
-          <div className="flex items-center gap-2 mb-4">
-            <svg className="w-4 h-4 text-fg-secondary" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-            </svg>
-            <span className="text-[13px] font-semibold text-fg">AI / Image Import</span>
+        <div className="bg-surface border border-surface-border rounded-2xl p-6 shadow-sm">
+          <div className="flex items-center gap-3 mb-1">
+            <span className="flex size-10 items-center justify-center rounded-xl bg-accent text-accent-foreground">
+              <svg className="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+              </svg>
+            </span>
+            <div>
+              <h2 className="text-base font-semibold text-fg">AI / Image Import</h2>
+              <p className="text-xs text-fg-secondary">Connect OpenAI for document extraction</p>
+            </div>
           </div>
-          <div className="relative">
+          <div className="relative mt-5">
             <Input
               label="OpenAI API Key"
               type={showApiKey ? 'text' : 'password'}
@@ -173,31 +192,32 @@ export function SettingsPage() {
           </p>
         </div>
 
-        <div className="flex gap-3 flex-wrap">
+        <div className="flex gap-2 flex-wrap items-center border-t border-surface-border pt-5">
           <button
             type="submit"
-            className="px-4 py-2 rounded-lg bg-fg text-background text-[12px] font-medium hover:opacity-80 transition-opacity"
+            className="px-4 py-2 rounded-xl bg-primary text-primary-foreground text-sm font-medium shadow-sm hover:bg-primary-hover transition-colors"
           >
             Save Settings
           </button>
           <button
             type="button"
             onClick={() => setShowResetConfirm(true)}
-            className="px-4 py-2 rounded-lg border border-surface-border text-[12px] font-medium text-fg-secondary hover:bg-surface-hover transition-colors"
+            className="px-4 py-2 rounded-xl border border-surface-border bg-surface text-sm font-medium text-fg-secondary hover:bg-surface-hover transition-colors"
           >
             Reset to Defaults
           </button>
+          <div className="flex-1" />
           <button
             type="button"
             onClick={() => setShowResetCatalogConfirm(true)}
-            className="px-4 py-2 rounded-lg border border-amber-500/50 text-[12px] font-medium text-amber-600 hover:bg-amber-500/10 transition-colors"
+            className="px-4 py-2 rounded-xl border border-warning/40 bg-warning-bg text-sm font-medium text-warning-foreground hover:bg-warning/30 transition-colors"
           >
             Reset Catalog
           </button>
           <button
             type="button"
             onClick={() => setShowClearAllConfirm(true)}
-            className="px-4 py-2 rounded-lg border border-danger/50 text-[12px] font-medium text-danger hover:bg-danger/10 transition-colors"
+            className="px-4 py-2 rounded-xl border border-danger/30 bg-danger-bg text-sm font-medium text-danger hover:bg-danger/15 transition-colors"
           >
             Clear All Data
           </button>

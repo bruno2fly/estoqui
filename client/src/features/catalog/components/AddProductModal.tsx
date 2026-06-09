@@ -259,8 +259,8 @@ export function AddProductModal({
       onClick={() => { setMode(tabMode); setReviewRows(null) }}
       className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
         mode === tabMode
-          ? 'bg-primary text-white'
-          : 'text-muted hover:text-fg'
+          ? 'bg-primary text-primary-foreground shadow-sm'
+          : 'text-fg-secondary hover:text-fg hover:bg-surface-hover'
       }`}
     >
       {label}
@@ -369,32 +369,32 @@ export function AddProductModal({
                     <button
                       type="button"
                       onClick={() => handleRemoveRow(i)}
-                      className="ml-auto text-xs text-red-500 hover:text-red-600"
+                      className="ml-auto text-xs text-danger hover:opacity-80"
                     >
                       Remove
                     </button>
                   </div>
                   <div className="grid grid-cols-2 gap-2">
                     <input
-                      className="bg-input-bg border border-input-border text-fg px-2 py-1 rounded-lg text-sm w-full"
+                      className="bg-input-bg border border-input-border text-fg px-2 py-1 rounded-lg text-sm w-full focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
                       placeholder="Product Name *"
                       value={row.name}
                       onChange={(e) => handleReviewRowChange(i, 'name', e.target.value)}
                     />
                     <input
-                      className="bg-input-bg border border-input-border text-fg px-2 py-1 rounded-lg text-sm w-full"
+                      className="bg-input-bg border border-input-border text-fg px-2 py-1 rounded-lg text-sm w-full focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
                       placeholder="Brand"
                       value={row.brand}
                       onChange={(e) => handleReviewRowChange(i, 'brand', e.target.value)}
                     />
                     <input
-                      className="bg-input-bg border border-input-border text-fg px-2 py-1 rounded-lg text-sm w-full"
+                      className="bg-input-bg border border-input-border text-fg px-2 py-1 rounded-lg text-sm w-full focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
                       placeholder="SKU"
                       value={row.sku}
                       onChange={(e) => handleReviewRowChange(i, 'sku', e.target.value)}
                     />
                     <input
-                      className="bg-input-bg border border-input-border text-fg px-2 py-1 rounded-lg text-sm w-full"
+                      className="bg-input-bg border border-input-border text-fg px-2 py-1 rounded-lg text-sm w-full focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
                       placeholder="Size/Unit"
                       value={row.unitSize}
                       onChange={(e) => handleReviewRowChange(i, 'unitSize', e.target.value)}
@@ -418,7 +418,7 @@ export function AddProductModal({
         ) : (
           <div className="space-y-4">
             {!settings?.openaiApiKey && (
-              <div className="bg-amber-50 dark:bg-yellow-900/30 border border-amber-200 dark:border-yellow-700/50 rounded-lg px-3 py-2 text-sm text-amber-700 dark:text-yellow-200">
+              <div className="bg-warning-bg border border-warning/30 rounded-lg px-3 py-2 text-sm text-warning">
                 OpenAI API key required. Go to <strong>Settings → AI / Image Import</strong> to add your key.
               </div>
             )}
