@@ -1,41 +1,57 @@
+@import url('https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* ── Light mode (default): white bg, dark text ── */
+/* ── Light mode (default): off-white bg, near-black neutral text ──
+   Palette translated from the v0 redesign (Tailwind v4 + OKLCH).
+   Variable NAMES preserved so all existing classes adopt the new look. */
 :root {
-  --color-background: #f2f2f2;
-  --color-surface: #ffffff;
-  --color-surface-border: #e5e7eb;
-  --color-surface-hover: #f5f5f5;
-  --color-sidebar: #ffffff;
-  --color-sidebar-border: #e5e7eb;
-  --color-sidebar-active: #f3f4f6;
-  --color-text-primary: #111827;
-  --color-text-secondary: #6b7280;
-  --color-text-muted: #9ca3af;
-  --color-input-bg: #f9fafb;
-  --color-input-border: #d1d5db;
-  --color-success-bg: #f0fdf4;
-  --color-danger-bg: #fef2f2;
+  --color-background: oklch(0.985 0.003 286);     /* v0 --background */
+  --color-surface: oklch(1 0 0);                  /* v0 --card */
+  --color-surface-border: oklch(0.92 0.005 286);  /* v0 --border */
+  --color-surface-hover: oklch(0.955 0.006 286);  /* v0 --secondary / --muted */
+  --color-sidebar: oklch(1 0 0);                  /* v0 --sidebar */
+  --color-sidebar-border: oklch(0.93 0.004 286);  /* v0 --sidebar-border */
+  --color-sidebar-active: oklch(0.95 0.03 295);   /* v0 --sidebar-accent (purple tint) */
+  --color-text-primary: oklch(0.22 0.02 285);     /* v0 --foreground */
+  --color-text-secondary: oklch(0.52 0.018 286);  /* v0 --muted-foreground */
+  --color-text-muted: oklch(0.62 0.016 286);      /* slightly lighter muted */
+  --color-input-bg: oklch(1 0 0);                 /* v0 card / input surface */
+  --color-input-border: oklch(0.92 0.005 286);    /* v0 --input */
+  --color-success-bg: oklch(0.62 0.16 152 / 0.12);
+  --color-danger-bg: oklch(0.58 0.22 27 / 0.10);
+  /* additive v0 tokens */
+  --color-accent: oklch(0.95 0.03 295);           /* v0 --accent (purple tint) */
+  --color-accent-foreground: oklch(0.4 0.18 295); /* v0 --accent-foreground */
+  --color-warning: oklch(0.75 0.16 70);           /* v0 --warning */
+  --color-warning-foreground: oklch(0.28 0.05 70);
+  --color-warning-bg: oklch(0.75 0.16 70 / 0.18);
 }
 
-/* ── Dark mode: dark bg, white text ── */
+/* ── Dark mode: near-black neutral bg, off-white text ── */
 .dark {
-  --color-background: #0c0c0c;
-  --color-surface: #181818;
-  --color-surface-border: #2c2c2c;
-  --color-surface-hover: #242424;
-  --color-sidebar: #141414;
-  --color-sidebar-border: #2c2c2c;
-  --color-sidebar-active: #282828;
-  --color-text-primary: #ffffff;
-  --color-text-secondary: #b0b0b0;
-  --color-text-muted: #757575;
-  --color-input-bg: #1e1e1e;
-  --color-input-border: #3a3a3a;
-  --color-success-bg: rgba(34, 197, 94, 0.12);
-  --color-danger-bg: rgba(239, 68, 68, 0.12);
+  --color-background: oklch(0.16 0.01 286);       /* v0 --background */
+  --color-surface: oklch(0.21 0.012 286);         /* v0 --card */
+  --color-surface-border: oklch(1 0 0 / 9%);      /* v0 --border */
+  --color-surface-hover: oklch(0.26 0.014 286);   /* v0 --secondary */
+  --color-sidebar: oklch(0.19 0.012 286);         /* v0 --sidebar */
+  --color-sidebar-border: oklch(1 0 0 / 9%);      /* v0 --sidebar-border */
+  --color-sidebar-active: oklch(0.3 0.05 295);    /* v0 --sidebar-accent (purple tint) */
+  --color-text-primary: oklch(0.95 0.005 286);    /* v0 --foreground */
+  --color-text-secondary: oklch(0.68 0.015 286);  /* v0 --muted-foreground */
+  --color-text-muted: oklch(0.6 0.014 286);
+  --color-input-bg: oklch(0.21 0.012 286);
+  --color-input-border: oklch(1 0 0 / 12%);       /* v0 --input */
+  --color-success-bg: oklch(0.66 0.15 152 / 0.15);
+  --color-danger-bg: oklch(0.65 0.2 25 / 0.15);
+  /* additive v0 tokens */
+  --color-accent: oklch(0.3 0.05 295);            /* v0 --accent */
+  --color-accent-foreground: oklch(0.86 0.06 295);
+  --color-warning: oklch(0.78 0.15 70);
+  --color-warning-foreground: oklch(0.2 0.04 70);
+  --color-warning-bg: oklch(0.78 0.15 70 / 0.2);
 }
 
 html {
@@ -45,7 +61,7 @@ html {
 body {
   margin: 0;
   min-height: 100%;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  font-family: 'Geist', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
   background: var(--color-background);
   color: var(--color-text-primary);
   line-height: 1.6;
@@ -59,6 +75,6 @@ body {
 }
 
 .dark select option {
-  background: #181818;
-  color: #ffffff;
+  background: oklch(0.21 0.012 286);
+  color: oklch(0.95 0.005 286);
 }

@@ -136,154 +136,198 @@ export function DashboardPage() {
   const pad = (n: number) => String(n).padStart(2, '0')
 
   return (
-    <div className="space-y-5">
-      {/* Top row: Overview + Right column */}
-      <div className="grid grid-cols-1 lg:grid-cols-[260px_1fr] gap-5">
+    <div className="space-y-6">
+      {/* Hero card */}
+      <section className="relative overflow-hidden rounded-3xl bg-primary p-6 text-primary-foreground shadow-lg md:p-8">
+        <div className="pointer-events-none absolute -right-10 -top-16 size-56 rounded-full bg-primary-foreground/10 blur-2xl" />
+        <div className="pointer-events-none absolute -bottom-20 right-24 size-48 rounded-full bg-primary-foreground/10 blur-2xl" />
 
-        {/* Overview card - single card wrapping all stats */}
-        <div className="bg-surface border border-surface-border rounded-2xl p-5">
-          <div className="flex items-center gap-2 mb-4">
-            <OverviewIcon />
-            <span className="text-[13px] font-semibold text-fg">Overview</span>
+        <div className="relative flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
+          <div className="max-w-xl">
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-primary-foreground/15 px-3 py-1 text-xs font-medium">
+              {lowStockCount > 0 ? 'Action needed' : 'All caught up'}
+            </span>
+            <h1 className="mt-4 text-balance text-2xl font-semibold leading-tight tracking-tight md:text-3xl">
+              {lowStockCount > 0
+                ? `You have ${lowStockCount} item${lowStockCount === 1 ? '' : 's'} running low on stock`
+                : 'Your inventory is in good shape'}
+            </h1>
+            <p className="mt-2 text-pretty text-sm leading-relaxed text-primary-foreground/80">
+              {lowStockCount > 0
+                ? 'Review the items below their minimum and generate reorder lists to send to your vendors.'
+                : 'Nothing needs reordering right now. Upload a fresh CSV to keep your counts up to date.'}
+            </p>
+
+            <div className="mt-6 flex flex-wrap items-center gap-3">
+              <Link
+                to="/inventory"
+                className="inline-flex items-center gap-2 rounded-xl bg-primary-foreground px-4 py-2.5 text-sm font-semibold text-primary transition-transform hover:-translate-y-0.5"
+              >
+                <BoxIcon />
+                View inventory
+              </Link>
+              <Link
+                to="/catalog"
+                className="inline-flex items-center gap-2 rounded-xl border border-primary-foreground/30 px-4 py-2.5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary-foreground/10"
+              >
+                Open catalog
+              </Link>
+            </div>
           </div>
-          <div className="space-y-3">
-            <StatRow icon={<BoxIcon />} label="Total products" value={pad(products.length)} tip="All the products registered in your store catalog." />
-            <StatRow icon={<PeopleIcon />} label="Total vendors" value={pad(vendors.length)} tip="Companies or people you buy products from." />
-            <StatRow icon={<CartAlertIcon />} label="Low stock items" value={pad(lowStockCount)} tip="Products running low that you need to reorder soon." />
-            <StatRow icon={<OrderIcon />} label="Total orders" value={pad(orders.length)} tip="Purchase orders you created to send to your vendors." />
+
+          <div className="hidden shrink-0 md:block">
+            <div className="flex size-32 items-center justify-center rounded-3xl bg-primary-foreground/15 backdrop-blur-sm">
+              <PackageIcon />
+            </div>
           </div>
         </div>
+      </section>
 
-        {/* Right column */}
-        <div className="space-y-5">
-          {/* Notifications */}
-          <div className="bg-surface border border-surface-border rounded-2xl p-5">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-2">
-                <BellSmIcon />
-                <span className="text-[13px] font-semibold text-fg">Notifications</span>
-              </div>
-              <button
-                type="button"
-                onClick={() => setShowAllNotifs(!showAllNotifs)}
-                className="text-[11px] text-muted hover:text-primary transition-colors"
-              >
-                {showAllNotifs ? 'Show less' : `See all (${allNotifications.length})`}
-              </button>
-            </div>
-            <div className="border border-surface-border rounded-xl p-4 space-y-3">
-              {notifications.map((n, i) => (
-                <div key={i} className="flex items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <p className="text-[13px] font-bold text-fg">{n.vendor}</p>
-                    <p className="text-[12px] text-fg-secondary mt-0.5 truncate">{n.message}</p>
-                  </div>
-                  <span className="text-[10px] text-muted whitespace-nowrap pt-0.5">{n.time}</span>
-                </div>
-              ))}
+      {/* KPI cards */}
+      <section className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+        <KpiCard icon={<BoxIcon />} tone="default" label="Total products" value={pad(products.length)} tip="All the products registered in your store catalog." />
+        <KpiCard icon={<PeopleIcon />} tone="default" label="Total vendors" value={pad(vendors.length)} tip="Companies or people you buy products from." />
+        <KpiCard icon={<CartAlertIcon />} tone="warning" label="Low stock items" value={pad(lowStockCount)} tip="Products running low that you need to reorder soon." />
+        <KpiCard icon={<OrderIcon />} tone="success" label="Total orders" value={pad(orders.length)} tip="Purchase orders you created to send to your vendors." />
+      </section>
+
+      {/* Two-column: Notifications + Upload */}
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_minmax(320px,400px)]">
+        {/* Notifications */}
+        <section className="flex flex-col rounded-2xl border border-surface-border bg-surface p-5 shadow-sm">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <BellSmIcon />
+              <h2 className="text-base font-semibold text-fg">Notifications</h2>
             </div>
             <button
               type="button"
-              className="mt-4 w-full py-2.5 border border-surface-border rounded-xl text-[12px] text-fg-secondary hover:bg-surface-hover transition-colors flex items-center justify-center gap-1.5"
+              onClick={() => setShowAllNotifs(!showAllNotifs)}
+              className="text-xs font-medium text-primary hover:underline"
             >
-              <AddNotifIcon />
-              Add notification
+              {showAllNotifs ? 'Show less' : `See all (${allNotifications.length})`}
             </button>
           </div>
+          <ul className="mt-4 flex flex-col gap-1">
+            {notifications.map((n, i) => (
+              <li key={i}>
+                <div className="flex items-start gap-3 rounded-xl p-3 transition-colors hover:bg-surface-hover">
+                  <span className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-lg bg-accent text-accent-foreground">
+                    <BellSmIcon />
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-medium text-fg">{n.vendor}</p>
+                    <p className="truncate text-xs text-fg-secondary mt-0.5">{n.message}</p>
+                  </div>
+                  <span className="shrink-0 text-xs text-muted">{n.time}</span>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </section>
 
-          {/* Upload */}
-          <div className="bg-surface border border-surface-border rounded-2xl p-5">
-            <div className="flex items-center gap-2 mb-3">
-              <UploadSmIcon />
-              <span className="text-[13px] font-semibold text-fg">Upload</span>
-            </div>
+        {/* Upload */}
+        <section className="rounded-2xl border border-surface-border bg-surface p-5 shadow-sm">
+          <div className="flex items-center gap-2">
+            <UploadSmIcon />
+            <h2 className="text-base font-semibold text-fg">Import inventory</h2>
+          </div>
+          <p className="mt-0.5 text-sm text-fg-secondary">Upload a CSV to bulk update stock counts</p>
+          <div className="mt-4">
             <FileUpload
               accept=".csv"
               onFile={handleCsvUpload}
               label="Upload your CSV file here"
             />
           </div>
-        </div>
+        </section>
       </div>
 
       {/* Recent Activity - full width */}
-      <div className="bg-surface border border-surface-border rounded-2xl p-5">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-2">
-            <ActivitySmIcon />
-            <span className="text-[13px] font-semibold text-fg">Recent Activity</span>
+      <section className="rounded-2xl border border-surface-border bg-surface p-5 shadow-sm">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-base font-semibold text-fg">Recent activity</h2>
+            <p className="mt-0.5 text-sm text-fg-secondary">Latest events across inventory and orders</p>
           </div>
           <div className="flex items-center gap-3">
             {(activity ?? []).length > 5 && (
               <button
                 type="button"
                 onClick={() => setShowAllActivity(!showAllActivity)}
-                className="text-[11px] text-muted hover:text-primary transition-colors"
+                className="text-xs font-medium text-primary hover:underline"
               >
                 {showAllActivity ? 'Show less' : `See all (${(activity ?? []).length})`}
               </button>
             )}
-            <Link to="/history" className="text-[11px] text-muted hover:text-primary transition-colors">Full history</Link>
+            <Link to="/history" className="inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline">
+              View all
+              <ArrowRightIcon />
+            </Link>
           </div>
         </div>
+
         {recentActivity.length === 0 ? (
-          <p className="text-[12px] text-muted text-center py-6">No recent activity</p>
+          <p className="text-sm text-muted text-center py-10">No recent activity</p>
         ) : (
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-surface-border">
-                <th className="text-left text-[11px] font-semibold text-fg-secondary pb-2.5 pr-4 w-[120px]">Type</th>
-                <th className="text-left text-[11px] font-semibold text-fg-secondary pb-2.5 pr-4">Description</th>
-                <th className="text-left text-[11px] font-semibold text-fg-secondary pb-2.5 w-[140px]">Date</th>
-              </tr>
-            </thead>
-            <tbody>
-              {recentActivity.map((act, i) => (
-                <tr key={i} className="border-b border-surface-border last:border-0">
-                  <td className="py-2.5 pr-4 text-[12px] text-fg whitespace-nowrap">{act.type}</td>
-                  <td className="py-2.5 pr-4 text-[12px] text-fg-secondary">{act.description}</td>
-                  <td className="py-2.5 text-[12px] text-muted whitespace-nowrap">{act.date}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <ul className="mt-4 flex flex-col">
+            {recentActivity.map((act, i) => (
+              <li
+                key={i}
+                className={`flex flex-col gap-2 py-3.5 sm:flex-row sm:items-center sm:gap-4 ${i !== 0 ? 'border-t border-surface-border' : ''}`}
+              >
+                <span className="inline-flex w-fit items-center rounded-full bg-accent px-2.5 py-0.5 text-xs font-medium text-accent-foreground whitespace-nowrap">
+                  {act.type}
+                </span>
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-medium text-fg">{act.description}</p>
+                </div>
+                <span className="shrink-0 text-xs text-muted whitespace-nowrap">{act.date}</span>
+              </li>
+            ))}
+          </ul>
         )}
-      </div>
+      </section>
     </div>
   )
 }
 
-function StatRow({ icon, label, value, tip }: { icon: React.ReactNode; label: string; value: string; tip?: string }) {
+const KPI_TONES: Record<string, string> = {
+  default: 'bg-accent text-accent-foreground',
+  warning: 'bg-warning-bg text-warning-foreground',
+  success: 'bg-success-bg text-success',
+}
+
+function KpiCard({ icon, tone, label, value, tip }: { icon: React.ReactNode; tone: 'default' | 'warning' | 'success'; label: string; value: string; tip?: string }) {
   return (
-    <div className="border border-surface-border rounded-xl p-3.5 flex items-center gap-3">
-      <div className="w-11 h-11 rounded-xl bg-surface-hover flex items-center justify-center shrink-0">
+    <div className="rounded-2xl border border-surface-border bg-surface p-5 shadow-sm transition-shadow hover:shadow-md">
+      <span className={`flex size-10 items-center justify-center rounded-xl ${KPI_TONES[tone]}`}>
         {icon}
-      </div>
-      <div className="min-w-0">
-        <div className="flex items-center gap-1.5">
-          <span className="text-[11px] text-fg-secondary leading-tight">{label}</span>
-          {tip && <InfoTip text={tip} />}
-        </div>
-        <p className="text-[26px] font-bold text-fg leading-none tabular-nums mt-0.5">{value}</p>
+      </span>
+      <p className="mt-4 text-3xl font-semibold tracking-tight text-fg tabular-nums">{value}</p>
+      <div className="mt-1 flex items-center gap-1.5">
+        <p className="text-sm text-fg-secondary">{label}</p>
+        {tip && <InfoTip text={tip} />}
       </div>
     </div>
   )
 }
 
-/* ── Icons ── */
+/* ── Icons (inherit color from parent via currentColor) ── */
 
-function OverviewIcon() {
+function BoxIcon() {
   return (
-    <svg className="w-3.5 h-3.5 text-fg-secondary" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="12" cy="12" r="3" />
-      <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z" />
+    <svg className="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z" />
+      <polyline points="3.27 6.96 12 12.01 20.73 6.96" />
+      <line x1="12" y1="22.08" x2="12" y2="12" />
     </svg>
   )
 }
 
-function BoxIcon() {
+function PackageIcon() {
   return (
-    <svg className="w-5 h-5 text-fg-secondary" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <svg className="size-16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
       <path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z" />
       <polyline points="3.27 6.96 12 12.01 20.73 6.96" />
       <line x1="12" y1="22.08" x2="12" y2="12" />
@@ -293,7 +337,7 @@ function BoxIcon() {
 
 function PeopleIcon() {
   return (
-    <svg className="w-5 h-5 text-fg-secondary" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <svg className="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
       <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" />
       <circle cx="9" cy="7" r="4" />
       <path d="M23 21v-2a4 4 0 00-3-3.87" />
@@ -304,7 +348,7 @@ function PeopleIcon() {
 
 function CartAlertIcon() {
   return (
-    <svg className="w-5 h-5 text-fg-secondary" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <svg className="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
       <circle cx="9" cy="21" r="1" />
       <circle cx="20" cy="21" r="1" />
       <path d="M1 1h4l2.68 13.39a2 2 0 002 1.61h9.72a2 2 0 002-1.61L23 6H6" />
@@ -314,7 +358,7 @@ function CartAlertIcon() {
 
 function OrderIcon() {
   return (
-    <svg className="w-5 h-5 text-fg-secondary" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <svg className="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
       <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z" />
       <line x1="3" y1="6" x2="21" y2="6" />
       <path d="M16 10a4 4 0 01-8 0" />
@@ -324,7 +368,7 @@ function OrderIcon() {
 
 function BellSmIcon() {
   return (
-    <svg className="w-3.5 h-3.5 text-fg-secondary" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg className="size-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9" />
       <path d="M13.73 21a2 2 0 01-3.46 0" />
     </svg>
@@ -333,7 +377,7 @@ function BellSmIcon() {
 
 function UploadSmIcon() {
   return (
-    <svg className="w-3.5 h-3.5 text-fg-secondary" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg className="size-[18px] text-fg-secondary" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
       <polyline points="17 8 12 3 7 8" />
       <line x1="12" y1="3" x2="12" y2="15" />
@@ -341,18 +385,11 @@ function UploadSmIcon() {
   )
 }
 
-function AddNotifIcon() {
+function ArrowRightIcon() {
   return (
-    <svg className="w-3.5 h-3.5 text-fg-secondary" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-    </svg>
-  )
-}
-
-function ActivitySmIcon() {
-  return (
-    <svg className="w-3.5 h-3.5 text-fg-secondary" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+    <svg className="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <line x1="5" y1="12" x2="19" y2="12" />
+      <polyline points="12 5 19 12 12 19" />
     </svg>
   )
 }

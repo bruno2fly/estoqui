@@ -57,60 +57,62 @@ export function Layout() {
 
   return (
     <>
-      <aside className="w-[220px] flex flex-col bg-sidebar border-r border-sidebar-border shrink-0 overflow-y-auto">
-        <div className="px-5 pt-6 pb-4">
-          <h1 className="text-[18px] font-extrabold text-fg tracking-tight leading-tight">ESTOQUI</h1>
-          <p className="text-[10px] text-muted mt-0.5 tracking-wide">By 2Fly</p>
+      <aside className="w-[248px] flex flex-col bg-sidebar border-r border-sidebar-border shrink-0 overflow-y-auto">
+        <div className="flex items-center gap-2.5 px-5 h-16 shrink-0">
+          <h1 className="text-[19px] font-extrabold text-fg tracking-tight leading-none">ESTOQUI</h1>
+          <span className="rounded-full bg-surface-hover px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-fg-secondary">
+            2Fly
+          </span>
         </div>
 
-        <div className="px-3 flex-1">
-          <p className="text-[9px] font-semibold uppercase tracking-[0.12em] text-muted px-2 mb-1.5">Main menu</p>
-          <nav className="space-y-px">
+        <nav className="flex-1 px-3 py-2">
+          <p className="px-3 pb-2 text-[11px] font-semibold uppercase tracking-wider text-muted">Menu</p>
+          <div className="space-y-1">
             {mainNavItems.map(({ to, label, icon: Icon }) => (
               <NavLink
                 key={to}
                 to={to}
                 end={to === '/'}
                 className={({ isActive }) =>
-                  `flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[13px] font-medium transition-colors ${
+                  `group flex items-center gap-3 rounded-xl px-3 py-2.5 text-[13px] font-medium transition-colors ${
                     isActive
-                      ? 'bg-sidebar-active text-fg'
-                      : 'text-fg-secondary hover:bg-sidebar-active hover:text-fg'
+                      ? 'bg-primary text-primary-foreground shadow-sm'
+                      : 'text-fg-secondary hover:bg-sidebar-active hover:text-accent-foreground'
                   }`
                 }
               >
-                <Icon className="w-4 h-4" />
-                <span>{label}</span>
+                <Icon className="w-[18px] h-[18px] shrink-0" />
+                <span className="flex-1">{label}</span>
               </NavLink>
             ))}
-          </nav>
+          </div>
 
-          <p className="text-[9px] font-semibold uppercase tracking-[0.12em] text-muted px-2 mb-1.5 mt-5">Others</p>
-          <nav className="space-y-px">
+          <p className="px-3 pb-2 pt-6 text-[11px] font-semibold uppercase tracking-wider text-muted">General</p>
+          <div className="space-y-1">
             {otherNavItems.map(({ to, label, icon: Icon }) => (
               <NavLink
                 key={label}
                 to={to}
                 end
                 className={({ isActive }) =>
-                  `flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[13px] font-medium transition-colors ${
+                  `group flex items-center gap-3 rounded-xl px-3 py-2.5 text-[13px] font-medium transition-colors ${
                     isActive
-                      ? 'bg-sidebar-active text-fg'
-                      : 'text-fg-secondary hover:bg-sidebar-active hover:text-fg'
+                      ? 'bg-primary text-primary-foreground shadow-sm'
+                      : 'text-fg-secondary hover:bg-sidebar-active hover:text-accent-foreground'
                   }`
                 }
               >
-                <Icon className="w-4 h-4" />
-                <span>{label}</span>
+                <Icon className="w-[18px] h-[18px] shrink-0" />
+                <span className="flex-1">{label}</span>
               </NavLink>
             ))}
-          </nav>
-        </div>
+          </div>
+        </nav>
 
-        <div className="px-5 py-4 border-t border-sidebar-border space-y-3">
-          <div className="flex items-center justify-between">
-            <span className="text-[12px] text-fg-secondary flex items-center gap-2">
-              <MoonIcon className="w-3.5 h-3.5" />
+        <div className="px-3 py-3 border-t border-sidebar-border space-y-1">
+          <div className="flex items-center justify-between rounded-xl px-3 py-2.5">
+            <span className="text-[13px] font-medium text-fg-secondary flex items-center gap-3">
+              <MoonIcon className="w-[18px] h-[18px]" />
               Dark Mode
             </span>
             <button
@@ -132,82 +134,88 @@ export function Layout() {
           <button
             type="button"
             onClick={() => { signOut().then(() => navigate('/login', { replace: true })) }}
-            className="flex items-center gap-2 text-[12px] text-fg-secondary hover:text-danger transition-colors w-full"
+            className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-[13px] font-medium text-fg-secondary transition-colors hover:bg-danger-bg hover:text-danger"
           >
-            <LogoutIcon className="w-3.5 h-3.5" />
+            <LogoutIcon className="w-[18px] h-[18px]" />
             Logout
           </button>
         </div>
       </aside>
 
       <main className="flex-1 flex flex-col overflow-hidden bg-background">
-        <header className="py-3.5 px-6 bg-surface border-b border-surface-border shrink-0">
-          <div className="flex items-center justify-between">
-            <h2 className="text-fg text-2xl font-bold">{title}</h2>
-            <div className="flex items-center gap-3">
+        <header className="flex h-16 items-center gap-3 px-6 bg-background/80 border-b border-surface-border shrink-0 backdrop-blur-md">
+          <h2 className="text-fg text-xl font-semibold tracking-tight">{title}</h2>
+
+          <div className="ml-auto flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => navigate('/')}
+              className="relative inline-flex size-9 items-center justify-center rounded-full border border-surface-border bg-surface text-fg-secondary transition-colors hover:bg-surface-hover hover:text-fg"
+              title="Notifications"
+            >
+              <BellIcon className="w-[18px] h-[18px]" />
+              <span className="absolute right-2 top-2 size-2 rounded-full bg-warning ring-2 ring-surface" />
+            </button>
+            <button
+              type="button"
+              onClick={() => navigate('/settings')}
+              className="inline-flex size-9 items-center justify-center rounded-full border border-surface-border bg-surface text-fg-secondary transition-colors hover:bg-surface-hover hover:text-fg"
+              title="Settings"
+            >
+              <GearIcon className="w-[18px] h-[18px]" />
+            </button>
+
+            <div className="relative">
               <button
                 type="button"
-                onClick={() => navigate('/settings')}
-                className="text-fg-secondary hover:text-fg transition-colors"
-                title="Settings"
+                onClick={() => setStoreMenuOpen(!storeMenuOpen)}
+                className="flex items-center gap-2.5 rounded-xl border border-surface-border bg-surface px-3 py-2 text-left transition-colors hover:bg-surface-hover"
               >
-                <GearIcon className="w-[18px] h-[18px]" />
+                <span className="flex size-8 items-center justify-center rounded-lg bg-accent text-accent-foreground">
+                  <LockIcon className="w-4 h-4" />
+                </span>
+                <span className="hidden leading-tight sm:block">
+                  <span className="block text-[13px] font-semibold text-fg">{storeName}</span>
+                  <span className="block text-[11px] text-fg-secondary">Store settings</span>
+                </span>
+                <ChevronDownIcon className={`w-4 h-4 text-muted transition-transform ${storeMenuOpen ? 'rotate-180' : ''}`} />
               </button>
-              <button
-                type="button"
-                onClick={() => navigate('/')}
-                className="text-fg-secondary hover:text-fg transition-colors"
-                title="Notifications"
-              >
-                <BellIcon className="w-[18px] h-[18px]" />
-              </button>
-              <div className="relative pl-2 border-l border-surface-border">
-                <button
-                  type="button"
-                  onClick={() => setStoreMenuOpen(!storeMenuOpen)}
-                  className="flex items-center gap-1.5 text-fg hover:opacity-80 transition-opacity"
-                >
-                  <LockIcon className="w-3.5 h-3.5 text-fg-secondary" />
-                  <span className="text-[17px] font-bold">{storeName}</span>
-                  <ChevronDownIcon className={`w-3.5 h-3.5 text-muted transition-transform ${storeMenuOpen ? 'rotate-180' : ''}`} />
-                </button>
-                {storeMenuOpen && (
-                  <>
-                    <div className="fixed inset-0 z-10" onClick={() => setStoreMenuOpen(false)} />
-                    <div className="absolute right-0 top-full mt-2 w-48 bg-surface border border-surface-border rounded-xl shadow-lg z-20 py-1">
-                      <button
-                        type="button"
-                        onClick={() => { setStoreMenuOpen(false); navigate('/settings') }}
-                        className="w-full text-left px-4 py-2.5 text-[13px] text-fg-secondary hover:bg-surface-hover transition-colors flex items-center gap-2.5"
-                      >
-                        <GearIcon className="w-4 h-4" />
-                        Store Settings
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => { setStoreMenuOpen(false); navigate('/help') }}
-                        className="w-full text-left px-4 py-2.5 text-[13px] text-fg-secondary hover:bg-surface-hover transition-colors flex items-center gap-2.5"
-                      >
-                        <HelpSmIcon className="w-4 h-4" />
-                        Help & Support
-                      </button>
-                      <div className="border-t border-surface-border my-1" />
-                      <button
-                        type="button"
-                        onClick={() => { setStoreMenuOpen(false); signOut().then(() => navigate('/login', { replace: true })) }}
-                        className="w-full text-left px-4 py-2.5 text-[13px] text-danger hover:bg-surface-hover transition-colors flex items-center gap-2.5"
-                      >
-                        <LogoutIcon className="w-4 h-4" />
-                        Logout
-                      </button>
-                    </div>
-                  </>
-                )}
-              </div>
+              {storeMenuOpen && (
+                <>
+                  <div className="fixed inset-0 z-10" onClick={() => setStoreMenuOpen(false)} />
+                  <div className="absolute right-0 top-full mt-2 w-48 bg-surface border border-surface-border rounded-xl shadow-lg z-20 py-1">
+                    <button
+                      type="button"
+                      onClick={() => { setStoreMenuOpen(false); navigate('/settings') }}
+                      className="w-full text-left px-4 py-2.5 text-[13px] text-fg-secondary hover:bg-surface-hover transition-colors flex items-center gap-2.5"
+                    >
+                      <GearIcon className="w-4 h-4" />
+                      Store Settings
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => { setStoreMenuOpen(false); navigate('/help') }}
+                      className="w-full text-left px-4 py-2.5 text-[13px] text-fg-secondary hover:bg-surface-hover transition-colors flex items-center gap-2.5"
+                    >
+                      <HelpSmIcon className="w-4 h-4" />
+                      Help & Support
+                    </button>
+                    <div className="border-t border-surface-border my-1" />
+                    <button
+                      type="button"
+                      onClick={() => { setStoreMenuOpen(false); signOut().then(() => navigate('/login', { replace: true })) }}
+                      className="w-full text-left px-4 py-2.5 text-[13px] text-danger hover:bg-surface-hover transition-colors flex items-center gap-2.5"
+                    >
+                      <LogoutIcon className="w-4 h-4" />
+                      Logout
+                    </button>
+                  </div>
+                </>
+              )}
             </div>
           </div>
         </header>
-        <div className="flex-1 overflow-y-auto p-5">
+        <div className="flex-1 overflow-y-auto p-6">
           <Outlet />
         </div>
       </main>
