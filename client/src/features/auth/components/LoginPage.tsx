@@ -20,16 +20,6 @@ function EyeOffIcon({ className }: { className?: string }) {
   )
 }
 
-function WarehouseIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z" />
-      <polyline points="3.27 6.96 12 12.01 20.73 6.96" />
-      <line x1="12" y1="22.08" x2="12" y2="12" />
-    </svg>
-  )
-}
-
 export function LoginPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -80,13 +70,12 @@ export function LoginPage() {
       <div className="relative w-full max-w-[420px] bg-surface border border-surface-border rounded-2xl shadow-2xl p-8 md:p-10">
         {/* Branding */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center size-14 rounded-2xl bg-primary text-primary-foreground shadow-sm mb-4">
-            <WarehouseIcon className="size-7" />
-          </div>
-          <h1 className="text-2xl font-extrabold tracking-tight text-fg">
-            <span className="text-primary">ESTOQUI</span>
-          </h1>
-          <p className="text-muted mt-1 text-sm">Inventory Management</p>
+          <img
+            src="/estoqui-logo.png"
+            alt="Estoqui"
+            className="h-10 w-auto mx-auto mb-3"
+          />
+          <p className="text-muted text-sm">Inventory Management</p>
           <p className="text-sm text-fg-secondary mt-3">
             {isRegister
               ? 'Create your account to get started.'
