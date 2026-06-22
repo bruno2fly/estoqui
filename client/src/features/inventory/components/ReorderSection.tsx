@@ -1,11 +1,108 @@
-import React, { useMemo } from 'react'
+import React, { useMemo, useState } from 'react'
 import { useStore } from '@/store'
 import { getVendorPricesForProduct } from '@/store/selectors/vendorPrices'
 import { getStalenessThreshold } from '@/store/selectors/settings'
-import { Badge } from '@/shared/components'
+import { Badge, Modal, Button, Input } from '@/shared/components'
 import { useToast } from '@/shared/components'
 import type { Order } from '@/types'
 import type { OrderGroup } from '@/store/actions/inventoryActions'
+
+/* ────────────────────────────────────────────────────────────
+   AddProductModal — manually add a catalog product to the draft
+   ──────────────────────────────────────────────────────────── */
+function AddProductModal({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const toast = useToast()
+  const products = useStore((s) => s.products)
+  const lines = useStore((s) => s.reorderDraft.lines)
+  const addReorderLine = useStore((s) => s.addReorderLine)
+  const [query, setQuery] = useState('')
+  const [qty, setQty] = useState('1')
+
+  const existingIds = useMemo(() => new Set(lines.map((l) => l.productId)), [lines])
+
+  const filtered = useMemo(() => {
+    const sorted = [...products].sort((a, b) =>
+      `${a.name} ${a.brand}`.localeCompare(`${b.name} ${b.brand}`)
+    )
+    const q = query.trim().toLowerCase()
+    const matches = q
+      ? sorted.filter((p) =>
+          `${p.name} ${p.brand} ${p.sku ?? ''}`.toLowerCase().includes(q)
+        )
+      : sorted
+    return matches.slice(0, 50)
+  }, [products, query])
+
+  const handleAdd = (productId: string) => {
+    // Same duplicate check as the list — warn and don't duplicate.
+    if (existingIds.has(productId)) {
+      toast.show('Already on the list', 'error')
+      return
+    }
+    const n = Math.max(1, parseInt(qty) || 1)
+    addReorderLine(productId, n)
+    const p = products.find((x) => x.id === productId)
+    toast.show(`${p ? `${p.name} ${p.brand}`.trim() : 'Product'} added`)
+  }
+
+  return (
+    <Modal open={open} onClose={onClose} title="Add Product" maxWidth="560px">
+      <div className="space-y-4">
+        <div className="flex gap-3">
+          <div className="flex-1">
+            <Input
+              placeholder="Search by name, brand, or SKU…"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              autoFocus
+            />
+          </div>
+          <div className="w-20">
+            <Input
+              type="number"
+              min="1"
+              value={qty}
+              onChange={(e) => setQty(e.target.value)}
+              aria-label="Quantity"
+            />
+          </div>
+        </div>
+
+        <div className="max-h-[50vh] overflow-y-auto border border-surface-border rounded-xl divide-y divide-surface-border">
+          {filtered.length === 0 ? (
+            <p className="text-sm text-muted text-center py-8">No products found.</p>
+          ) : (
+            filtered.map((p) => {
+              const already = existingIds.has(p.id)
+              return (
+                <div key={p.id} className="flex items-center gap-3 px-4 py-2.5 hover:bg-surface-hover/50">
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm text-fg truncate">
+                      {p.name} <span className="text-muted">{p.brand}</span>
+                    </p>
+                    {p.sku && <p className="text-[11px] text-muted truncate">{p.sku}</p>}
+                  </div>
+                  <button
+                    type="button"
+                    disabled={already}
+                    onClick={() => handleAdd(p.id)}
+                    className="shrink-0 px-3 py-1.5 rounded-lg text-xs font-medium bg-fg text-background hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed"
+                  >
+                    {already ? 'On list' : 'Add'}
+                  </button>
+                </div>
+              )
+            })
+          )}
+        </div>
+
+        <div className="flex justify-end">
+          <Button variant="secondary" onClick={onClose}>Done</Button>
+        </div>
+      </div>
+    </Modal>
+  )
+}
 
 interface LastOrderInfo {
   qty: number
@@ -21,6 +118,7 @@ export function ReorderSection({
   onOrderCreated?: (order: Order, byVendor: Record<string, OrderGroup>) => void
 }) {
   const toast = useToast()
+  const [addOpen, setAddOpen] = useState(false)
   const state = useStore((s) => s)
   const reorderDraft = state.reorderDraft
   const products = state.products
@@ -75,22 +173,36 @@ export function ReorderSection({
   if (lines.length === 0) {
     return (
       <div className="bg-surface border border-surface-border rounded-2xl p-6 shadow-sm">
-        <div className="flex items-center gap-3 mb-5">
-          <span className="flex size-10 items-center justify-center rounded-xl bg-accent text-accent-foreground">
-            <svg className="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
-              <polyline points="14 2 14 8 20 8" />
-              <line x1="16" y1="13" x2="8" y2="13" />
-              <line x1="16" y1="17" x2="8" y2="17" />
-              <polyline points="10 9 9 9 8 9" />
-            </svg>
-          </span>
-          <div>
-            <h2 className="text-base font-semibold text-fg">Reorder List</h2>
-            <p className="text-xs text-fg-secondary">Items suggested for reorder based on your stock</p>
+        <div className="flex items-center justify-between mb-5">
+          <div className="flex items-center gap-3">
+            <span className="flex size-10 items-center justify-center rounded-xl bg-accent text-accent-foreground">
+              <svg className="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
+                <polyline points="14 2 14 8 20 8" />
+                <line x1="16" y1="13" x2="8" y2="13" />
+                <line x1="16" y1="17" x2="8" y2="17" />
+                <polyline points="10 9 9 9 8 9" />
+              </svg>
+            </span>
+            <div>
+              <h2 className="text-base font-semibold text-fg">Reorder List</h2>
+              <p className="text-xs text-fg-secondary">Items suggested for reorder based on your stock</p>
+            </div>
           </div>
+          <button
+            type="button"
+            onClick={() => setAddOpen(true)}
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-fg text-background text-sm font-medium hover:opacity-90 transition-opacity"
+          >
+            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="12" y1="5" x2="12" y2="19" />
+              <line x1="5" y1="12" x2="19" y2="12" />
+            </svg>
+            Add Product
+          </button>
         </div>
-        <p className="text-muted text-sm">No items to reorder.</p>
+        <p className="text-muted text-sm">No items to reorder. Use “Add Product” to add one from your catalog.</p>
+        <AddProductModal open={addOpen} onClose={() => setAddOpen(false)} />
       </div>
     )
   }
@@ -113,14 +225,28 @@ export function ReorderSection({
             <p className="text-xs text-fg-secondary">Items suggested for reorder based on your stock</p>
           </div>
         </div>
-        <button
-          type="button"
-          onClick={handleCreateOrder}
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-primary text-primary-foreground text-sm font-medium shadow-sm hover:bg-primary-hover transition-colors"
-        >
-          Create Order
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setAddOpen(true)}
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-fg text-background text-sm font-medium hover:opacity-90 transition-opacity"
+          >
+            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="12" y1="5" x2="12" y2="19" />
+              <line x1="5" y1="12" x2="19" y2="12" />
+            </svg>
+            Add Product
+          </button>
+          <button
+            type="button"
+            onClick={handleCreateOrder}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-primary text-primary-foreground text-sm font-medium shadow-sm hover:bg-primary-hover transition-colors"
+          >
+            Create Order
+          </button>
+        </div>
       </div>
+      <AddProductModal open={addOpen} onClose={() => setAddOpen(false)} />
       <div className="border border-surface-border rounded-xl overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full border-collapse">

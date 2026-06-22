@@ -316,7 +316,11 @@ export function InventoryPage() {
   }
 
   const hasActiveSession = Boolean(reorderDraft?.lines?.length) || orderData !== null
-  const showReorder = Boolean(reorderDraft?.lines?.length) && orderData === null
+  // Keep the reorder section visible whenever there's an active snapshot — even
+  // with zero lines — so a user who removed every item can re-add from catalog.
+  const showReorder =
+    (Boolean(reorderDraft?.lines?.length) || Boolean(reorderDraft?.snapshotId)) &&
+    orderData === null
   const showOrderCards = orderData !== null
 
   const tabBtn = (label: string, tabMode: UploadMode) => (

@@ -70,9 +70,9 @@ function VendorListModal({
         <table className="w-full text-xs">
           <thead className="sticky top-0 bg-surface z-10">
             <tr className="border-b border-surface-border">
+              <th className="text-center text-muted font-semibold text-[11px] uppercase tracking-wider px-3 py-2.5 w-20">Qty</th>
               <th className="text-left text-muted font-semibold text-[11px] uppercase tracking-wider px-4 py-2.5">Product</th>
               <th className="text-center text-muted font-semibold text-[11px] uppercase tracking-wider px-3 py-2.5 w-16">Current</th>
-              <th className="text-center text-muted font-semibold text-[11px] uppercase tracking-wider px-3 py-2.5 w-20">Qty</th>
               <th className="text-center text-muted font-semibold text-[11px] uppercase tracking-wider px-3 py-2.5 w-16">Type</th>
               <th className="text-right text-muted font-semibold text-[11px] uppercase tracking-wider px-3 py-2.5 w-24">Unit</th>
               <th className="text-right text-muted font-semibold text-[11px] uppercase tracking-wider px-3 py-2.5 w-24">Total</th>
@@ -93,8 +93,6 @@ function VendorListModal({
                 const currentStock = product?.stockQty ?? 0
                 return (
                   <tr key={`${l.productId}-${i}`} className="border-b border-surface-border/50 hover:bg-surface-hover/50">
-                    <td className="px-4 py-1.5 text-fg">{l.productName}</td>
-                    <td className="px-3 py-1.5 text-center text-muted tabular-nums">{currentStock}</td>
                     <td className="px-3 py-1.5 text-center">
                       <input
                         type="number"
@@ -104,6 +102,8 @@ function VendorListModal({
                         className="w-14 bg-input-bg border border-input-border text-fg text-center px-1.5 py-1 rounded-lg text-xs tabular-nums focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
                       />
                     </td>
+                    <td className="px-4 py-1.5 text-fg">{l.productName}</td>
+                    <td className="px-3 py-1.5 text-center text-muted tabular-nums">{currentStock}</td>
                     <td className="px-3 py-1.5 text-center">
                       <span className={`inline-block px-1.5 py-0.5 rounded text-[10px] font-bold uppercase ${
                         isCase

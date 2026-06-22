@@ -1,5 +1,6 @@
 import type { ReorderDraft, ReorderDraftLine } from '@/types'
 import type { StateSetter, StateGetter } from '../types'
+import { computeBestVendor } from '../selectors/vendorPrices'
 
 export const initialReorderDraftState: { reorderDraft: ReorderDraft } = {
   reorderDraft: { snapshotId: null, lines: [] },
@@ -9,6 +10,44 @@ export function getReorderDraftActions(set: StateSetter, get: StateGetter) {
   return {
     setReorderDraft: (draft: ReorderDraft) => {
       set(() => ({ reorderDraft: draft }))
+    },
+    /**
+     * Manually add a catalog product to the current reorder draft — for items
+     * that aren't on a shelf scan / CSV (e.g. re-adding one the user removed).
+     * No-ops if the product is already on the list (caller shows the toast).
+     */
+    addReorderLine: (productId: string, qty?: number) => {
+      const state = get()
+      // Duplicate guard — same productId can never appear twice.
+      if (state.reorderDraft.lines.some((l) => l.productId === productId)) return
+      const product = state.products.find((p) => p.id === productId)
+      if (!product) return
+
+      const best = computeBestVendor(state, productId)
+      const vp = best
+        ? state.vendorPrices.find(
+            (p) => p.vendorId === best.vendorId && p.productId === productId
+          )
+        : null
+
+      const line: ReorderDraftLine = {
+        productId,
+        currentStock: product.stockQty ?? 0,
+        minStock: product.minStock ?? 10,
+        suggestedQty: Math.max(1, Math.round(qty ?? 1)),
+        chosenVendorId: best?.vendorId ?? null,
+        unitPrice: vp ? vp.unitPrice : 0,
+        priceUpdatedAt: vp ? vp.updatedAt : null,
+        selected: true,
+        packType: vp?.packType ?? 'CASE',
+        unitsPerCase: vp?.unitsPerCase ?? 1,
+        vendorCasePrice: vp ? vp.unitPrice : 0,
+        vendorUnitsPerCase: vp?.unitsPerCase,
+      }
+
+      set((s) => ({
+        reorderDraft: { ...s.reorderDraft, lines: [...s.reorderDraft.lines, line] },
+      }))
     },
     clearReorderDraft: () => {
       set(() => ({ reorderDraft: { snapshotId: null, lines: [] } }))
