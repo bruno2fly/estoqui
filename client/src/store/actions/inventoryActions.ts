@@ -103,6 +103,11 @@ export function getInventoryActions(
       const snapshot = state.stockSnapshots.find((s) => s.id === snapshotId)
       if (!snapshot) return
 
+      // Dedup happens HERE, by construction: stock rows are aggregated into a
+      // map keyed by productId. If several employees (or several snapshot rows)
+      // reference the same product, their quantities are SUMMED into one entry
+      // instead of producing duplicate lines. Because object keys are unique,
+      // the draft can never contain two lines for the same productId.
       const stockByProduct: Record<string, number> = {}
       snapshot.rows.forEach((row) => {
         const productId =
@@ -118,8 +123,16 @@ export function getInventoryActions(
         stockByProduct[productId] = (stockByProduct[productId] ?? 0) + row.stockQty
       })
 
+      // Defensive guard: enforce the one-line-per-product invariant even if the
+      // aggregation above is ever refactored. A duplicate productId is skipped.
       const lines: ReorderDraftLine[] = []
+      const seenProductIds = new Set<string>()
       for (const [productId, totalStock] of Object.entries(stockByProduct)) {
+        if (seenProductIds.has(productId)) {
+          console.warn(`[reorder] Duplicate product ${productId} skipped in draft`)
+          continue
+        }
+        seenProductIds.add(productId)
         const product = state.products.find((p) => p.id === productId)
         if (!product) continue
 
