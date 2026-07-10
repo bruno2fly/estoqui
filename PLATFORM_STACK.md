@@ -7,7 +7,8 @@
 
 ## Vercel
 - **Project**: estoqui-app
-- **Live URL**: https://estoqui-app.vercel.app
+- **Live URL**: https://app.estoqui.com (custom domain)
+- **Vercel URL**: https://estoqui-pwa-src.vercel.app
 - **Framework**: Vite (React)
 - **Root directory**: `client`
 - **Environment Variables**:

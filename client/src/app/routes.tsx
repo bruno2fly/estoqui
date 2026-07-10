@@ -11,11 +11,13 @@ import { SettingsPage } from '@/features/settings'
 import { HelpPage } from '@/features/help'
 import { ConverterPage } from '@/features/converter'
 import { NeedsSkuQueuePage } from '@/features/import'
+import { PrivacyPage } from '@/features/privacy/PrivacyPage'
 
 export function AppRoutes() {
   return (
     <Routes>
       <Route path="/login" element={<LoginPage />} />
+      <Route path="/privacy" element={<PrivacyPage />} />
       <Route element={<ProtectedRoute />}>
         <Route path="/" element={<Layout />}>
           <Route index element={<DashboardPage />} />
