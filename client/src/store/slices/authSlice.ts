@@ -10,12 +10,22 @@ interface AuthState {
   loading: boolean
   initialized: boolean
   dataLoaded: boolean
+  /**
+   * Cross-product entitlement gate. The Software is only unlocked for the
+   * 'software_app' tier (the $299 "App + Software" plan). Read from the shared
+   * `entitlements` table, written by the App's Stripe webhook.
+   *   null  = not checked yet
+   *   true  = tier is 'software_app' → allowed
+   *   false = no entitlement / App-only / error → locked (default-deny)
+   */
+  entitled: boolean | null
 
   initialize: () => Promise<void>
   signIn: (email: string, password: string) => Promise<{ error: string | null }>
   signUp: (email: string, password: string) => Promise<{ error: string | null }>
   signOut: () => Promise<void>
   loadUserData: () => Promise<void>
+  checkEntitlement: () => Promise<void>
 }
 
 // Import the main store dynamically to avoid circular deps
@@ -32,6 +42,7 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
   loading: false,
   initialized: false,
   dataLoaded: false,
+  entitled: null,
 
   initialize: async () => {
     const TIMEOUT_MS = 5000 // only for session check, not data loading
@@ -46,6 +57,7 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
 
       if (session?.user) {
         set({ user: session.user, session, initialized: true })
+        void get().checkEntitlement()
         // Load data in background — don't block the login screen
         get().loadUserData().catch(() => {
           console.warn('[auth] loadUserData failed on init — continuing with empty data')
@@ -63,7 +75,7 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
     supabase.auth.onAuthStateChange((_event, session) => {
       set({ user: session?.user ?? null, session })
       if (!session?.user) {
-        set({ dataLoaded: false })
+        set({ dataLoaded: false, entitled: null })
         _getMainStore?.()?.clearStore()
       }
     })
@@ -78,6 +90,7 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
     }
     // Set user immediately so navigation works, then load data in background
     set({ user: data.user, session: data.session, loading: false })
+    void get().checkEntitlement()
     // Don't await — let the ProtectedRoute show "Loading your inventory..."
     // while data downloads in the background
     get().loadUserData().catch((err) => {
@@ -97,6 +110,7 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
     // If email confirmation is disabled, user is signed in immediately
     if (data.user && data.session) {
       set({ user: data.user, session: data.session, loading: false })
+      void get().checkEntitlement()
       get().loadUserData().catch((err) => {
         console.error('[auth] Failed to load data after sign-up:', err)
         set({ dataLoaded: true })
@@ -109,8 +123,29 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
 
   signOut: async () => {
     await supabase.auth.signOut()
-    set({ user: null, session: null, dataLoaded: false })
+    set({ user: null, session: null, dataLoaded: false, entitled: null })
     _getMainStore?.()?.clearStore()
+  },
+
+  checkEntitlement: async () => {
+    const uid = get().user?.id
+    if (!uid) {
+      set({ entitled: false })
+      return
+    }
+    try {
+      const { data, error } = await supabase
+        .from('entitlements')
+        .select('tier')
+        .eq('user_id', uid)
+        .maybeSingle()
+      if (error) throw error
+      // Default-deny: only the 'software_app' tier unlocks the Software.
+      set({ entitled: data?.tier === 'software_app' })
+    } catch (err) {
+      console.error('[auth] entitlement check failed', err)
+      set({ entitled: false }) // deny on error; the Locked screen offers a retry
+    }
   },
 
   loadUserData: async () => {
