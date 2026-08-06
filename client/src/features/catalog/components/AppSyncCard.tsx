@@ -1,8 +1,8 @@
 import { useState } from 'react'
 import { useToast } from '@/shared/components'
 import {
-  syncProductsFromApp,
-  pushProductsToApp,
+  syncAllFromApp,
+  pushAllToApp,
   getLastSync,
   type AppSyncResult,
 } from '@/lib/appSync'
@@ -22,16 +22,17 @@ export function AppSyncCard() {
   const handleSync = async () => {
     setSyncing(true)
     try {
-      const result = await syncProductsFromApp()
-      setLastSync(result)
-      if (result.ok) {
+      const { products, vendors } = await syncAllFromApp()
+      setLastSync(products)
+      if (products.ok && vendors.ok) {
+        const changes = products.created + products.updated + vendors.created + vendors.updated
         toast.show(
-          result.created + result.updated === 0
-            ? 'Catalog already up to date with the App'
-            : `Synced from the App: ${result.created} new, ${result.updated} updated`,
+          changes === 0
+            ? 'Already up to date with the App'
+            : `Synced from the App: ${products.created + products.updated} product(s), ${vendors.created + vendors.updated} vendor(s)`,
         )
       } else {
-        toast.show(result.error ?? 'Sync failed', 'error')
+        toast.show(products.error ?? vendors.error ?? 'Sync failed', 'error')
       }
     } finally {
       setSyncing(false)
@@ -41,15 +42,15 @@ export function AppSyncCard() {
   const handlePush = async () => {
     setPushing(true)
     try {
-      const result = await pushProductsToApp()
-      if (result.ok) {
+      const { products, vendors } = await pushAllToApp()
+      if (products.ok && vendors.ok) {
         toast.show(
-          result.created === 0
-            ? 'The App already has every product with a SKU'
-            : `Sent ${result.created} product(s) to the App — scannable now`,
+          products.created + vendors.created === 0
+            ? 'The App already has everything (products need a SKU)'
+            : `Sent to the App: ${products.created} product(s), ${vendors.created} vendor(s)`,
         )
       } else {
-        toast.show(result.error ?? 'Push failed', 'error')
+        toast.show(products.error ?? vendors.error ?? 'Push failed', 'error')
       }
     } finally {
       setPushing(false)

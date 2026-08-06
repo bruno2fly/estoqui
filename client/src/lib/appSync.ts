@@ -1,7 +1,8 @@
 import { supabase } from '@/lib/supabase'
 import { useStore } from '@/store'
 import { insertNewProducts, upsertProducts } from '@/lib/supabase/products'
-import type { Product } from '@/types'
+import { upsertVendor } from '@/lib/supabase/vendors'
+import type { Product, Vendor } from '@/types'
 
 /**
  * App → Software product pull-sync.
@@ -78,7 +79,8 @@ const norm = (s: string | null | undefined) => (s ?? '').trim().toLowerCase()
  * query at 1000 rows, which would silently truncate big catalogs (and make the
  * push think existing App products are "new", creating duplicates).
  */
-async function fetchAllAppProducts(
+async function fetchAllStoreRows(
+  table: 'app_products' | 'app_vendors',
   storeId: string,
   select: string,
 ): Promise<Record<string, unknown>[]> {
@@ -86,7 +88,7 @@ async function fetchAllAppProducts(
   let all: Record<string, unknown>[] = []
   for (let from = 0; ; from += PAGE) {
     const { data, error } = await supabase
-      .from('app_products')
+      .from(table)
       .select(select)
       .eq('store_id', storeId)
       .range(from, from + PAGE - 1)
@@ -129,7 +131,7 @@ export async function syncProductsFromApp(): Promise<AppSyncResult> {
 
     // App catalog — paginated so catalogs over 1000 products aren't truncated.
     // select('*') keeps this resilient to older App schemas.
-    const rows = await fetchAllAppProducts(storeId, '*')
+    const rows = await fetchAllStoreRows('app_products', storeId, '*')
 
     const state = useStore.getState()
     const existing = state.products
@@ -251,7 +253,7 @@ export async function pushProductsToApp(): Promise<AppPushResult> {
 
     // What the App already has (barcode + name), to guarantee additive-only.
     // Paginated — a truncated read here would create DUPLICATES in the App.
-    const appRows = await fetchAllAppProducts(storeId, 'barcode, name')
+    const appRows = await fetchAllStoreRows('app_products', storeId, 'barcode, name')
     const appBarcodes = new Set(
       appRows.map((r) => ((r.barcode as string | null) ?? '').trim()).filter(Boolean),
     )
@@ -310,4 +312,167 @@ export async function pushProductsToApp(): Promise<AppPushResult> {
   } finally {
     pushing = false
   }
+}
+
+// ---------------------------------------------------------------------------
+// Vendors — same rules as products; the join key is the NORMALIZED NAME
+// (vendors have no barcode).
+//
+// Field mapping:
+//   App app_vendors { name, contact_method: 'whatsapp'|'email', contact_value }
+//   Software Vendor { name, phone, contactEmail, preferredChannel, ... }
+//   whatsapp → phone / email → contactEmail; preferredChannel mirrors method.
+// ---------------------------------------------------------------------------
+
+/** App → Software vendor pull. Fill-blanks-only, never deletes. */
+export async function syncVendorsFromApp(): Promise<AppSyncResult> {
+  const fail = (error: string): AppSyncResult => ({
+    ok: false, created: 0, updated: 0, skipped: 0, total: 0, error, at: new Date().toISOString(),
+  })
+  try {
+    const { data: auth } = await supabase.auth.getUser()
+    const uid = auth.user?.id
+    if (!uid) return fail('Not signed in')
+    const storeId = await resolveAppStoreId(uid)
+    if (!storeId) return fail('No App store found for this account')
+
+    const rows = await fetchAllStoreRows('app_vendors', storeId, '*')
+    const existing = useStore.getState().vendors
+    const byName = new Map(existing.map((v) => [norm(v.name), v]))
+
+    const created: Vendor[] = []
+    const updated: Vendor[] = []
+    let skipped = 0
+
+    for (const r of rows) {
+      const name = ((r.name as string | null) ?? '').trim()
+      if (!name) {
+        skipped++
+        continue
+      }
+      const method = r.contact_method === 'email' ? 'email' : 'whatsapp'
+      const value = ((r.contact_value as string | null) ?? '').trim()
+      const match = byName.get(norm(name))
+
+      if (!match) {
+        const vendor: Vendor = {
+          id: crypto.randomUUID(),
+          name,
+          phone: method === 'whatsapp' ? value : '',
+          notes: '',
+          status: 'active',
+          contactEmail: method === 'email' && value ? value : undefined,
+          preferredChannel: method,
+        }
+        created.push(vendor)
+        byName.set(norm(name), vendor)
+      } else {
+        // FILL BLANKS ONLY — owner-entered contact data always wins.
+        const patch: Partial<Vendor> = {}
+        if (!match.phone?.trim() && method === 'whatsapp' && value) patch.phone = value
+        if (!match.contactEmail?.trim() && method === 'email' && value) patch.contactEmail = value
+        if (!match.preferredChannel) patch.preferredChannel = method
+        if (Object.keys(patch).length > 0) updated.push({ ...match, ...patch })
+      }
+    }
+
+    for (const v of [...created, ...updated]) await upsertVendor(v, uid)
+
+    if (created.length > 0 || updated.length > 0) {
+      const patched = new Map(updated.map((v) => [v.id, v]))
+      useStore.setState({
+        vendors: [...existing.map((v) => patched.get(v.id) ?? v), ...created],
+      })
+    }
+
+    return {
+      ok: true,
+      created: created.length,
+      updated: updated.length,
+      skipped,
+      total: rows.length,
+      at: new Date().toISOString(),
+    }
+  } catch (err) {
+    return fail(err instanceof Error ? err.message : 'Vendor sync failed')
+  }
+}
+
+/** Software → App vendor push. Additive only, name-keyed, never modifies. */
+export async function pushVendorsToApp(): Promise<AppPushResult> {
+  const fail = (error: string): AppPushResult => ({
+    ok: false, created: 0, skipped: 0, error, at: new Date().toISOString(),
+  })
+  try {
+    const { data: auth } = await supabase.auth.getUser()
+    const uid = auth.user?.id
+    if (!uid) return fail('Not signed in')
+    const storeId = await resolveAppStoreId(uid)
+    if (!storeId) return fail('No App store found for this account')
+
+    const appRows = await fetchAllStoreRows('app_vendors', storeId, 'name')
+    const appNames = new Set(appRows.map((r) => norm(r.name as string | null)))
+
+    const vendors = useStore.getState().vendors
+    let skipped = 0
+    const rows: Record<string, unknown>[] = []
+    for (const v of vendors) {
+      const name = v.name.trim()
+      if (!name || appNames.has(norm(name))) {
+        skipped++
+        continue
+      }
+      // The App stores ONE contact: prefer WhatsApp/phone, fall back to email.
+      const phone = v.phone?.trim() ?? ''
+      const email = v.contactEmail?.trim() ?? ''
+      rows.push({
+        store_id: storeId,
+        name,
+        contact_method: phone ? 'whatsapp' : 'email',
+        contact_value: phone || email,
+      })
+      appNames.add(norm(name))
+    }
+
+    let created = 0
+    const CHUNK = 100
+    for (let i = 0; i < rows.length; i += CHUNK) {
+      const chunk = rows.slice(i, i + CHUNK)
+      const { error } = await supabase.from('app_vendors').insert(chunk)
+      if (error) return fail(error.message)
+      created += chunk.length
+    }
+
+    return { ok: true, created, skipped, at: new Date().toISOString() }
+  } catch (err) {
+    return fail(err instanceof Error ? err.message : 'Vendor push failed')
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Combined runners — what the UI and the login hook actually call.
+// ---------------------------------------------------------------------------
+
+export interface CombinedSyncResult {
+  products: AppSyncResult
+  vendors: AppSyncResult
+}
+
+export interface CombinedPushResult {
+  products: AppPushResult
+  vendors: AppPushResult
+}
+
+/** Pull products + vendors from the App (login auto-run and "Sync from App"). */
+export async function syncAllFromApp(): Promise<CombinedSyncResult> {
+  const products = await syncProductsFromApp()
+  const vendors = await syncVendorsFromApp()
+  return { products, vendors }
+}
+
+/** Push products + vendors to the App ("Send to App"). */
+export async function pushAllToApp(): Promise<CombinedPushResult> {
+  const products = await pushProductsToApp()
+  const vendors = await pushVendorsToApp()
+  return { products, vendors }
 }

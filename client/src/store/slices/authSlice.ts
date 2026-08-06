@@ -160,10 +160,10 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
       const sanitized = sanitizeState(data)
       _getMainStore?.()?.hydrateFromSupabase(sanitized)
       set({ dataLoaded: true })
-      // App → Software pull-sync (fire-and-forget, after hydration so the
-      // merge sees the real catalog). Dynamic import avoids a static cycle.
+      // App → Software pull-sync (products + vendors; fire-and-forget, after
+      // hydration so the merge sees real data). Dynamic import avoids a cycle.
       void import('@/lib/appSync')
-        .then((m) => m.syncProductsFromApp())
+        .then((m) => m.syncAllFromApp())
         .catch(() => {})
     } catch (err) {
       console.error('[auth] Failed to load user data:', err)
