@@ -9,6 +9,7 @@ const mainNavItems = [
   { to: '/vendors', label: 'Vendors', icon: VendorsIcon },
   { to: '/catalog', label: 'Catalog', icon: CatalogIcon },
   { to: '/converter', label: 'File Converter', icon: ConverterIcon },
+  { to: '/reports', label: 'Reports', icon: ReportsIcon },
   { to: '/history', label: 'History', icon: HistoryIcon },
 ] as const
 
@@ -24,6 +25,7 @@ const pathToTitle: Record<string, string> = {
   '/vendors': 'Vendors',
   '/converter': 'File Converter',
   '/catalog/needs-sku': 'Needs SKU',
+  '/reports': 'Reports',
   '/history': 'History',
   '/settings': 'Settings',
   '/help': 'Help & Support',
@@ -220,6 +222,17 @@ export function Layout() {
         </div>
       </main>
     </>
+  )
+}
+
+function ReportsIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M3 3v18h18" />
+      <rect x="7" y="12" width="3" height="6" />
+      <rect x="12" y="8" width="3" height="10" />
+      <rect x="17" y="5" width="3" height="13" />
+    </svg>
   )
 }
 

@@ -79,8 +79,8 @@ const norm = (s: string | null | undefined) => (s ?? '').trim().toLowerCase()
  * query at 1000 rows, which would silently truncate big catalogs (and make the
  * push think existing App products are "new", creating duplicates).
  */
-async function fetchAllStoreRows(
-  table: 'app_products' | 'app_vendors',
+export async function fetchAllStoreRows(
+  table: 'app_products' | 'app_vendors' | 'app_requests' | 'app_daily_sales',
   storeId: string,
   select: string,
 ): Promise<Record<string, unknown>[]> {
@@ -101,7 +101,7 @@ async function fetchAllStoreRows(
 }
 
 /** The signed-in user's App store id (owner or member), or null. */
-async function resolveAppStoreId(uid: string): Promise<string | null> {
+export async function resolveAppStoreId(uid: string): Promise<string | null> {
   const { data, error } = await supabase
     .from('app_members')
     .select('store_id')
