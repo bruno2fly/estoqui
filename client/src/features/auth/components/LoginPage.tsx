@@ -154,13 +154,26 @@ export function LoginPage() {
               : (isRegister ? 'Create Account' : 'Sign In')}
           </button>
 
-          <button
-            type="button"
-            onClick={() => { setIsRegister(!isRegister); setError(''); setSuccessMsg('') }}
-            className="block w-full text-center text-sm font-medium text-primary hover:underline transition-colors"
-          >
-            {isRegister ? 'Already have an account? Sign in' : "Don't have an account? Create one"}
-          </button>
+          {/* Accounts (and checkout) are created in the App — signing up here
+              would dead-end on the Locked screen with no way to pay. */}
+          {isRegister ? (
+            <button
+              type="button"
+              onClick={() => { setIsRegister(false); setError(''); setSuccessMsg('') }}
+              className="block w-full text-center text-sm font-medium text-primary hover:underline transition-colors"
+            >
+              Already have an account? Sign in
+            </button>
+          ) : (
+            <a
+              href="https://app.estoqui.com?plan=enterprise"
+              target="_blank"
+              rel="noreferrer"
+              className="block w-full text-center text-sm font-medium text-primary hover:underline transition-colors"
+            >
+              Don&apos;t have an account? Create one at app.estoqui.com
+            </a>
+          )}
         </form>
 
         <p className="text-xs text-muted text-center mt-8">By 2Fly</p>

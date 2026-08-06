@@ -3,10 +3,10 @@ import { useAuthStore } from '@/store/slices/authSlice'
 
 /**
  * Shown when a signed-in user's plan does NOT include the Software
- * (entitlement tier !== 'software_app'). Deliberately has NO in-app purchase
- * button or external checkout link — purchases originate in the Estoqui App,
- * and an external-purchase link would violate Apple's App Store rules if this
- * screen is ever reused in the iOS build.
+ * (entitlement tier !== 'software_app'). Purchases still originate in the App
+ * (app.estoqui.com) — the ONLY point of sale — but since this screen is
+ * desktop-web only (never inside the iOS binary), linking to the upgrade page
+ * is safe and turns a dead end into a working funnel.
  */
 export function Locked() {
   const checkEntitlement = useAuthStore((s) => s.checkEntitlement)
@@ -41,10 +41,18 @@ export function Locked() {
         </div>
 
         <div className="flex items-center justify-center gap-3 pt-2">
+          <a
+            href="https://app.estoqui.com/configuracoes"
+            target="_blank"
+            rel="noreferrer"
+            className="px-4 py-2 rounded-xl bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 transition"
+          >
+            Upgrade at app.estoqui.com
+          </a>
           <button
             onClick={retry}
             disabled={checking}
-            className="px-4 py-2 rounded-xl bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 transition disabled:opacity-50"
+            className="px-4 py-2 rounded-xl border border-surface-border text-fg text-sm font-medium hover:bg-surface-hover transition disabled:opacity-50"
           >
             {checking ? 'Checking…' : 'I upgraded — refresh'}
           </button>
