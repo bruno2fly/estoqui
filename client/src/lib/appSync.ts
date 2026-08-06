@@ -73,6 +73,31 @@ export function getLastPush(): AppPushResult | null {
 
 const norm = (s: string | null | undefined) => (s ?? '').trim().toLowerCase()
 
+/**
+ * Read ALL matching rows, not just the first 1000 — Supabase caps a single
+ * query at 1000 rows, which would silently truncate big catalogs (and make the
+ * push think existing App products are "new", creating duplicates).
+ */
+async function fetchAllAppProducts(
+  storeId: string,
+  select: string,
+): Promise<Record<string, unknown>[]> {
+  const PAGE = 1000
+  let all: Record<string, unknown>[] = []
+  for (let from = 0; ; from += PAGE) {
+    const { data, error } = await supabase
+      .from('app_products')
+      .select(select)
+      .eq('store_id', storeId)
+      .range(from, from + PAGE - 1)
+    if (error) throw new Error(error.message)
+    const rows = (data ?? []) as unknown as Record<string, unknown>[]
+    all = all.concat(rows)
+    if (rows.length < PAGE) break
+  }
+  return all
+}
+
 /** The signed-in user's App store id (owner or member), or null. */
 async function resolveAppStoreId(uid: string): Promise<string | null> {
   const { data, error } = await supabase
@@ -102,12 +127,9 @@ export async function syncProductsFromApp(): Promise<AppSyncResult> {
     const storeId = await resolveAppStoreId(uid)
     if (!storeId) return fail('No App store found for this account')
 
-    // App catalog. select('*') keeps this resilient to older App schemas.
-    const { data: rows, error: prodErr } = await supabase
-      .from('app_products')
-      .select('*')
-      .eq('store_id', storeId)
-    if (prodErr) return fail(prodErr.message)
+    // App catalog — paginated so catalogs over 1000 products aren't truncated.
+    // select('*') keeps this resilient to older App schemas.
+    const rows = await fetchAllAppProducts(storeId, '*')
 
     const state = useStore.getState()
     const existing = state.products
@@ -128,7 +150,7 @@ export async function syncProductsFromApp(): Promise<AppSyncResult> {
     const updated: Product[] = []
     let skipped = 0
 
-    for (const r of rows ?? []) {
+    for (const r of rows) {
       const barcode = ((r.barcode as string | null) ?? '').trim()
       const name = ((r.name as string | null) ?? '').trim()
       // Client suggestions / barcode-less items: skip (v1 rule).
@@ -184,7 +206,7 @@ export async function syncProductsFromApp(): Promise<AppSyncResult> {
       created: created.length,
       updated: updated.length,
       skipped,
-      total: rows?.length ?? 0,
+      total: rows.length,
       at: new Date().toISOString(),
     })
   } catch (err) {
@@ -228,15 +250,12 @@ export async function pushProductsToApp(): Promise<AppPushResult> {
     if (!storeId) return fail('No App store found for this account')
 
     // What the App already has (barcode + name), to guarantee additive-only.
-    const { data: appRows, error: appErr } = await supabase
-      .from('app_products')
-      .select('barcode, name')
-      .eq('store_id', storeId)
-    if (appErr) return fail(appErr.message)
+    // Paginated — a truncated read here would create DUPLICATES in the App.
+    const appRows = await fetchAllAppProducts(storeId, 'barcode, name')
     const appBarcodes = new Set(
-      (appRows ?? []).map((r) => ((r.barcode as string | null) ?? '').trim()).filter(Boolean),
+      appRows.map((r) => ((r.barcode as string | null) ?? '').trim()).filter(Boolean),
     )
-    const appNames = new Set((appRows ?? []).map((r) => norm(r.name as string | null)))
+    const appNames = new Set(appRows.map((r) => norm(r.name as string | null)))
 
     const products = useStore.getState().products
     let skipped = 0
