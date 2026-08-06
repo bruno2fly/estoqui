@@ -4,7 +4,12 @@ import { useStore } from '@/store'
 import { useCatalogStore } from '@/store/catalogStore'
 import { FileUpload, useToast } from '@/shared/components'
 import { parseVendorCatalogCsv } from '@/lib/import/csvImport'
-import { syncProductsFromApp, getLastSync, type AppSyncResult } from '@/lib/appSync'
+import {
+  syncProductsFromApp,
+  pushProductsToApp,
+  getLastSync,
+  type AppSyncResult,
+} from '@/lib/appSync'
 import { DataHealthPanel } from './DataHealthPanel'
 
 export function ImportCenterPage() {
@@ -16,6 +21,7 @@ export function ImportCenterPage() {
   const [vendorId, setVendorId] = useState(vendors[0]?.id ?? '')
   const [uploading, setUploading] = useState(false)
   const [syncing, setSyncing] = useState(false)
+  const [pushing, setPushing] = useState(false)
   const [lastSync, setLastSync] = useState<AppSyncResult | null>(() => getLastSync())
 
   const handleAppSync = async () => {
@@ -34,6 +40,24 @@ export function ImportCenterPage() {
       }
     } finally {
       setSyncing(false)
+    }
+  }
+
+  const handleAppPush = async () => {
+    setPushing(true)
+    try {
+      const result = await pushProductsToApp()
+      if (result.ok) {
+        toast.show(
+          result.created === 0
+            ? 'The App already has every product with a SKU'
+            : `Sent ${result.created} product(s) to the App — scannable now`,
+        )
+      } else {
+        toast.show(result.error ?? 'Push failed', 'error')
+      }
+    } finally {
+      setPushing(false)
     }
   }
 
@@ -84,13 +108,23 @@ export function ImportCenterPage() {
               )}
             </p>
           </div>
-          <button
-            onClick={handleAppSync}
-            disabled={syncing}
-            className="px-4 py-2 rounded-xl bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 transition disabled:opacity-50"
-          >
-            {syncing ? 'Syncing…' : 'Sync now'}
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleAppSync}
+              disabled={syncing || pushing}
+              className="px-4 py-2 rounded-xl bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 transition disabled:opacity-50"
+            >
+              {syncing ? 'Syncing…' : 'Sync from App'}
+            </button>
+            <button
+              onClick={handleAppPush}
+              disabled={syncing || pushing}
+              title="Create App products for catalog items the App doesn't have yet (needs a SKU). Never modifies existing App products."
+              className="px-4 py-2 rounded-xl border border-surface-border text-fg text-sm font-medium hover:bg-surface-hover transition disabled:opacity-50"
+            >
+              {pushing ? 'Sending…' : 'Send to App'}
+            </button>
+          </div>
         </div>
       </div>
 

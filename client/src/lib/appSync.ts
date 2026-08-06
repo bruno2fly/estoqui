@@ -32,6 +32,14 @@ export interface AppSyncResult {
   at: string
 }
 
+export interface AppPushResult {
+  ok: boolean
+  created: number
+  skipped: number
+  error?: string
+  at: string
+}
+
 const LAST_SYNC_KEY = 'estoqui-app-sync-last'
 
 export function getLastSync(): AppSyncResult | null {
@@ -52,7 +60,30 @@ function remember(result: AppSyncResult): AppSyncResult {
   return result
 }
 
+const LAST_PUSH_KEY = 'estoqui-app-push-last'
+
+export function getLastPush(): AppPushResult | null {
+  try {
+    const raw = localStorage.getItem(LAST_PUSH_KEY)
+    return raw ? (JSON.parse(raw) as AppPushResult) : null
+  } catch {
+    return null
+  }
+}
+
 const norm = (s: string | null | undefined) => (s ?? '').trim().toLowerCase()
+
+/** The signed-in user's App store id (owner or member), or null. */
+async function resolveAppStoreId(uid: string): Promise<string | null> {
+  const { data, error } = await supabase
+    .from('app_members')
+    .select('store_id')
+    .eq('user_id', uid)
+    .limit(1)
+    .maybeSingle()
+  if (error) throw new Error(error.message)
+  return (data?.store_id as string | undefined) ?? null
+}
 
 let running = false
 
@@ -68,14 +99,7 @@ export async function syncProductsFromApp(): Promise<AppSyncResult> {
     if (!uid) return fail('Not signed in')
 
     // The user's App store (owner or member — RLS scopes the read either way).
-    const { data: member, error: memberErr } = await supabase
-      .from('app_members')
-      .select('store_id')
-      .eq('user_id', uid)
-      .limit(1)
-      .maybeSingle()
-    if (memberErr) return fail(memberErr.message)
-    const storeId = member?.store_id as string | undefined
+    const storeId = await resolveAppStoreId(uid)
     if (!storeId) return fail('No App store found for this account')
 
     // App catalog. select('*') keeps this resilient to older App schemas.
@@ -167,5 +191,104 @@ export async function syncProductsFromApp(): Promise<AppSyncResult> {
     return fail(err instanceof Error ? err.message : 'Sync failed')
   } finally {
     running = false
+  }
+}
+
+/**
+ * Software → App push (the reverse direction).
+ *
+ * RULES (mirror of the pull, approved by Bruno):
+ *  - ADDITIVE ONLY: creates App products for barcodes the App doesn't have.
+ *    Existing App products are NEVER modified — the floor's data stays
+ *    authoritative in the App.
+ *  - Products without a SKU are skipped (nothing to scan on the phone).
+ *  - Name collisions are skipped too (the pull already links those by name).
+ *  - Loop-safe: the pull direction fills blanks only, so a pushed product
+ *    simply round-trips as a barcode match with nothing to change.
+ */
+let pushing = false
+
+export async function pushProductsToApp(): Promise<AppPushResult> {
+  const fail = (error: string): AppPushResult => {
+    const r: AppPushResult = { ok: false, created: 0, skipped: 0, error, at: new Date().toISOString() }
+    try {
+      localStorage.setItem(LAST_PUSH_KEY, JSON.stringify(r))
+    } catch { /* harmless */ }
+    return r
+  }
+
+  if (pushing) return fail('Push already running')
+  pushing = true
+  try {
+    const { data: auth } = await supabase.auth.getUser()
+    const uid = auth.user?.id
+    if (!uid) return fail('Not signed in')
+
+    const storeId = await resolveAppStoreId(uid)
+    if (!storeId) return fail('No App store found for this account')
+
+    // What the App already has (barcode + name), to guarantee additive-only.
+    const { data: appRows, error: appErr } = await supabase
+      .from('app_products')
+      .select('barcode, name')
+      .eq('store_id', storeId)
+    if (appErr) return fail(appErr.message)
+    const appBarcodes = new Set(
+      (appRows ?? []).map((r) => ((r.barcode as string | null) ?? '').trim()).filter(Boolean),
+    )
+    const appNames = new Set((appRows ?? []).map((r) => norm(r.name as string | null)))
+
+    const products = useStore.getState().products
+    let skipped = 0
+    const rows: Record<string, unknown>[] = []
+    for (const p of products) {
+      const sku = p.sku?.trim() ?? ''
+      if (!sku || appBarcodes.has(sku) || appNames.has(norm(p.name))) {
+        skipped++
+        continue
+      }
+      const row: Record<string, unknown> = {
+        store_id: storeId,
+        barcode: sku,
+        name: p.name.trim(),
+        created_by: uid,
+        created_by_name: 'Software',
+      }
+      // Optional seeds — only when the Software actually has a value.
+      if (p.unitCost != null && p.unitCost > 0) row.purchase_price = p.unitCost
+      if (p.unitPrice != null && p.unitPrice > 0) row.sale_price = p.unitPrice
+      if (p.minStock != null && p.minStock > 0) row.min_stock = Math.round(p.minStock)
+      rows.push(row)
+      appBarcodes.add(sku) // dedupe within this batch too
+    }
+
+    let created = 0
+    const CHUNK = 100
+    for (let i = 0; i < rows.length; i += CHUNK) {
+      const chunk = rows.slice(i, i + CHUNK)
+      const { error } = await supabase.from('app_products').insert(chunk)
+      if (error) {
+        // Pre-v3/v4 App schema or similar: retry without optional columns.
+        const bare = chunk.map((r) => ({
+          store_id: r.store_id,
+          barcode: r.barcode,
+          name: r.name,
+          created_by: r.created_by,
+        }))
+        const { error: bareErr } = await supabase.from('app_products').insert(bare)
+        if (bareErr) return fail(bareErr.message)
+      }
+      created += chunk.length
+    }
+
+    const result: AppPushResult = { ok: true, created, skipped, at: new Date().toISOString() }
+    try {
+      localStorage.setItem(LAST_PUSH_KEY, JSON.stringify(result))
+    } catch { /* harmless */ }
+    return result
+  } catch (err) {
+    return fail(err instanceof Error ? err.message : 'Push failed')
+  } finally {
+    pushing = false
   }
 }

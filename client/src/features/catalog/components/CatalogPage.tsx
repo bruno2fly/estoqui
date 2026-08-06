@@ -7,6 +7,7 @@ import { useToast } from '@/shared/components'
 import { normalize } from '@/shared/lib/matching'
 import { AddProductModal } from './AddProductModal'
 import { ProductDetailModal } from './ProductDetailModal'
+import { AppSyncCard } from './AppSyncCard'
 import type { Product } from '@/types'
 import {
   getStockStatus,
@@ -160,6 +161,9 @@ export function CatalogPage() {
 
   return (
     <div className="space-y-5">
+      {/* ── App ↔ Software sync ─────────────────────────────────────── */}
+      <AppSyncCard />
+
       {/* ── Summary Bar ──────────────────────────────────────────────── */}
       <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
         <SummaryCard
