@@ -261,11 +261,8 @@ export function InventoryPage() {
   }
 
   const handleAiFile = async (file: File) => {
-    const apiKey = settings?.openaiApiKey ?? ''
-    if (!apiKey) {
-      toast.show('OpenAI API key required. Add it in Settings → AI / Image Import.', 'error')
-      return
-    }
+    // AI extraction is included in the plan — runs via Estoqui's server.
+    const apiKey = ''
 
     setUploadStatus('idle')
     setUploadMessage('')
@@ -385,11 +382,6 @@ export function InventoryPage() {
             />
           ) : (
             <>
-              {!settings?.openaiApiKey && (
-                <div className="bg-warning-bg border border-warning/30 rounded-lg px-3 py-2 text-sm text-warning mb-3">
-                  OpenAI API key required. Go to <strong>Settings → AI / Image Import</strong> to add your key.
-                </div>
-              )}
               <FileUpload
                 accept=".csv,.tsv,.txt,.xls,.xlsx,.html,.htm,.pdf,image/png,image/jpeg,image/webp"
                 onFile={handleAiFile}

@@ -285,11 +285,8 @@ export function VendorDetailModal({
   }
 
   const handleImageFile = async (file: File) => {
-    const apiKey = state.settings?.openaiApiKey ?? ''
-    if (!apiKey) {
-      toast.show('OpenAI API key required. Add it in Settings.', 'error')
-      return
-    }
+    // AI extraction is included in the plan — runs via Estoqui's server.
+    const apiKey = ''
 
     setImageLoading(true)
     setCsvStatus(null)
@@ -581,11 +578,6 @@ export function VendorDetailModal({
                 </>
               ) : (
                 <>
-                  {!state.settings?.openaiApiKey && (
-                    <div className="bg-warning-bg border border-warning/30 rounded-lg px-3 py-2 text-sm text-warning">
-                      OpenAI API key required. Go to <strong>Settings</strong> to add your key.
-                    </div>
-                  )}
                   <FileUpload
                     accept="image/png,image/jpeg,image/webp,.pdf,.txt,.html,.htm,.csv,.tsv,.xls,.xlsx"
                     onFile={handleImageFile}
@@ -611,7 +603,7 @@ export function VendorDetailModal({
           {/* Bulk screenshot import */}
           {importMode === 'bulk' && !reviewRows && (
             <BulkScreenshotImport
-              apiKey={settings?.openaiApiKey ?? ''}
+              apiKey=""
               onImport={handleBulkImport}
               onCancel={() => setImportMode(null)}
             />

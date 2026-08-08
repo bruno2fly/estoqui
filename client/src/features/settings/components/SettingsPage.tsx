@@ -18,10 +18,6 @@ export function SettingsPage() {
   const [defaultMinStock, setDefaultMinStock] = useState(
     String(settings?.defaultMinStock ?? DEFAULT_SETTINGS.defaultMinStock)
   )
-  const [openaiApiKey, setOpenaiApiKey] = useState(
-    settings?.openaiApiKey ?? ''
-  )
-  const [showApiKey, setShowApiKey] = useState(false)
   const [showResetConfirm, setShowResetConfirm] = useState(false)
   const [showClearAllConfirm, setShowClearAllConfirm] = useState(false)
   const [showResetCatalogConfirm, setShowResetCatalogConfirm] = useState(false)
@@ -36,8 +32,7 @@ export function SettingsPage() {
     setDefaultMinStock(
       String(settings?.defaultMinStock ?? DEFAULT_SETTINGS.defaultMinStock)
     )
-    setOpenaiApiKey(settings?.openaiApiKey ?? '')
-  }, [settings?.storeName, settings?.stalenessThreshold, settings?.defaultMinStock, settings?.openaiApiKey])
+  }, [settings?.storeName, settings?.stalenessThreshold, settings?.defaultMinStock])
 
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault()
@@ -48,7 +43,8 @@ export function SettingsPage() {
         Math.min(365, parseInt(stalenessThreshold, 10) || 45)
       ),
       defaultMinStock: Math.max(1, parseInt(defaultMinStock, 10) || 10),
-      openaiApiKey: openaiApiKey.trim(),
+      // Legacy field kept in the type; extraction now runs via Estoqui's server.
+      openaiApiKey: settings?.openaiApiKey ?? '',
     })
     toast.show('Settings saved!')
   }
@@ -166,29 +162,13 @@ export function SettingsPage() {
             </span>
             <div>
               <h2 className="text-base font-semibold text-fg">AI / Image Import</h2>
-              <p className="text-xs text-fg-secondary">Connect OpenAI for document extraction</p>
+              <p className="text-xs text-fg-secondary">Included in your plan — no setup needed</p>
             </div>
           </div>
-          <div className="relative mt-5">
-            <Input
-              label="OpenAI API Key"
-              type={showApiKey ? 'text' : 'password'}
-              value={openaiApiKey}
-              onChange={(e) => setOpenaiApiKey(e.target.value)}
-              placeholder="sk-..."
-            />
-            <button
-              type="button"
-              onClick={() => setShowApiKey(!showApiKey)}
-              className="absolute right-2 top-7 text-xs text-muted hover:text-fg transition-colors"
-            >
-              {showApiKey ? 'Hide' : 'Show'}
-            </button>
-          </div>
-          <p className="text-muted text-xs mt-1">
-            Required for "Upload image" in Catalog → Add Product.
-            Uses GPT-4o vision to extract products from screenshots.
-            Key is stored locally and only sent to OpenAI.
+          <p className="text-muted text-xs mt-4">
+            Image, screenshot and PDF extraction (Catalog uploads, vendor price lists, the File
+            Converter, stock imports) runs on Estoqui&apos;s own AI service — no API key required.
+            Fair-use limit of 500 pages per month.
           </p>
         </div>
 

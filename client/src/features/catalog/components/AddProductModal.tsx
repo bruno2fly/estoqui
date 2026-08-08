@@ -194,11 +194,8 @@ export function AddProductModal({
   }
 
   const handleImageFile = async (file: File) => {
-    const apiKey = settings?.openaiApiKey ?? ''
-    if (!apiKey) {
-      toast.show('OpenAI API key required. Add it in Settings → AI / Image Import.', 'error')
-      return
-    }
+    // AI extraction is included in the plan — runs via Estoqui's server.
+    const apiKey = ''
 
     setImageLoading(true)
     try {
@@ -417,11 +414,6 @@ export function AddProductModal({
           </div>
         ) : (
           <div className="space-y-4">
-            {!settings?.openaiApiKey && (
-              <div className="bg-warning-bg border border-warning/30 rounded-lg px-3 py-2 text-sm text-warning">
-                OpenAI API key required. Go to <strong>Settings → AI / Image Import</strong> to add your key.
-              </div>
-            )}
             <FileUpload
               accept="image/png,image/jpeg,image/webp"
               onFile={handleImageFile}

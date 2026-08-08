@@ -276,7 +276,7 @@ export function BulkScreenshotImport({ apiKey, onImport, onCancel }: BulkScreens
           <div className="flex gap-2">
             <Button
               onClick={startProcessing}
-              disabled={files.length === 0 || !apiKey}
+              disabled={files.length === 0}
             >
               Process {files.length} screenshot{files.length !== 1 ? 's' : ''}
             </Button>

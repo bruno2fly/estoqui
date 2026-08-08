@@ -124,8 +124,8 @@ function rowsToExcel(rows: ExtractedRow[]): ArrayBuffer {
 
 export function ConverterPage() {
   const toast = useToast()
-  const settings = useStore((s) => s.settings)
-  const apiKey = settings?.openaiApiKey ?? ''
+  // AI extraction is included in the plan — runs via Estoqui's server.
+  const apiKey = ''
 
   const [step, setStep] = useState<Step>('upload')
   const [file, setFile] = useState<File | null>(null)
@@ -155,7 +155,7 @@ export function ConverterPage() {
 
   // --- Process file ---
   const processFile = async () => {
-    if (!file || !apiKey) return
+    if (!file) return
     setStep('processing')
     setErrorMsg('')
 
@@ -271,20 +271,6 @@ export function ConverterPage() {
         </div>
       </div>
 
-      {/* API key warning */}
-      {!apiKey && (
-        <div className="flex items-start gap-3 bg-warning-bg border border-warning/40 rounded-xl px-4 py-3 text-sm text-warning-foreground">
-          <svg className="size-5 shrink-0 mt-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
-            <line x1="12" y1="9" x2="12" y2="13" />
-            <line x1="12" y1="17" x2="12.01" y2="17" />
-          </svg>
-          <div>
-            OpenAI API key required for image/PDF conversion. Go to <strong>Settings</strong> to add your key.
-            <span className="block text-xs opacity-80 mt-0.5">Excel and CSV files don't need AI — they'll be converted directly.</span>
-          </div>
-        </div>
-      )}
 
       {/* STEP 1: Upload */}
       {step === 'upload' && (
@@ -363,7 +349,7 @@ export function ConverterPage() {
           )}
 
           <div className="flex gap-2">
-            <Button onClick={processFile} disabled={!file || (!apiKey && isImageOrPdf(file))}>
+            <Button onClick={processFile} disabled={!file}>
               Convert to CSV
             </Button>
           </div>

@@ -4,6 +4,7 @@
  */
 import type { VendorPriceRow } from './vendorCsv'
 import { parsePackFromText } from '@/lib/pack/parsePack'
+import { aiExtract } from '@/shared/lib/openaiVision'
 
 /** The same structured extraction prompt from vendorImageParse.ts */
 const SYSTEM_PROMPT = `You are a structured data extraction engine for Estoqui, a SaaS platform used by Brazilian grocery stores in the USA.
@@ -127,54 +128,24 @@ function fileToBase64(file: File): Promise<string> {
  */
 async function processBatch(
   images: File[],
-  apiKey: string
+  _apiKey: string // ignored — extraction runs through Estoqui's own server now
 ): Promise<BulkExtractedRow[]> {
-  // Build content array with all images
-  const imageContents: unknown[] = []
+  // Build the data-URL list for the server transport
+  const dataUrls: string[] = []
   for (const img of images) {
-    const base64 = await fileToBase64(img)
-    imageContents.push({ type: 'image_url', image_url: { url: base64, detail: 'high' } })
+    dataUrls.push(await fileToBase64(img))
   }
 
-  const messages = [
-    { role: 'system', content: SYSTEM_PROMPT },
-    {
-      role: 'user',
-      content: [
-        {
-          type: 'text',
-          text: `Extract all products and their prices from these ${images.length} vendor catalog screenshots. Each screenshot shows a grid of products with codes, names, prices, and stock info.`,
-        },
-        ...imageContents,
-      ],
-    },
-  ]
-
-  const body = {
-    model: 'gpt-4o',
-    messages,
-    max_tokens: 16384, // Larger limit for bulk extractions
-    temperature: 0,
-  }
-
-  const response = await fetch('https://api.openai.com/v1/chat/completions', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${apiKey.trim()}`,
-    },
-    body: JSON.stringify(body),
+  const result = await aiExtract({
+    system: SYSTEM_PROMPT,
+    user: `Extract all products and their prices from these ${images.length} vendor catalog screenshots. Each screenshot shows a grid of products with codes, names, prices, and stock info.`,
+    images: dataUrls,
+    maxTokens: 16384, // Larger limit for bulk extractions
   })
-
-  if (!response.ok) {
-    const text = await response.text().catch(() => '')
-    if (response.status === 401) throw new Error('Invalid OpenAI API key.')
-    if (response.status === 429) throw new Error('Rate limit reached. Wait a moment and try again.')
-    throw new Error(`OpenAI API error (${response.status}): ${text.slice(0, 200)}`)
+  if ('error' in result) {
+    throw new Error(result.error)
   }
-
-  const json = await response.json()
-  const content: string = json?.choices?.[0]?.message?.content ?? ''
+  const content: string = result.content
 
   // Parse the response
   const cleaned = content.replace(/^```(?:json)?\s*/, '').replace(/\s*```$/, '').trim()

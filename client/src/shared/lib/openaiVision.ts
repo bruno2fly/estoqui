@@ -1,6 +1,19 @@
 /**
- * Shared helpers for calling OpenAI GPT-4o (vision + text).
+ * AI extraction — now via ESTOQUI'S OWN server (app.estoqui.com/api/ai/extract).
+ *
+ * Customers no longer bring an OpenAI key: the server runs OUR key with a
+ * provider-swappable engine (Gemini flash-class by default, OpenAI fallback),
+ * gated by the Enterprise entitlement and a monthly page quota.
+ *
+ * The exported function signatures are unchanged (the old `apiKey` argument is
+ * accepted and IGNORED) so every existing caller keeps compiling; the key
+ * requirement is simply gone.
  */
+
+import { supabase } from '@/lib/supabase'
+
+const AI_BASE =
+  (import.meta.env.VITE_API_BASE as string | undefined) ?? 'https://app.estoqui.com'
 
 function fileToBase64(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -30,135 +43,105 @@ function isPdfFile(file: File): boolean {
   return file.type === 'application/pdf' || /\.pdf$/i.test(file.name)
 }
 
-async function callOpenAIRaw(
-  apiKey: string,
-  messages: unknown[],
-  maxTokens = 4096
+export interface AiExtractPayload {
+  system?: string
+  user?: string
+  images?: string[] // data URLs
+  pdf?: { filename?: string; dataUrl: string } | null
+  text?: string
+  maxTokens?: number
+}
+
+/** Core transport: POST to our server with the user's session token. */
+export async function aiExtract(
+  payload: AiExtractPayload,
 ): Promise<{ content: string } | { error: string }> {
-  const body = {
-    model: 'gpt-4o',
-    messages,
-    max_tokens: maxTokens,
-    temperature: 0,
+  let token = ''
+  try {
+    const { data } = await supabase.auth.getSession()
+    token = data.session?.access_token ?? ''
+  } catch {
+    /* fall through — server will 401 */
   }
+  if (!token) return { error: 'Not signed in. Sign in again and retry.' }
 
   let response: Response
   try {
-    response = await fetch('https://api.openai.com/v1/chat/completions', {
+    response = await fetch(`${AI_BASE}/api/ai/extract`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${apiKey.trim()}`,
+        Authorization: `Bearer ${token}`,
       },
-      body: JSON.stringify(body),
+      body: JSON.stringify(payload),
     })
   } catch (e) {
-    return { error: `Network error: ${e instanceof Error ? e.message : 'Failed to reach OpenAI'}` }
+    return { error: `Network error: ${e instanceof Error ? e.message : 'request failed'}` }
   }
 
+  const json = await response.json().catch(() => ({}))
   if (!response.ok) {
-    const text = await response.text().catch(() => '')
-    if (response.status === 401) {
-      return { error: 'Invalid OpenAI API key. Check your key in Settings.' }
-    }
-    return { error: `OpenAI API error (${response.status}): ${text.slice(0, 200)}` }
+    return { error: (json as { error?: string }).error ?? `Server error (${response.status})` }
   }
-
-  const json = await response.json()
-  const content: string = json?.choices?.[0]?.message?.content ?? ''
+  const content = (json as { content?: string }).content ?? ''
+  if (!content) return { error: 'Empty AI response' }
   return { content }
 }
 
 /**
- * Call OpenAI GPT-4o with an image file (vision).
+ * Vision extraction from an image file. (`_apiKey` is ignored — kept only so
+ * existing call sites compile unchanged.)
  */
 export async function callOpenAIVision(
   file: File,
-  apiKey: string,
+  _apiKey: string,
   systemPrompt: string,
   userPrompt: string,
   maxTokens?: number
 ): Promise<{ content: string } | { error: string }> {
-  if (!apiKey.trim()) {
-    return { error: 'OpenAI API key is required. Add it in Settings.' }
-  }
-
   const base64 = await fileToBase64(file)
-
-  const messages = [
-    { role: 'system', content: systemPrompt },
-    {
-      role: 'user',
-      content: [
-        { type: 'text', text: userPrompt },
-        { type: 'image_url', image_url: { url: base64, detail: 'high' } },
-      ],
-    },
-  ]
-
-  return callOpenAIRaw(apiKey, messages, maxTokens)
+  return aiExtract({ system: systemPrompt, user: userPrompt, images: [base64], maxTokens })
 }
 
 /**
- * Call OpenAI GPT-4o with a text document (CSV, TSV, TXT, etc.) or image.
- * Automatically detects file type and sends text content or base64 image.
+ * Document extraction: image, PDF or text file. (`_apiKey` ignored.)
  */
 export async function callOpenAIDocument(
   file: File,
-  apiKey: string,
+  _apiKey: string,
   systemPrompt: string,
   userPrompt: string,
   maxTokens?: number
 ): Promise<{ content: string } | { error: string }> {
-  if (!apiKey.trim()) {
-    return { error: 'OpenAI API key is required. Add it in Settings.' }
-  }
-
   if (isImageFile(file)) {
-    return callOpenAIVision(file, apiKey, systemPrompt, userPrompt, maxTokens)
+    return callOpenAIVision(file, _apiKey, systemPrompt, userPrompt, maxTokens)
   }
 
-  // PDFs are binary — send as base64 to the vision endpoint
   if (isPdfFile(file)) {
     const base64 = await fileToBase64(file)
-    const messages = [
-      { role: 'system', content: systemPrompt },
-      {
-        role: 'user',
-        content: [
-          { type: 'text', text: userPrompt },
-          {
-            type: 'file',
-            file: { filename: file.name, file_data: base64 },
-          },
-        ],
-      },
-    ]
-    return callOpenAIRaw(apiKey, messages, maxTokens)
+    return aiExtract({
+      system: systemPrompt,
+      user: userPrompt,
+      pdf: { filename: file.name, dataUrl: base64 },
+      maxTokens,
+    })
   }
 
-  // Text-based file: read as text and send inline
+  // TEXT-FIRST (cost design): plain text never touches vision pricing.
   const text = await fileToText(file)
   if (!text.trim()) {
     return { error: 'File is empty or could not be read.' }
   }
-
-  // Truncate very large files to ~50k chars to stay within token limits
   const truncated = text.length > 50000 ? text.slice(0, 50000) + '\n\n[... truncated ...]' : text
-
-  const messages = [
-    { role: 'system', content: systemPrompt },
-    {
-      role: 'user',
-      content: `${userPrompt}\n\nHere is the file content (filename: ${file.name}):\n\n${truncated}`,
-    },
-  ]
-
-  return callOpenAIRaw(apiKey, messages, maxTokens)
+  return aiExtract({
+    system: systemPrompt,
+    user: `${userPrompt}\n\nHere is the file content (filename: ${file.name}):\n\n${truncated}`,
+    maxTokens,
+  })
 }
 
 /**
- * Parse a JSON array from an OpenAI response string (strips markdown fences).
+ * Parse a JSON array from an AI response string (strips markdown fences).
  */
 export function parseJsonArray(raw: string): unknown[] | { error: string } {
   const cleaned = raw.replace(/^```(?:json)?\s*/, '').replace(/\s*```$/, '').trim()
