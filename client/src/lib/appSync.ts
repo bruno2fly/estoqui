@@ -80,7 +80,7 @@ const norm = (s: string | null | undefined) => (s ?? '').trim().toLowerCase()
  * push think existing App products are "new", creating duplicates).
  */
 export async function fetchAllStoreRows(
-  table: 'app_products' | 'app_vendors' | 'app_requests' | 'app_daily_sales',
+  table: 'app_products' | 'app_vendors' | 'app_requests' | 'app_daily_sales' | 'app_members',
   storeId: string,
   select: string,
 ): Promise<Record<string, unknown>[]> {
