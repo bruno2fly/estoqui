@@ -145,7 +145,7 @@ export function Layout() {
       </aside>
 
       <main className="flex-1 flex flex-col overflow-hidden bg-background">
-        <header className="flex h-16 items-center gap-3 px-6 bg-background/80 border-b border-surface-border shrink-0 backdrop-blur-md">
+        <header className="relative z-30 flex h-16 items-center gap-3 px-6 bg-background/80 border-b border-surface-border shrink-0 backdrop-blur-md">
           <h2 className="text-fg text-xl font-semibold tracking-tight">{title}</h2>
 
           <div className="ml-auto flex items-center gap-2">
