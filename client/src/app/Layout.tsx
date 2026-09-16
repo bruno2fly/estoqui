@@ -5,6 +5,7 @@ import { useAuthStore } from '@/store/slices/authSlice'
 
 const mainNavItems = [
   { to: '/', label: 'Dashboard', icon: DashboardIcon },
+  { to: '/money', label: 'Money Finder', icon: MoneyIcon },
   { to: '/inventory', label: 'Inventory', icon: InventoryIcon },
   { to: '/vendors', label: 'Vendors', icon: VendorsIcon },
   { to: '/catalog', label: 'Catalog', icon: CatalogIcon },
@@ -19,6 +20,7 @@ const otherNavItems = [
 
 const pathToTitle: Record<string, string> = {
   '/': 'Dashboard',
+  '/money': 'Money Finder',
   '/inventory': 'Inventory',
   '/catalog': 'Catalog',
   '/vendors': 'Vendors',
@@ -217,6 +219,15 @@ export function Layout() {
         </div>
       </main>
     </>
+  )
+}
+
+function MoneyIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <line x1="12" y1="2" x2="12" y2="22" />
+      <path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6" />
+    </svg>
   )
 }
 

@@ -81,7 +81,8 @@ export function CatalogPage() {
       const minStock = product.minStock ?? 10
       const status = getStockStatus(stockQty, minStock)
 
-      const unitCost = product.unitCost ?? (best ? best.unitPrice : undefined)
+      // Always compare per-unit: a vendor's CASE price must never masquerade as a unit cost.
+      const unitCost = product.unitCost ?? (best ? best.effectiveUnitCost : undefined)
       const unitPrice = product.unitPrice
       const marginPercent = computeMargin(unitCost, unitPrice)
 
@@ -96,7 +97,7 @@ export function CatalogPage() {
         unitPrice,
         marginPercent,
         bestVendorName,
-        bestPrice: best?.unitPrice,
+        bestPrice: best?.effectiveUnitCost,
         bestUpdatedAt: best?.updatedAt,
         priceStatus,
         priceCount,
@@ -346,7 +347,7 @@ export function CatalogPage() {
                           {row.bestVendorName}
                         </td>
                         <td className="px-3 py-2.5 text-[13px] text-fg tabular-nums">
-                          {row.bestPrice != null ? `$ ${row.bestPrice.toFixed(2)}` : '—'}
+                          {row.bestPrice != null ? `$ ${row.bestPrice.toFixed(2)} /ea` : '—'}
                         </td>
                         <td className="px-3 py-2.5">
                           {row.hasVendorMatch ? (

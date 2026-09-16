@@ -11,6 +11,7 @@ import { SettingsPage } from '@/features/settings'
 import { HelpPage } from '@/features/help'
 import { NeedsSkuQueuePage } from '@/features/import'
 import { ReportsPage } from '@/features/reports'
+import { MoneyReportPage } from '@/features/money'
 import { PrivacyPage } from '@/features/privacy/PrivacyPage'
 
 export function AppRoutes() {
@@ -25,6 +26,7 @@ export function AppRoutes() {
           <Route path="catalog" element={<CatalogPage />} />
           <Route path="vendors" element={<VendorsPage />} />
           <Route path="catalog/needs-sku" element={<NeedsSkuQueuePage />} />
+          <Route path="money" element={<MoneyReportPage />} />
           <Route path="reports" element={<ReportsPage />} />
           <Route path="history" element={<HistoryPage />} />
           <Route path="settings" element={<SettingsPage />} />
