@@ -246,7 +246,7 @@ export function VendorDetailModal({
     setOverlayStatus('loading')
     setOverlayMessage('')
 
-    const isExcel = /\.(xlsx?|xlsm)$/i.test(file.name) ||
+    const isExcel = /\.(xlsx?|xlsm|numbers)$/i.test(file.name) ||
       file.type === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' ||
       file.type === 'application/vnd.ms-excel'
 
@@ -304,7 +304,7 @@ export function VendorDetailModal({
    */
   const handleAnyFile = (file: File) => {
     const isSpreadsheet =
-      /\.(csv|tsv|txt|xlsx?|xlsm)$/i.test(file.name) ||
+      /\.(csv|tsv|txt|xlsx?|xlsm|numbers)$/i.test(file.name) ||
       file.type === 'text/csv' ||
       file.type === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' ||
       file.type === 'application/vnd.ms-excel'
@@ -598,9 +598,9 @@ export function VendorDetailModal({
           {importMode === 'upload' && !reviewRows && (
             <div className="border border-surface-border rounded-xl p-4 space-y-3">
               <FileUpload
-                accept=".csv,.tsv,.txt,.xlsx,.xls,.xlsm,.pdf,.html,.htm,image/png,image/jpeg,image/webp"
+                accept=".csv,.tsv,.txt,.xlsx,.xls,.xlsm,.numbers,.pdf,.html,.htm,image/png,image/jpeg,image/webp"
                 onFile={handleAnyFile}
-                label="Drop the vendor's price list here — Excel, CSV, PDF, or a photo"
+                label="Drop the vendor's price list here — Excel, Numbers, CSV, PDF, or a photo"
                 hint="The format is detected automatically. Spreadsheets import instantly; photos and PDFs are read by AI with a review step."
               />
               {(csvLoading || imageLoading) && (
