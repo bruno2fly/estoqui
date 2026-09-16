@@ -69,6 +69,10 @@ export function VendorDetailModal({
   const [showRenewConfirm, setShowRenewConfirm] = useState(false)
   const [overlayStatus, setOverlayStatus] = useState<'loading' | 'success' | 'error' | null>(null)
   const [overlayMessage, setOverlayMessage] = useState('')
+  // Vendor items that didn't match any catalog product — offered for explicit
+  // adding, never auto-created (the catalog is what the STORE carries).
+  const [unmatchedOffers, setUnmatchedOffers] = useState<VendorPriceRow[] | null>(null)
+  const [offerSel, setOfferSel] = useState<Set<number>>(new Set())
 
   const vendorUploads = useMemo(() => {
     if (!vendor) return []
@@ -123,10 +127,72 @@ export function VendorDetailModal({
     toast.show('Product removed!')
   }
 
+  /** Vendor item codes (e.g. "B0010:0011") are NOT store barcodes — only
+   *  digit strings that look like real barcodes may become a product SKU. */
+  const isLikelyBarcode = (sVal: string) => /^\d{8,14}$/.test(sVal.trim())
+
+  const saveVendorPrice = (row: VendorPriceRow, productId: string) => {
+    const now = new Date().toISOString()
+    const effectiveUnitCost =
+      row.packType === 'CASE' && row.priceBasis === 'PER_CASE' && (row.unitsPerCase ?? 1) > 0
+        ? row.price / (row.unitsPerCase ?? 1)
+        : row.price
+    setVendorPrice({
+      vendorId: vendor.id,
+      productId,
+      unitPrice: row.price,
+      updatedAt: now,
+      packType: row.packType ?? 'UNIT',
+      unitsPerCase: row.unitsPerCase ?? 1,
+      unitDescriptor: row.unitDescriptor ?? '',
+      priceBasis: row.priceBasis ?? 'PER_UNIT',
+      parseVersion: 1,
+      unitCost: effectiveUnitCost,
+    })
+  }
+
+  /** Explicit user choice: create the product in the catalog + attach price. */
+  const addOfferToCatalog = (row: VendorPriceRow) => {
+    const effectiveUnitCost =
+      row.packType === 'CASE' && row.priceBasis === 'PER_CASE' && (row.unitsPerCase ?? 1) > 0
+        ? row.price / (row.unitsPerCase ?? 1)
+        : row.price
+    const productId = addProduct({
+      name: row.name,
+      brand: row.brand,
+      sku: isLikelyBarcode(row.sku) ? row.sku : '',
+      category: '',
+      unitSize: row.unitSize || '',
+      minStock: settings?.defaultMinStock ?? 10,
+      unitCost: effectiveUnitCost,
+    })
+    setMatch(matchKey(row.name, row.brand), productId)
+    if (row.sku) setMatch(`vsku|${vendor.id}|${row.sku}`, productId)
+    saveVendorPrice(row, productId)
+  }
+
+  const handleAddSelectedOffers = () => {
+    if (!unmatchedOffers) return
+    const chosen = [...offerSel].map((i) => unmatchedOffers[i]).filter(Boolean)
+    if (chosen.length === 0) {
+      toast.show('Select at least one item first', 'error')
+      return
+    }
+    chosen.forEach(addOfferToCatalog)
+    const remaining = unmatchedOffers.filter((_, i) => !offerSel.has(i))
+    setUnmatchedOffers(remaining.length ? remaining : null)
+    setOfferSel(new Set())
+    addActivity(
+      'vendor_price_updated',
+      `Added ${chosen.length} vendor item(s) to catalog: ${vendor.name}`
+    )
+    toast.show(`${chosen.length} product(s) added to your catalog with this vendor's price`)
+  }
+
   const applyPriceRows = (rows: VendorPriceRow[], source: 'csv_upload' | 'whatsapp_parse', fileName: string, parseStats?: { rowCount: number; validRowCount: number; invalidRowCount: number; hasSkuPercent: number; errors: { row: number; message: string }[] }) => {
     let priceAdded = 0
     let priceUpdated = 0
-    let productsCreated = 0
+    const unmatched: VendorPriceRow[] = []
 
     rows.forEach((row) => {
       // Vendor-code memory: once a vendor's own item code has been matched to
@@ -147,20 +213,12 @@ export function VendorDetailModal({
         )
       }
 
+      // The catalog is what the STORE carries, not what the vendor sells.
+      // Unmatched vendor items are offered for explicit adding below — never
+      // auto-created into the client's catalog.
       if (!product) {
-        const productId = addProduct({
-          name: row.name,
-          brand: row.brand,
-          sku: row.sku || '',
-          category: '',
-          unitSize: row.unitSize || '',
-          minStock: settings?.defaultMinStock ?? 10,
-          unitCost: row.price,
-        })
-        const key = matchKey(row.name, row.brand)
-        setMatch(key, productId)
-        product = { id: productId, name: row.name, brand: row.brand, sku: row.sku, minStock: settings?.defaultMinStock ?? 10 }
-        productsCreated++
+        unmatched.push(row)
+        return
       }
 
       // Remember this vendor's item code → product for next week's list.
@@ -169,25 +227,13 @@ export function VendorDetailModal({
       const existing = state.vendorPrices.find(
         (vp) => vp.vendorId === vendor.id && vp.productId === product!.id
       )
-      const now = new Date().toISOString()
-      const effectiveUnitCost = row.packType === 'CASE' && row.priceBasis === 'PER_CASE' && (row.unitsPerCase ?? 1) > 0
-        ? row.price / (row.unitsPerCase ?? 1)
-        : row.price
-      setVendorPrice({
-        vendorId: vendor.id,
-        productId: product.id,
-        unitPrice: row.price,
-        updatedAt: now,
-        packType: row.packType ?? 'UNIT',
-        unitsPerCase: row.unitsPerCase ?? 1,
-        unitDescriptor: row.unitDescriptor ?? '',
-        priceBasis: row.priceBasis ?? 'PER_UNIT',
-        parseVersion: 1,
-        unitCost: effectiveUnitCost,
-      })
+      saveVendorPrice(row, product.id)
       if (existing) priceUpdated++
       else priceAdded++
     })
+
+    setUnmatchedOffers(unmatched.length > 0 ? unmatched : null)
+    setOfferSel(new Set())
 
     const now = new Date().toISOString()
     updateVendor(vendor.id, { lastPriceListAt: now, updatedAt: now })
@@ -222,13 +268,13 @@ export function VendorDetailModal({
     const parts = []
     if (priceAdded) parts.push(`${priceAdded} prices added`)
     if (priceUpdated) parts.push(`${priceUpdated} prices updated`)
-    if (productsCreated) parts.push(`${productsCreated} new products created`)
+    if (unmatched.length) parts.push(`${unmatched.length} items not in your catalog`)
 
     addActivity(
       'vendor_price_updated',
       `Vendor import: ${vendor.name} — ${parts.join(', ')}`
     )
-    const resultText = `Imported! Prices added: ${priceAdded} | Updated: ${priceUpdated}${productsCreated ? ` | New products: ${productsCreated}` : ''}`
+    const resultText = `Imported! Prices added: ${priceAdded} | Updated: ${priceUpdated}${unmatched.length ? ` | Not in your catalog: ${unmatched.length} (review below)` : ''}`
     setCsvStatus({
       type: 'success',
       message: resultText,
@@ -655,7 +701,7 @@ export function VendorDetailModal({
                       {row.matchedProductName ? (
                         <span className="text-xs text-success">Matched: {row.matchedProductName}</span>
                       ) : (
-                        <span className="text-xs text-warning">New product (will be created)</span>
+                        <span className="text-xs text-warning">Not in your catalog</span>
                       )}
                       <button type="button" onClick={() => handleRemoveRow(i)} className="ml-auto text-xs text-danger hover:opacity-80">Remove</button>
                     </div>
@@ -678,6 +724,75 @@ export function VendorDetailModal({
               <div className="flex gap-2 pt-2">
                 <Button onClick={handleReviewImport}>Import {selectedCount} price{selectedCount !== 1 ? 's' : ''}</Button>
                 <Button type="button" variant="secondary" onClick={() => setReviewRows(null)}>Back</Button>
+              </div>
+            </div>
+          )}
+
+          {/* Vendor items not in the client's catalog — explicit opt-in only */}
+          {unmatchedOffers && unmatchedOffers.length > 0 && (
+            <div className="border border-warning/30 bg-warning-bg/30 rounded-xl p-4 space-y-3">
+              <div className="flex items-center justify-between gap-3 flex-wrap">
+                <div>
+                  <h4 className="text-sm font-semibold text-fg">
+                    {unmatchedOffers.length} vendor item{unmatchedOffers.length !== 1 ? 's' : ''} not in your catalog
+                  </h4>
+                  <p className="text-xs text-fg-secondary">
+                    Your catalog only holds what your store carries. Check anything you actually
+                    stock and add it — the vendor&apos;s price comes with it. This list shows up
+                    again whenever this vendor&apos;s file is uploaded.
+                  </p>
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setOfferSel(
+                        offerSel.size === unmatchedOffers.length
+                          ? new Set()
+                          : new Set(unmatchedOffers.map((_, i) => i))
+                      )
+                    }
+                    className="text-[12px] text-fg-secondary hover:text-fg underline underline-offset-2"
+                  >
+                    {offerSel.size === unmatchedOffers.length ? 'Unselect all' : 'Select all'}
+                  </button>
+                  <Button onClick={handleAddSelectedOffers} className="!text-xs">
+                    Add {offerSel.size > 0 ? offerSel.size : ''} to catalog
+                  </Button>
+                  <Button variant="secondary" className="!text-xs" onClick={() => { setUnmatchedOffers(null); setOfferSel(new Set()) }}>
+                    Dismiss
+                  </Button>
+                </div>
+              </div>
+              <div className="max-h-[280px] overflow-y-auto divide-y divide-surface-border rounded-lg border border-surface-border bg-surface">
+                {unmatchedOffers.map((row, i) => {
+                  const unit =
+                    row.packType === 'CASE' && row.priceBasis === 'PER_CASE' && (row.unitsPerCase ?? 1) > 0
+                      ? row.price / (row.unitsPerCase ?? 1)
+                      : row.price
+                  return (
+                    <label key={`${row.sku}-${i}`} className="flex items-center gap-3 px-3 py-2 text-sm cursor-pointer hover:bg-surface-hover">
+                      <input
+                        type="checkbox"
+                        className="accent-primary shrink-0"
+                        checked={offerSel.has(i)}
+                        onChange={() => {
+                          setOfferSel((prev) => {
+                            const next = new Set(prev)
+                            if (next.has(i)) next.delete(i)
+                            else next.add(i)
+                            return next
+                          })
+                        }}
+                      />
+                      <span className="flex-1 min-w-0 truncate text-fg">{row.name}</span>
+                      {row.sku && <span className="text-[11px] text-muted shrink-0">{row.sku}</span>}
+                      <span className="text-[12px] text-fg-secondary tabular-nums shrink-0">
+                        $ {row.price.toFixed(2)}{row.packType === 'CASE' ? `/cs · $ ${unit.toFixed(2)}/ea` : ''}
+                      </span>
+                    </label>
+                  )
+                })}
               </div>
             </div>
           )}
