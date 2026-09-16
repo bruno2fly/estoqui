@@ -1,3 +1,4 @@
+import * as XLSX from 'xlsx'
 import type { StockSnapshotRow } from '@/types'
 
 /** RFC 4180-style line parser: handles quoted fields with commas/newlines */
@@ -186,4 +187,49 @@ export function parseCSVStock(text: string): StockSnapshotRow[] {
   }
 
   return rows
+}
+
+
+/**
+ * Parse an Excel (.xlsx/.xls/.xlsm) or Apple Numbers stock report.
+ *
+ * Tries EVERY sheet (QuickBooks-style exports hide the data behind a tips
+ * sheet) and keeps the one that yields the most rows. Also tolerates title/
+ * blank rows above the real header by scanning the first lines for one that
+ * looks like a header.
+ */
+export function parseStockExcel(data: ArrayBuffer): StockSnapshotRow[] {
+  const HEADER_RE = /\b(name|product|produto|nome|item|desc|stock|estoque|qty|quantity|quantidade|barcode|sku|upc)\b/i
+  // A STOCK report must have a quantity column — without this gate, a vendor
+  // price list dropped here by mistake would parse as thousands of qty-0 rows.
+  const STOCK_COL_RE = /\b(stock|estoque|qty|quantity|quantidade|case|units|pcs|pieces|on[- ]?hand|inventory)\b/i
+  let best: StockSnapshotRow[] = []
+  let workbook: XLSX.WorkBook
+  try {
+    workbook = XLSX.read(data, { type: 'array' })
+  } catch {
+    return []
+  }
+  for (const sheetName of workbook.SheetNames) {
+    const csvText = XLSX.utils.sheet_to_csv(workbook.Sheets[sheetName], { FS: ',', RS: '\n' })
+    if (!csvText.trim()) continue
+    const lines = csvText.split('\n')
+    // Skip leading junk rows until a header-looking line (within the first 12).
+    let start = -1
+    for (let i = 0; i < Math.min(lines.length, 12); i++) {
+      const probe = lines[i].replace(/_/g, ' ')
+      if (HEADER_RE.test(probe) && STOCK_COL_RE.test(probe)) {
+        start = i
+        break
+      }
+    }
+    if (start === -1) continue
+    try {
+      const rows = parseCSVStock(lines.slice(start).join('\n'))
+      if (rows.length > best.length) best = rows
+    } catch {
+      /* try the next sheet */
+    }
+  }
+  return best
 }

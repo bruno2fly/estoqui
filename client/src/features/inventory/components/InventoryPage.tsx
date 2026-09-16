@@ -3,14 +3,12 @@ import { useStore } from '@/store'
 import { matchKey } from '../lib/matching'
 import { FileUpload, ConfirmDialog, UploadOverlay } from '@/shared/components'
 import { useToast } from '@/shared/components'
-import { parseCSVStock } from '../lib/csvStock'
+import { parseCSVStock, parseStockExcel } from '../lib/csvStock'
 import { parseStockWithOpenAI } from '../lib/aiStockParse'
 import { findProductMatch } from '../lib/matching'
 import { ReorderSection } from './ReorderSection'
 import { OrderVendorCards } from './OrderSplitModal'
 import type { StockSnapshotRow } from '@/types'
-
-type UploadMode = 'csv' | 'ai'
 
 export function InventoryPage() {
   const toast = useToast()
@@ -25,7 +23,6 @@ export function InventoryPage() {
   const clearReorderDraft = useStore((s) => s.clearReorderDraft)
   const addActivity = useStore((s) => s.addActivity)
 
-  const [uploadMode, setUploadMode] = useState<UploadMode>('csv')
   const [uploadStatus, setUploadStatus] = useState<'idle' | 'success' | 'error'>('idle')
   const [uploadMessage, setUploadMessage] = useState('')
   const [aiLoading, setAiLoading] = useState(false)
@@ -226,6 +223,55 @@ export function InventoryPage() {
     buildReorderDraftFromSnapshot(snapshotId)
   }
 
+  /**
+   * One door for any POS report. Spreadsheets parse instantly and free
+   * (CSV/TSV/TXT as text; Excel/Numbers via the sheet reader); photos,
+   * PDFs and anything unrecognized go to AI extraction — screenshots
+   * included (the AI path reads images via vision on Estoqui's server).
+   */
+  const handleAnyFile = (file: File) => {
+    const isExcelLike =
+      /\.(xlsx?|xlsm|numbers)$/i.test(file.name) ||
+      file.type === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' ||
+      file.type === 'application/vnd.ms-excel'
+    const isTextSheet = /\.(csv|tsv|txt)$/i.test(file.name) || file.type === 'text/csv'
+
+    if (isExcelLike) handleExcelFile(file)
+    else if (isTextSheet) handleCsvFile(file)
+    else void handleAiFile(file)
+  }
+
+  const handleExcelFile = (file: File) => {
+    setUploadStatus('idle')
+    setUploadMessage('')
+    clearActiveOrderView()
+    setOverlayStatus('loading')
+    setOverlayMessage('')
+
+    const reader = new FileReader()
+    reader.onload = () => {
+      const data = reader.result as ArrayBuffer
+      const rows = parseStockExcel(data)
+      if (rows.length === 0) {
+        // Spreadsheet unreadable as a table — let AI have a shot at it.
+        void handleAiFile(file)
+        return
+      }
+      setTimeout(() => {
+        try {
+          processStockRows(rows, file.name, 'excel')
+        } catch (err) {
+          const msg = err instanceof Error ? err.message : 'Failed to process file'
+          setOverlayStatus('error')
+          setOverlayMessage(msg)
+          setUploadStatus('error')
+          setUploadMessage(msg)
+        }
+      }, 50)
+    }
+    reader.readAsArrayBuffer(file)
+  }
+
   const handleCsvFile = (file: File) => {
     setUploadStatus('idle')
     setUploadMessage('')
@@ -320,20 +366,6 @@ export function InventoryPage() {
     orderData === null
   const showOrderCards = orderData !== null
 
-  const tabBtn = (label: string, tabMode: UploadMode) => (
-    <button
-      type="button"
-      onClick={() => { setUploadMode(tabMode); setUploadStatus('idle') }}
-      className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-        uploadMode === tabMode
-          ? 'bg-primary text-primary-foreground shadow-sm'
-          : 'text-fg-secondary hover:text-fg hover:bg-surface-hover'
-      }`}
-    >
-      {label}
-    </button>
-  )
-
   return (
     <div className="space-y-6">
       {/* Upload section — hide when order cards are showing */}
@@ -368,35 +400,19 @@ export function InventoryPage() {
             )}
           </div>
 
-          <div className="flex gap-2 border-b border-surface-border pb-2 mb-4">
-            {tabBtn('CSV', 'csv')}
-            {tabBtn('AI (any file)', 'ai')}
-          </div>
-
-          {uploadMode === 'csv' ? (
-            <FileUpload
-              accept=".csv"
-              onFile={handleCsvFile}
-              label="Upload your CSV file here"
-              hint="Use the CSV file exported from your POS system"
-            />
-          ) : (
-            <>
-              <FileUpload
-                accept=".csv,.tsv,.txt,.xls,.xlsx,.html,.htm,.pdf,image/png,image/jpeg,image/webp"
-                onFile={handleAiFile}
-                label="Drag any POS report file or screenshot here"
-                hint="Supports CSV, TXT, TSV, HTML, Excel (text), images, and more"
-              />
-              {aiLoading && (
-                <div className="mt-3 space-y-2">
-                  <p className="text-sm text-muted">Analyzing file with AI… This may take 5–20 seconds.</p>
-                  <div className="h-1 bg-surface-border rounded overflow-hidden">
-                    <div className="h-full bg-primary animate-pulse rounded" style={{ width: '100%' }} />
-                  </div>
-                </div>
-              )}
-            </>
+          <FileUpload
+            accept=".csv,.tsv,.txt,.xlsx,.xls,.xlsm,.numbers,.pdf,.html,.htm,image/png,image/jpeg,image/webp"
+            onFile={handleAnyFile}
+            label="Drop your POS report here — CSV, Excel, Numbers, PDF, or a screenshot"
+            hint="The format is detected automatically. Spreadsheets import instantly; photos and PDFs are read by AI."
+          />
+          {aiLoading && (
+            <div className="mt-3 space-y-2">
+              <p className="text-sm text-muted">Analyzing file with AI… This may take 5–20 seconds.</p>
+              <div className="h-1 bg-surface-border rounded overflow-hidden">
+                <div className="h-full bg-primary animate-pulse rounded" style={{ width: '100%' }} />
+              </div>
+            </div>
           )}
 
           {uploadStatus === 'success' && (
