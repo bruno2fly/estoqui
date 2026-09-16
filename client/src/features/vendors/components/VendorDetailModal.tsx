@@ -19,7 +19,7 @@ import { AddProductToVendorModal } from './AddProductToVendorModal'
 import { BulkScreenshotImport } from './BulkScreenshotImport'
 import type { BulkExtractedRow } from '../lib/vendorBulkParse'
 
-type ImportMode = 'csv' | 'image' | 'bulk'
+type ImportMode = 'upload' | 'bulk'
 
 interface ReviewRow extends VendorPriceRow {
   selected: boolean
@@ -112,7 +112,7 @@ export function VendorDetailModal({
     clearVendorPrices(vendor.id)
     setShowRenewConfirm(false)
     setCsvStatus(null)
-    setImportMode('csv')
+    setImportMode('upload')
     addActivity('vendor_price_updated', `Vendor list renewed: ${vendor.name} — ${oldCount} old prices removed`)
     toast.show(`Removed ${oldCount} prices. Now upload the new list.`)
   }
@@ -129,13 +129,23 @@ export function VendorDetailModal({
     let productsCreated = 0
 
     rows.forEach((row) => {
-      let product = findProductByNameAndBrand(
-        row.name,
-        row.brand,
-        state.products,
-        state.matches,
-        row.sku
-      )
+      // Vendor-code memory: once a vendor's own item code has been matched to
+      // one of our products, every future list from that vendor resolves it
+      // instantly — codes are stable week to week even when names drift.
+      const vskuKey = row.sku ? `vsku|${vendor.id}|${row.sku}` : null
+      let product = vskuKey && state.matches[vskuKey]
+        ? state.products.find((p) => p.id === state.matches[vskuKey]) ?? null
+        : null
+
+      if (!product) {
+        product = findProductByNameAndBrand(
+          row.name,
+          row.brand,
+          state.products,
+          state.matches,
+          row.sku
+        )
+      }
 
       if (!product) {
         const productId = addProduct({
@@ -152,6 +162,9 @@ export function VendorDetailModal({
         product = { id: productId, name: row.name, brand: row.brand, sku: row.sku, minStock: settings?.defaultMinStock ?? 10 }
         productsCreated++
       }
+
+      // Remember this vendor's item code → product for next week's list.
+      if (vskuKey) setMatch(vskuKey, product.id)
 
       const existing = state.vendorPrices.find(
         (vp) => vp.vendorId === vendor.id && vp.productId === product!.id
@@ -282,6 +295,21 @@ export function VendorDetailModal({
       }
       reader.readAsText(file, 'UTF-8')
     }
+  }
+
+  /**
+   * One door for any price-list file. Spreadsheet-like files go through the
+   * fast deterministic parser (free, instant); PDFs, photos and everything
+   * else go through AI extraction with the review step.
+   */
+  const handleAnyFile = (file: File) => {
+    const isSpreadsheet =
+      /\.(csv|tsv|txt|xlsx?|xlsm)$/i.test(file.name) ||
+      file.type === 'text/csv' ||
+      file.type === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' ||
+      file.type === 'application/vnd.ms-excel'
+    if (isSpreadsheet) handleCsvFile(file)
+    else void handleImageFile(file)
   }
 
   const handleImageFile = async (file: File) => {
@@ -421,8 +449,17 @@ export function VendorDetailModal({
           </div>
 
           {isStale && (
-            <div className="bg-danger-bg border border-danger/30 rounded-lg px-3 py-2 text-sm text-danger">
-              Data is stale — last price list is {days}+ days old (threshold: {vendor.staleAfterDays ?? 7} days). Upload a fresh price list to restore Active status.
+            <div className="bg-danger-bg border border-danger/30 rounded-lg px-3 py-2 text-sm text-danger flex items-center gap-3 flex-wrap">
+              <span className="flex-1 min-w-[240px]">
+                Data is stale — last price list is {days}+ days old (threshold: {vendor.staleAfterDays ?? 7} days).
+              </span>
+              <button
+                type="button"
+                onClick={() => { setImportMode('upload'); setCsvStatus(null) }}
+                className="px-3 py-1.5 rounded-lg text-[12px] font-semibold bg-danger text-white hover:opacity-90 transition-opacity shrink-0"
+              >
+                Upload new list
+              </button>
             </div>
           )}
 
@@ -503,36 +540,35 @@ export function VendorDetailModal({
                 </span>
               </Button>
             )}
-            <Button onClick={() => setAddProductOpen(true)}>+ Add Product</Button>
-            <Button variant="secondary" onClick={() => setImportMode(importMode === 'csv' ? null : 'csv')}>
-              Import CSV / Excel
-            </Button>
-            <Button variant="secondary" onClick={() => setImportMode(importMode === 'image' ? null : 'image')}>
-              Import from File (AI)
-            </Button>
-            <Button
-              variant="secondary"
-              onClick={() => setImportMode(importMode === 'bulk' ? null : 'bulk')}
-              className="!border-primary/40 !text-primary hover:!bg-accent"
-            >
+            <Button onClick={() => { setImportMode(importMode === 'upload' ? null : 'upload'); setCsvStatus(null) }}>
               <span className="flex items-center gap-1.5">
                 <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <rect x="3" y="3" width="7" height="7" />
-                  <rect x="14" y="3" width="7" height="7" />
-                  <rect x="3" y="14" width="7" height="7" />
-                  <rect x="14" y="14" width="7" height="7" />
+                  <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
+                  <polyline points="17 8 12 3 7 8" />
+                  <line x1="12" y1="3" x2="12" y2="15" />
                 </svg>
-                Bulk Screenshots (AI)
+                Upload Price List
               </span>
             </Button>
-            <Button variant="secondary" onClick={downloadVendorCsvTemplate}>
-              Download CSV Template
-            </Button>
-            {vendorUploads.length > 0 && (
-              <Button variant="secondary" onClick={() => setShowUploadHistory(!showUploadHistory)}>
-                {showUploadHistory ? 'Hide' : 'Show'} Upload History ({vendorUploads.length})
-              </Button>
-            )}
+            <Button variant="secondary" onClick={() => setAddProductOpen(true)}>+ Add Product</Button>
+            <div className="ml-auto flex items-center gap-3">
+              <button
+                type="button"
+                onClick={downloadVendorCsvTemplate}
+                className="text-[12px] text-muted hover:text-fg underline underline-offset-2 transition-colors"
+              >
+                CSV template
+              </button>
+              {vendorUploads.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setShowUploadHistory(!showUploadHistory)}
+                  className="text-[12px] text-muted hover:text-fg underline underline-offset-2 transition-colors"
+                >
+                  History ({vendorUploads.length})
+                </button>
+              )}
+            </div>
           </div>
 
           {/* Upload History */}
@@ -558,45 +594,35 @@ export function VendorDetailModal({
             </div>
           )}
 
-          {/* Import section (CSV / single file AI) */}
-          {importMode && importMode !== 'bulk' && !reviewRows && (
+          {/* One upload door — the file type picks the parser, not the user */}
+          {importMode === 'upload' && !reviewRows && (
             <div className="border border-surface-border rounded-xl p-4 space-y-3">
-              <div className="flex gap-2 border-b border-surface-border pb-2">
-                <TabBtn label="CSV / Excel" mode="csv" active={importMode} onClick={(m) => { setImportMode(m); setReviewRows(null); setCsvStatus(null) }} />
-                <TabBtn label="File (AI)" mode="image" active={importMode} onClick={(m) => { setImportMode(m); setReviewRows(null); setCsvStatus(null) }} />
-              </div>
-
-              {importMode === 'csv' ? (
-                <>
-                  <FileUpload
-                    accept=".csv,.xlsx,.xls,.xlsm"
-                    onFile={handleCsvFile}
-                    label="Drag a CSV or Excel file or click to select"
-                    hint="Supports .csv, .xlsx, .xls — Columns: product_name, price (required). Optional: sku, brand, unit_size, unit_type, available"
-                  />
-                  {csvLoading && <p className="text-sm text-muted">Processing CSV...</p>}
-                </>
-              ) : (
-                <>
-                  <FileUpload
-                    accept="image/png,image/jpeg,image/webp,.pdf,.txt,.html,.htm,.csv,.tsv,.xls,.xlsx"
-                    onFile={handleImageFile}
-                    label="Drag a price list file here (image, PDF, or any document)"
-                    hint="Supports images, PDFs, TXT, HTML, CSV. AI extracts products + prices."
-                  />
-                  {imageLoading && (
-                    <div className="space-y-2">
-                      <p className="text-sm text-muted">Analyzing file with AI...</p>
-                      <div className="h-1 bg-surface-border rounded overflow-hidden">
-                        <div className="h-full bg-primary animate-pulse rounded" style={{ width: '100%' }} />
-                      </div>
-                    </div>
-                  )}
-                </>
+              <FileUpload
+                accept=".csv,.tsv,.txt,.xlsx,.xls,.xlsm,.pdf,.html,.htm,image/png,image/jpeg,image/webp"
+                onFile={handleAnyFile}
+                label="Drop the vendor's price list here — Excel, CSV, PDF, or a photo"
+                hint="The format is detected automatically. Spreadsheets import instantly; photos and PDFs are read by AI with a review step."
+              />
+              {(csvLoading || imageLoading) && (
+                <div className="space-y-2">
+                  <p className="text-sm text-muted">{imageLoading ? 'Analyzing file with AI...' : 'Processing file...'}</p>
+                  <div className="h-1 bg-surface-border rounded overflow-hidden">
+                    <div className="h-full bg-primary animate-pulse rounded" style={{ width: '100%' }} />
+                  </div>
+                </div>
               )}
-              <Button type="button" variant="secondary" className="!text-xs" onClick={() => { setImportMode(null); setCsvStatus(null) }}>
-                Close
-              </Button>
+              <div className="flex items-center justify-between">
+                <button
+                  type="button"
+                  onClick={() => { setImportMode('bulk'); setCsvStatus(null) }}
+                  className="text-[12px] text-primary hover:underline underline-offset-2"
+                >
+                  Have many photos of the list? Import them all at once →
+                </button>
+                <Button type="button" variant="secondary" className="!text-xs" onClick={() => { setImportMode(null); setCsvStatus(null) }}>
+                  Close
+                </Button>
+              </div>
             </div>
           )}
 
@@ -691,7 +717,7 @@ export function VendorDetailModal({
                 {prices.length === 0 ? (
                   <tr>
                     <td colSpan={10} className="py-8 text-center text-muted text-sm">
-                      No prices registered. Add products or import CSV / image.
+                      No prices registered yet — click Upload Price List and drop the vendor's file.
                     </td>
                   </tr>
                 ) : (
@@ -832,16 +858,3 @@ function ComplianceCard({ label, value, tip }: { label: string; value: React.Rea
   )
 }
 
-function TabBtn({ label, mode, active, onClick }: { label: string; mode: ImportMode; active: ImportMode | null; onClick: (m: ImportMode) => void }) {
-  return (
-    <button
-      type="button"
-      onClick={() => onClick(mode)}
-      className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-        active === mode ? 'bg-primary text-primary-foreground shadow-sm' : 'text-fg-secondary hover:text-fg hover:bg-surface-hover'
-      }`}
-    >
-      {label}
-    </button>
-  )
-}

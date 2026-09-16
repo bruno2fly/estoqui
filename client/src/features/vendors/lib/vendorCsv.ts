@@ -43,7 +43,8 @@ export function parseVendorPriceCSV(
     const lower = line.toLowerCase().replace(/_/g, ' ')
     return /\b(name|product|nome|produto|price|preco|preço|sku|brand|marca|description|descricao|descrição|desc|item|cost|valor|case|pack|quantity)\b/.test(lower)
   }
-  for (let i = 0; i < Math.min(lines.length, 5); i++) {
+  // QuickBooks-style exports bury the header below title/blank rows — scan deeper.
+  for (let i = 0; i < Math.min(lines.length, 12); i++) {
     if (isHeaderLine(lines[i])) {
       headerLineIdx = i
       break
@@ -179,21 +180,38 @@ export function parseVendorPriceCSV(
 
 /**
  * Parse an Excel (.xlsx / .xls) file into vendor price rows.
- * Reads the first sheet, converts to CSV, then reuses the CSV parser.
+ *
+ * Tries EVERY sheet and keeps the one that yields the most valid price rows —
+ * real-world exports (QuickBooks Desktop especially) put an instructions/tips
+ * sheet first and the actual data on the second sheet.
  */
 export function parseVendorPriceExcel(
   data: ArrayBuffer
 ): VendorCsvParseResult | { error: string } {
   try {
     const workbook = XLSX.read(data, { type: 'array' })
-    const firstSheet = workbook.SheetNames[0]
-    if (!firstSheet) return { error: 'Excel file has no sheets.' }
+    if (workbook.SheetNames.length === 0) return { error: 'Excel file has no sheets.' }
 
-    const sheet = workbook.Sheets[firstSheet]
-    const csvText = XLSX.utils.sheet_to_csv(sheet, { FS: ',', RS: '\n' })
-    if (!csvText.trim()) return { error: 'Excel sheet is empty.' }
+    let best: VendorCsvParseResult | null = null
+    let firstError: { error: string } | null = null
 
-    return parseVendorPriceCSV(csvText)
+    for (const sheetName of workbook.SheetNames) {
+      const sheet = workbook.Sheets[sheetName]
+      const csvText = XLSX.utils.sheet_to_csv(sheet, { FS: ',', RS: '\n' })
+      if (!csvText.trim()) continue
+
+      const result = parseVendorPriceCSV(csvText)
+      if ('error' in result) {
+        if (!firstError) firstError = result
+        continue
+      }
+      if (!best || result.validRowCount > best.validRowCount) {
+        best = result
+      }
+    }
+
+    if (best) return best
+    return firstError ?? { error: 'No sheet in this Excel file contains a readable price list.' }
   } catch (err) {
     return {
       error: `Failed to read Excel file: ${err instanceof Error ? err.message : 'Unknown error'}`,

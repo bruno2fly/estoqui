@@ -178,7 +178,7 @@ export function HelpPage() {
           <div className="flex flex-col gap-2.5 mt-4 text-[13px]">
             <div className="flex items-center gap-2.5">
               <MailIcon className="w-4 h-4 text-primary-foreground/70 shrink-0" />
-              <a href="mailto:support@2fly.digital" className="font-medium underline-offset-2 hover:underline">support@2fly.digital</a>
+              <a href="mailto:sales@estoqui.com" className="font-medium underline-offset-2 hover:underline">sales@estoqui.com</a>
             </div>
             <div className="flex items-center gap-2.5 text-primary-foreground/80">
               <PhoneIcon className="w-4 h-4 text-primary-foreground/70 shrink-0" />
@@ -186,7 +186,7 @@ export function HelpPage() {
             </div>
           </div>
           <p className="text-[11px] text-primary-foreground/60 mt-5">
-            Estoqui v1.0 — Built by 2Fly Digital
+            Estoqui v1.0
           </p>
         </div>
       </div>

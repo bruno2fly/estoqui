@@ -62,9 +62,6 @@ export function Layout() {
       <aside className="w-[248px] flex flex-col bg-sidebar border-r border-sidebar-border shrink-0 overflow-y-auto">
         <div className="flex items-center gap-2.5 px-5 h-16 shrink-0">
           <img src="/estoqui-logo.png" alt="Estoqui" className="h-6 w-auto" />
-          <span className="rounded-full bg-surface-hover px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-fg-secondary">
-            2Fly
-          </span>
         </div>
 
         <nav className="flex-1 px-3 py-2">

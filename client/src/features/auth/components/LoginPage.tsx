@@ -176,7 +176,7 @@ export function LoginPage() {
           )}
         </form>
 
-        <p className="text-xs text-muted text-center mt-8">By 2Fly</p>
+        <p className="text-xs text-muted text-center mt-8">Estoqui</p>
       </div>
     </div>
   )
