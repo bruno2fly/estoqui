@@ -9,15 +9,19 @@ import {
 
 interface BulkScreenshotImportProps {
   apiKey: string
+  /** Photos already picked elsewhere (e.g. multi-select on the main dropzone) — preloaded into the list. */
+  initialFiles?: File[]
   onImport: (rows: BulkExtractedRow[]) => void
   onCancel: () => void
 }
 
 type Step = 'upload' | 'processing' | 'review'
 
-export function BulkScreenshotImport({ apiKey, onImport, onCancel }: BulkScreenshotImportProps) {
+export function BulkScreenshotImport({ apiKey, initialFiles, onImport, onCancel }: BulkScreenshotImportProps) {
   const [step, setStep] = useState<Step>('upload')
-  const [files, setFiles] = useState<File[]>([])
+  const [files, setFiles] = useState<File[]>(() =>
+    initialFiles ? sortFilesByName(filterImageFiles(initialFiles)) : []
+  )
   const [dragging, setDragging] = useState(false)
   const [progress, setProgress] = useState<BulkParseProgress | null>(null)
   const [results, setResults] = useState<BulkExtractedRow[]>([])

@@ -56,6 +56,7 @@ export function VendorDetailModal({
 
   const [addProductOpen, setAddProductOpen] = useState(false)
   const [importMode, setImportMode] = useState<ImportMode | null>(null)
+  const [bulkFiles, setBulkFiles] = useState<File[] | null>(null)
   const [csvLoading, setCsvLoading] = useState(false)
   const [imageLoading, setImageLoading] = useState(false)
   const [reviewRows, setReviewRows] = useState<ReviewRow[] | null>(null)
@@ -358,6 +359,33 @@ export function VendorDetailModal({
     else void handleImageFile(file)
   }
 
+  /**
+   * The dropzone accepts several files at once (important on phones, where
+   * the gallery picker multi-selects). One file keeps the normal flow;
+   * two or more photos jump straight into the bulk photo importer with the
+   * photos already loaded.
+   */
+  const handleAnyFiles = (files: File[]) => {
+    if (files.length === 0) return
+    if (files.length === 1) {
+      handleAnyFile(files[0])
+      return
+    }
+    const images = files.filter((f) => f.type.startsWith('image/'))
+    if (images.length >= 2) {
+      setBulkFiles(images)
+      setImportMode('bulk')
+      setCsvStatus(null)
+      if (images.length < files.length) {
+        toast.show('Loaded the photos. Other file types must be uploaded one at a time.')
+      }
+      return
+    }
+    // Mixed or multiple non-photo files: process the first, tell the user.
+    toast.show('Multiple files at once only works with photos. Processing the first file.')
+    handleAnyFile(files[0])
+  }
+
   const handleImageFile = async (file: File) => {
     // AI extraction is included in the plan — runs via Estoqui's server.
     const apiKey = ''
@@ -455,9 +483,9 @@ export function VendorDetailModal({
   return (
     <>
       <Modal open={open} onClose={onClose} title={vendor.name} maxWidth="900px">
-        <div className="space-y-5">
-          {/* Compliance Summary Cards */}
-          <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+        <div className="flex flex-col gap-5">
+          {/* Compliance Summary Cards (on phones these drop below the upload flow) */}
+          <div className="order-last sm:order-none grid grid-cols-2 sm:grid-cols-5 gap-3">
             <ComplianceCard
               label="Score"
               value={<span className={`text-2xl font-bold ${getScoreColor(score)}`}>{score}</span>}
@@ -528,8 +556,8 @@ export function VendorDetailModal({
             </div>
           )}
 
-          {/* Vendor Info */}
-          <div className="flex items-start justify-between gap-4">
+          {/* Vendor Info (on phones this drops below the upload flow) */}
+          <div className="order-last sm:order-none flex items-start justify-between gap-4 flex-wrap">
             <div className="text-sm text-fg space-y-0.5">
               {vendor.contactName && <p><strong>Contact:</strong> {vendor.contactName}</p>}
               <p><strong>Phone:</strong> {vendor.phone || '-'}</p>
@@ -645,9 +673,10 @@ export function VendorDetailModal({
             <div className="border border-surface-border rounded-xl p-4 space-y-3">
               <FileUpload
                 accept=".csv,.tsv,.txt,.xlsx,.xls,.xlsm,.numbers,.pdf,.html,.htm,image/png,image/jpeg,image/webp"
-                onFile={handleAnyFile}
-                label="Drop the vendor's price list here — Excel, Numbers, CSV, PDF, or a photo"
-                hint="The format is detected automatically. Spreadsheets import instantly; photos and PDFs are read by AI with a review step."
+                multiple
+                onFiles={handleAnyFiles}
+                label="Drop the vendor's price list here — Excel, Numbers, CSV, PDF, or photos"
+                hint="The format is detected automatically. Spreadsheets import instantly; photos and PDFs are read by AI with a review step. On a phone, you can select several photos at once."
               />
               {(csvLoading || imageLoading) && (
                 <div className="space-y-2">
@@ -676,8 +705,9 @@ export function VendorDetailModal({
           {importMode === 'bulk' && !reviewRows && (
             <BulkScreenshotImport
               apiKey=""
-              onImport={handleBulkImport}
-              onCancel={() => setImportMode(null)}
+              initialFiles={bulkFiles ?? undefined}
+              onImport={(rows) => { setBulkFiles(null); handleBulkImport(rows) }}
+              onCancel={() => { setBulkFiles(null); setImportMode(null) }}
             />
           )}
 

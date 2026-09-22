@@ -2,7 +2,11 @@ import { useState, useRef, type DragEvent, type ChangeEvent } from 'react'
 
 export interface FileUploadProps {
   accept?: string
-  onFile: (file: File) => void
+  onFile?: (file: File) => void
+  /** When set, the picker allows selecting several files at once (e.g. photos
+   *  from a phone gallery) and they are all delivered in one call. */
+  onFiles?: (files: File[]) => void
+  multiple?: boolean
   label?: string
   hint?: string
 }
@@ -10,17 +14,25 @@ export interface FileUploadProps {
 export function FileUpload({
   accept = '.csv',
   onFile,
+  onFiles,
+  multiple = false,
   label = 'Arraste um arquivo ou clique para selecionar',
   hint,
 }: FileUploadProps) {
   const [dragging, setDragging] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
 
+  const deliver = (list: FileList | null) => {
+    const files = Array.from(list ?? [])
+    if (files.length === 0) return
+    if (onFiles) onFiles(multiple ? files : files.slice(0, 1))
+    else if (onFile) onFile(files[0])
+  }
+
   const handleDrop = (e: DragEvent<HTMLDivElement>) => {
     e.preventDefault()
     setDragging(false)
-    const file = e.dataTransfer.files[0]
-    if (file) onFile(file)
+    deliver(e.dataTransfer.files)
   }
 
   const handleDragOver = (e: DragEvent<HTMLDivElement>) => {
@@ -31,8 +43,7 @@ export function FileUpload({
   const handleDragLeave = () => setDragging(false)
 
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (file) onFile(file)
+    deliver(e.target.files)
     e.target.value = ''
   }
 
@@ -74,6 +85,7 @@ export function FileUpload({
         ref={inputRef}
         type="file"
         accept={accept}
+        multiple={multiple}
         onChange={handleChange}
         className="hidden"
         aria-label="Selecionar arquivo"

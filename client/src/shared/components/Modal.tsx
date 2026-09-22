@@ -27,18 +27,18 @@ export function Modal({ open, onClose, title, children, maxWidth = '800px' }: Mo
 
   const content = (
     <div
-      className="fixed inset-0 z-[1000] flex items-center justify-center overflow-y-auto bg-black/40 dark:bg-black/70 p-5 backdrop-blur-sm"
+      className="fixed inset-0 z-[1000] flex items-start sm:items-center justify-center overflow-y-auto bg-black/40 dark:bg-black/70 p-0 sm:p-5 backdrop-blur-sm"
       role="dialog"
       aria-modal="true"
       aria-labelledby="modal-title"
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
       <div
-        className="bg-surface border border-surface-border rounded-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl"
+        className="bg-surface border border-surface-border rounded-none sm:rounded-2xl w-full min-h-full sm:min-h-0 sm:max-h-[90vh] overflow-y-auto shadow-2xl"
         style={{ maxWidth }}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between px-6 py-5 border-b border-surface-border">
+        <div className="sticky top-0 z-10 bg-surface flex items-center justify-between px-4 sm:px-6 py-4 sm:py-5 border-b border-surface-border">
           <h2 id="modal-title" className="text-lg font-semibold tracking-tight text-fg">
             {title}
           </h2>
@@ -51,7 +51,7 @@ export function Modal({ open, onClose, title, children, maxWidth = '800px' }: Mo
             &times;
           </button>
         </div>
-        <div className="p-6">{children}</div>
+        <div className="p-4 sm:p-6">{children}</div>
       </div>
     </div>
   )

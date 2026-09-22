@@ -195,7 +195,39 @@ export function VendorsPage() {
             <p className="text-muted text-sm">No vendors registered</p>
           </div>
         ) : (
-          <div className="border border-surface-border rounded-xl overflow-hidden overflow-x-auto">
+          <>
+          {/* Phone view: simple tap-able vendor cards */}
+          <div className="md:hidden space-y-2">
+            {filtered.map(({ vendor, status, score, days, priceCount }) => {
+              const badge = getStatusBadge(status)
+              const stale = (vendor.staleAfterDays ?? 7) < (days ?? 9999)
+              return (
+                <button
+                  type="button"
+                  key={vendor.id}
+                  onClick={() => setDetailVendorId(vendor.id)}
+                  className="w-full text-left bg-surface border border-surface-border rounded-xl px-4 py-3 hover:bg-surface-hover active:bg-surface-hover transition-colors"
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-[14px] font-semibold text-fg truncate">{vendor.name}</span>
+                    <span className={`shrink-0 inline-block px-2 py-0.5 rounded-md text-[10px] font-semibold uppercase tracking-wide ${badge.className}`}>
+                      {badge.label}
+                    </span>
+                  </div>
+                  <div className="mt-1.5 flex items-center gap-3 text-[12px] text-fg-secondary">
+                    <span>Score <span className={`font-bold ${getScoreColor(score)}`}>{score}</span></span>
+                    <span className={stale ? 'text-danger font-medium' : ''}>
+                      {days !== null ? (days === 0 ? 'Updated today' : `${days}d ago${stale ? ' - STALE' : ''}`) : 'Never updated'}
+                    </span>
+                    <span className="ml-auto tabular-nums">{priceCount} products</span>
+                  </div>
+                </button>
+              )
+            })}
+          </div>
+
+          {/* Desktop view: full table */}
+          <div className="hidden md:block border border-surface-border rounded-xl overflow-hidden overflow-x-auto">
             <table className="w-full border-collapse min-w-[700px]">
               <thead>
                 <tr>
@@ -288,6 +320,7 @@ export function VendorsPage() {
               </tbody>
             </table>
           </div>
+          </>
         )}
       </div>
 
