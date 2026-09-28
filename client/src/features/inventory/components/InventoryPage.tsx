@@ -3,12 +3,31 @@ import { useStore } from '@/store'
 import { matchKey } from '../lib/matching'
 import { FileUpload, ConfirmDialog, UploadOverlay } from '@/shared/components'
 import { useToast } from '@/shared/components'
-import { parseCSVStock, parseStockExcel } from '../lib/csvStock'
+import { parseCSVStock } from '../lib/csvStock'
 import { parseStockWithOpenAI } from '../lib/aiStockParse'
 import { findProductMatch } from '../lib/matching'
 import { ReorderSection } from './ReorderSection'
 import { OrderVendorCards } from './OrderSplitModal'
 import type { StockSnapshotRow } from '@/types'
+
+type UploadMode = 'csv' | 'ai'
+
+/**
+ * Guard against garbage vendor names from messy POS exports. A real vendor is
+ * words, not a timestamp: reject date/time-looking values ("05/27/2026
+ * 07:51:33"), values that are mostly digits, and one-character strings.
+ * (Casa Nova's MyPOS report put timestamps in the vendor/brand column and the
+ * import created 89 fake "vendors" — this gate makes that impossible.)
+ */
+function isPlausibleVendorName(name: string): boolean {
+  const s = name.trim()
+  if (s.length < 2) return false
+  if (/^\d{1,4}[\/\-.]\d{1,2}[\/\-.]\d{1,4}/.test(s)) return false // starts like a date
+  if (/\d{1,2}:\d{2}/.test(s)) return false // contains a time
+  const digitish = (s.match(/[\d\/\-.:]/g) ?? []).length
+  if (digitish / s.length > 0.5) return false // mostly numbers/punctuation
+  return true
+}
 
 export function InventoryPage() {
   const toast = useToast()
@@ -23,6 +42,7 @@ export function InventoryPage() {
   const clearReorderDraft = useStore((s) => s.clearReorderDraft)
   const addActivity = useStore((s) => s.addActivity)
 
+  const [uploadMode, setUploadMode] = useState<UploadMode>('csv')
   const [uploadStatus, setUploadStatus] = useState<'idle' | 'success' | 'error'>('idle')
   const [uploadMessage, setUploadMessage] = useState('')
   const [aiLoading, setAiLoading] = useState(false)
@@ -138,7 +158,7 @@ export function InventoryPage() {
         const cost = orig?.unitCost ?? orig?.unitPrice ?? r.unitCost ?? r.unitPrice ?? 0
         return { ...r, rawVendor: vendor, unitCost: cost }
       })
-      .filter((r) => r.rawVendor && r.matchedProductId && r.unitCost && r.unitCost > 0)
+      .filter((r) => r.rawVendor && isPlausibleVendorName(r.rawVendor) && r.matchedProductId && r.unitCost && r.unitCost > 0)
 
     console.log(`[Inventory] Vendor linking: ${vendorRows.length} rows with vendor+product+cost out of ${updatedRows.length} total`, vendorRows.length > 0 ? { sampleVendor: vendorRows[0].rawVendor, sampleCost: vendorRows[0].unitCost } : 'NO VENDOR ROWS')
 
@@ -221,55 +241,6 @@ export function InventoryPage() {
     const vpCount = useStore.getState().vendorPrices.length
     console.log(`[Inventory] Building reorder draft. vendorPrices in store: ${vpCount}, vendors: ${useStore.getState().vendors.length}`)
     buildReorderDraftFromSnapshot(snapshotId)
-  }
-
-  /**
-   * One door for any POS report. Spreadsheets parse instantly and free
-   * (CSV/TSV/TXT as text; Excel/Numbers via the sheet reader); photos,
-   * PDFs and anything unrecognized go to AI extraction — screenshots
-   * included (the AI path reads images via vision on Estoqui's server).
-   */
-  const handleAnyFile = (file: File) => {
-    const isExcelLike =
-      /\.(xlsx?|xlsm|numbers)$/i.test(file.name) ||
-      file.type === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' ||
-      file.type === 'application/vnd.ms-excel'
-    const isTextSheet = /\.(csv|tsv|txt)$/i.test(file.name) || file.type === 'text/csv'
-
-    if (isExcelLike) handleExcelFile(file)
-    else if (isTextSheet) handleCsvFile(file)
-    else void handleAiFile(file)
-  }
-
-  const handleExcelFile = (file: File) => {
-    setUploadStatus('idle')
-    setUploadMessage('')
-    clearActiveOrderView()
-    setOverlayStatus('loading')
-    setOverlayMessage('')
-
-    const reader = new FileReader()
-    reader.onload = () => {
-      const data = reader.result as ArrayBuffer
-      const rows = parseStockExcel(data)
-      if (rows.length === 0) {
-        // Spreadsheet unreadable as a table — let AI have a shot at it.
-        void handleAiFile(file)
-        return
-      }
-      setTimeout(() => {
-        try {
-          processStockRows(rows, file.name, 'excel')
-        } catch (err) {
-          const msg = err instanceof Error ? err.message : 'Failed to process file'
-          setOverlayStatus('error')
-          setOverlayMessage(msg)
-          setUploadStatus('error')
-          setUploadMessage(msg)
-        }
-      }, 50)
-    }
-    reader.readAsArrayBuffer(file)
   }
 
   const handleCsvFile = (file: File) => {
@@ -366,6 +337,20 @@ export function InventoryPage() {
     orderData === null
   const showOrderCards = orderData !== null
 
+  const tabBtn = (label: string, tabMode: UploadMode) => (
+    <button
+      type="button"
+      onClick={() => { setUploadMode(tabMode); setUploadStatus('idle') }}
+      className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+        uploadMode === tabMode
+          ? 'bg-primary text-primary-foreground shadow-sm'
+          : 'text-fg-secondary hover:text-fg hover:bg-surface-hover'
+      }`}
+    >
+      {label}
+    </button>
+  )
+
   return (
     <div className="space-y-6">
       {/* Upload section — hide when order cards are showing */}
@@ -400,19 +385,35 @@ export function InventoryPage() {
             )}
           </div>
 
-          <FileUpload
-            accept=".csv,.tsv,.txt,.xlsx,.xls,.xlsm,.numbers,.pdf,.html,.htm,image/png,image/jpeg,image/webp"
-            onFile={handleAnyFile}
-            label="Drop your POS report here — CSV, Excel, Numbers, PDF, or a screenshot"
-            hint="The format is detected automatically. Spreadsheets import instantly; photos and PDFs are read by AI."
-          />
-          {aiLoading && (
-            <div className="mt-3 space-y-2">
-              <p className="text-sm text-muted">Analyzing file with AI… This may take 5–20 seconds.</p>
-              <div className="h-1 bg-surface-border rounded overflow-hidden">
-                <div className="h-full bg-primary animate-pulse rounded" style={{ width: '100%' }} />
-              </div>
-            </div>
+          <div className="flex gap-2 border-b border-surface-border pb-2 mb-4">
+            {tabBtn('CSV', 'csv')}
+            {tabBtn('AI (any file)', 'ai')}
+          </div>
+
+          {uploadMode === 'csv' ? (
+            <FileUpload
+              accept=".csv"
+              onFile={handleCsvFile}
+              label="Upload your CSV file here"
+              hint="Use the CSV file exported from your POS system"
+            />
+          ) : (
+            <>
+              <FileUpload
+                accept=".csv,.tsv,.txt,.xls,.xlsx,.html,.htm,.pdf,image/png,image/jpeg,image/webp"
+                onFile={handleAiFile}
+                label="Drag any POS report file or screenshot here"
+                hint="Supports CSV, TXT, TSV, HTML, Excel (text), images, and more"
+              />
+              {aiLoading && (
+                <div className="mt-3 space-y-2">
+                  <p className="text-sm text-muted">Analyzing file with AI… This may take 5–20 seconds.</p>
+                  <div className="h-1 bg-surface-border rounded overflow-hidden">
+                    <div className="h-full bg-primary animate-pulse rounded" style={{ width: '100%' }} />
+                  </div>
+                </div>
+              )}
+            </>
           )}
 
           {uploadStatus === 'success' && (
