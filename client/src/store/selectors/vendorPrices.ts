@@ -35,7 +35,11 @@ export function computeBestVendor(
   state: PersistedState,
   productId: string
 ): VendorPriceWithVendor | null {
-  const prices = getVendorPricesForProduct(state, productId)
+  // A $0 price is a parse error, not a bargain — it must never win "best
+  // vendor" (ascending sort would otherwise always pick it).
+  const prices = getVendorPricesForProduct(state, productId).filter(
+    (p) => p.effectiveUnitCost > 0
+  )
   if (prices.length === 0) return null
 
   const threshold = state.settings?.stalenessThreshold ?? 45
