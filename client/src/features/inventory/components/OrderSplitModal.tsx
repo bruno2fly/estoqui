@@ -160,11 +160,13 @@ export function OrderVendorCards({
   byVendor,
   onArchive,
   onReset,
+  onBackToList,
 }: {
   order: Order
   byVendor: Record<string, OrderGroup>
   onArchive: () => void
   onReset?: () => void
+  onBackToList?: () => void
 }) {
   const toast = useToast()
   const storeName = useStore((s) => s.settings?.storeName ?? DEFAULT_SETTINGS.storeName)
@@ -254,6 +256,18 @@ export function OrderVendorCards({
             </div>
           </div>
           <div className="flex items-center gap-2">
+            {onBackToList && (
+              <button
+                type="button"
+                onClick={onBackToList}
+                className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-[12px] font-medium text-fg-secondary border border-surface-border hover:bg-surface-hover transition-colors"
+              >
+                <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="15 18 9 12 15 6" />
+                </svg>
+                Back to list
+              </button>
+            )}
             {onReset && (
               <button
                 type="button"

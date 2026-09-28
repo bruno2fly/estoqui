@@ -51,6 +51,9 @@ export function InventoryPage() {
 
   // Order state — persisted in Zustand store so it survives navigation
   const orderData = useStore((s) => s.activeOrderView)
+  // After Create Order the user can flip back to the reorder list and return
+  // to the order page — nothing is destroyed by navigating.
+  const [viewList, setViewList] = useState(false)
   const setActiveOrderView = useStore((s) => s.setActiveOrderView)
   const clearActiveOrderView = useStore((s) => s.clearActiveOrderView)
 
@@ -384,6 +387,7 @@ export function InventoryPage() {
   }
 
   const handleArchiveOrder = () => {
+    setViewList(false)
     clearReorderDraft()
     clearActiveOrderView()
     setUploadStatus('idle')
@@ -393,6 +397,7 @@ export function InventoryPage() {
   }
 
   const handleResetInventory = () => {
+    setViewList(false)
     // Remember which snapshot was dismissed (persisted in settings) so a
     // page reload doesn't rebuild the reorder list from it.
     const st = useStore.getState()
@@ -411,8 +416,8 @@ export function InventoryPage() {
   // with zero lines — so a user who removed every item can re-add from catalog.
   const showReorder =
     (Boolean(reorderDraft?.lines?.length) || Boolean(reorderDraft?.snapshotId)) &&
-    orderData === null
-  const showOrderCards = orderData !== null
+    (orderData === null || viewList)
+  const showOrderCards = orderData !== null && !viewList
 
   return (
     <div className="space-y-6">
@@ -476,11 +481,28 @@ export function InventoryPage() {
         </div>
       )}
 
-      {/* Reorder list — shown after upload, before order creation */}
+      {/* Reorder list — shown after upload, before order creation (and again
+          via "Back to list" while an order exists) */}
       {showReorder && (
-        <ReorderSection
-          onOrderCreated={(order, byVendor) => setActiveOrderView({ order, byVendor })}
-        />
+        <>
+          {orderData !== null && (
+            <div className="flex items-center justify-between bg-accent border border-primary/20 rounded-xl px-4 py-3">
+              <p className="text-sm text-accent-foreground">
+                You have a created order — edits here don&apos;t change it until you create a new order.
+              </p>
+              <button
+                type="button"
+                onClick={() => setViewList(false)}
+                className="shrink-0 px-3.5 py-1.5 rounded-lg text-[12px] font-medium bg-primary text-primary-foreground hover:bg-primary-hover transition-colors"
+              >
+                View order &rarr;
+              </button>
+            </div>
+          )}
+          <ReorderSection
+            onOrderCreated={(order, byVendor) => { setActiveOrderView({ order, byVendor }); setViewList(false) }}
+          />
+        </>
       )}
 
       {/* Order vendor cards — shown inline after Create Order */}
@@ -490,6 +512,7 @@ export function InventoryPage() {
           byVendor={orderData!.byVendor}
           onArchive={handleArchiveOrder}
           onReset={handleResetInventory}
+          onBackToList={() => setViewList(true)}
         />
       )}
 
