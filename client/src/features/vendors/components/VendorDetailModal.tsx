@@ -196,6 +196,12 @@ export function VendorDetailModal({
     let priceUpdated = 0
     const unmatched: VendorPriceRow[] = []
 
+    // A new list REPLACES the old one: any product not in this upload loses
+    // its link to this vendor (including old purchase-history links). The
+    // vendor's current list is the only truth about what they sell today.
+    const removedOld = state.vendorPrices.filter((vp) => vp.vendorId === vendor.id).length
+    clearVendorPrices(vendor.id)
+
     rows.forEach((row) => {
       // Vendor-code memory: once a vendor's own item code has been matched to
       // one of our products, every future list from that vendor resolves it
@@ -226,12 +232,8 @@ export function VendorDetailModal({
       // Remember this vendor's item code → product for next week's list.
       if (vskuKey) setMatch(vskuKey, product.id)
 
-      const existing = state.vendorPrices.find(
-        (vp) => vp.vendorId === vendor.id && vp.productId === product!.id
-      )
       saveVendorPrice(row, product.id)
-      if (existing) priceUpdated++
-      else priceAdded++
+      priceAdded++
     })
 
     setUnmatchedOffers(unmatched.length > 0 ? unmatched : null)
@@ -268,7 +270,8 @@ export function VendorDetailModal({
     updateVendor(vendor.id, { score: newScore, status: newStatus })
 
     const parts = []
-    if (priceAdded) parts.push(`${priceAdded} prices added`)
+    if (priceAdded) parts.push(`${priceAdded} prices imported`)
+    if (removedOld > 0) parts.push(`old list replaced (${removedOld} previous links cleared)`)
     if (priceUpdated) parts.push(`${priceUpdated} prices updated`)
     if (unmatched.length) parts.push(`${unmatched.length} items not in your catalog`)
 
