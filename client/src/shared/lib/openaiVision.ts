@@ -65,6 +65,20 @@ export async function aiExtract(
   }
   if (!token) return { error: 'Not signed in. Sign in again and retry.' }
 
+  // The server rejects request bodies over ~4.5 MB (and the browser can only
+  // report that as an opaque "Failed to fetch"). Catch it BEFORE sending and
+  // explain what to do instead. Base64 inflates files ~33%, so this limit
+  // corresponds to roughly a 3 MB original file.
+  const body = JSON.stringify(payload)
+  if (body.length > 3_800_000) {
+    return {
+      error:
+        'This file is too big to be read by AI (about 3 MB max). ' +
+        'For a large PDF, take photos of the pages with your phone instead — ' +
+        'you can select them all at once and the AI reads them in batches.',
+    }
+  }
+
   let response: Response
   try {
     response = await fetch(`${AI_BASE}/api/ai/extract`, {
@@ -73,7 +87,7 @@ export async function aiExtract(
         'Content-Type': 'application/json',
         Authorization: `Bearer ${token}`,
       },
-      body: JSON.stringify(payload),
+      body,
     })
   } catch (e) {
     return { error: `Network error: ${e instanceof Error ? e.message : 'request failed'}` }
