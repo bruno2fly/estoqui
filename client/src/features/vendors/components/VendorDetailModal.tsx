@@ -15,6 +15,7 @@ import {
   isUpdatedThisWeek,
 } from '../lib/vendorScore'
 import { stripPackFromName } from '@/lib/pack/parsePack'
+import { pdfToImageFiles, isPdf } from '@/shared/lib/pdfToImages'
 import { AddProductToVendorModal } from './AddProductToVendorModal'
 import { BulkScreenshotImport } from './BulkScreenshotImport'
 import type { BulkExtractedRow } from '../lib/vendorBulkParse'
@@ -356,7 +357,41 @@ export function VendorDetailModal({
       file.type === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' ||
       file.type === 'application/vnd.ms-excel'
     if (isSpreadsheet) handleCsvFile(file)
+    else if (isPdf(file)) void handlePdfFile(file)
     else void handleImageFile(file)
+  }
+
+  /**
+   * Any-size PDFs: render each page to an image IN THE BROWSER, then feed the
+   * pages through the same batch pipeline as the multi-photo import. No single
+   * request is ever big, and page-by-page reads extract better than one gulp.
+   */
+  const handlePdfFile = async (file: File) => {
+    setCsvStatus(null)
+    setOverlayStatus('loading')
+    setOverlayMessage('Preparing PDF pages...')
+    try {
+      const pages = await pdfToImageFiles(file, (p) =>
+        setOverlayMessage(`Preparing PDF pages... ${p.page}/${p.totalPages}`)
+      )
+      setOverlayStatus(null)
+      setOverlayMessage('')
+      if (pages.length === 0) {
+        toast.show('Could not read any pages from this PDF.', 'error')
+        return
+      }
+      if (pages.length === 1) {
+        void handleImageFile(pages[0])
+        return
+      }
+      setBulkFiles(pages)
+      setImportMode('bulk')
+    } catch (e) {
+      setOverlayStatus('error')
+      const msg = e instanceof Error ? e.message : 'Failed to read the PDF'
+      setOverlayMessage(msg)
+      toast.show(msg, 'error')
+    }
   }
 
   /**

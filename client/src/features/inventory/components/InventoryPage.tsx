@@ -5,6 +5,7 @@ import { FileUpload, ConfirmDialog, UploadOverlay } from '@/shared/components'
 import { useToast } from '@/shared/components'
 import { parseCSVStock, parseStockExcel } from '../lib/csvStock'
 import { parseStockWithOpenAI } from '../lib/aiStockParse'
+import { pdfToImageFiles, isPdf } from '@/shared/lib/pdfToImages'
 import { findProductMatch } from '../lib/matching'
 import { ReorderSection } from './ReorderSection'
 import { OrderVendorCards } from './OrderSplitModal'
@@ -336,18 +337,42 @@ export function InventoryPage() {
     setOverlayMessage('')
 
     try {
-      const result = await parseStockWithOpenAI(file, apiKey)
-      if ('error' in result) {
-        setOverlayStatus('error')
-        setOverlayMessage(result.error)
-        setUploadStatus('error')
-        setUploadMessage(result.error)
-        setAiLoading(false)
-        return
+      // Any-size PDFs: render pages in the browser and read them one by one,
+      // merging the rows — no single request is ever too big for the server.
+      let allRows: StockSnapshotRow[] = []
+      if (isPdf(file)) {
+        const pages = await pdfToImageFiles(file, (p) =>
+          setOverlayMessage(`Preparing PDF pages... ${p.page}/${p.totalPages}`)
+        )
+        if (pages.length === 0) throw new Error('Could not read any pages from this PDF.')
+        const merged: StockSnapshotRow[] = []
+        let pageErrors = 0
+        for (let i = 0; i < pages.length; i++) {
+          setOverlayMessage(`Reading page ${i + 1} of ${pages.length} with AI...`)
+          const r = await parseStockWithOpenAI(pages[i], apiKey)
+          if ('error' in r) { pageErrors++; continue }
+          merged.push(...r.rows)
+        }
+        if (merged.length === 0) {
+          throw new Error(pageErrors > 0 ? 'AI could not read this PDF\u2019s pages.' : 'No products found in this PDF.')
+        }
+        allRows = merged
+        if (pageErrors > 0) toast.show(`${pageErrors} page(s) could not be read — imported the rest.`)
+      } else {
+        const result = await parseStockWithOpenAI(file, apiKey)
+        if ('error' in result) {
+          setOverlayStatus('error')
+          setOverlayMessage(result.error)
+          setUploadStatus('error')
+          setUploadMessage(result.error)
+          setAiLoading(false)
+          return
+        }
+        allRows = result.rows
       }
       // Use setTimeout to let the overlay render before heavy processing
       await new Promise((r) => setTimeout(r, 50))
-      processStockRows(result.rows, file.name, 'ai')
+      processStockRows(allRows, file.name, 'ai')
     } catch (e) {
       const msg = e instanceof Error ? e.message : 'Failed to process file'
       setOverlayStatus('error')
