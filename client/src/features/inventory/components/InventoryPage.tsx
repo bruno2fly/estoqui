@@ -237,6 +237,9 @@ export function InventoryPage() {
     setOverlayMessage(resultText)
     toast.show(`${rows.length} products imported`)
 
+    // A fresh upload supersedes any earlier "Reset & Start New"
+    useStore.getState().setSettings({ dismissedSnapshotId: null })
+
     // Always build reorder draft immediately
     const vpCount = useStore.getState().vendorPrices.length
     console.log(`[Inventory] Building reorder draft. vendorPrices in store: ${vpCount}, vendors: ${useStore.getState().vendors.length}`)
@@ -321,6 +324,11 @@ export function InventoryPage() {
   }
 
   const handleResetInventory = () => {
+    // Remember which snapshot was dismissed (persisted in settings) so a
+    // page reload doesn't rebuild the reorder list from it.
+    const st = useStore.getState()
+    const dismissId = st.reorderDraft?.snapshotId ?? st.stockSnapshots[0]?.id ?? null
+    st.setSettings({ dismissedSnapshotId: dismissId })
     clearReorderDraft()
     setUploadStatus('idle')
     setUploadMessage('')

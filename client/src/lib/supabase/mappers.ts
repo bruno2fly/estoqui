@@ -244,6 +244,8 @@ export function settingsToDb(s: AppSettings, userId: string) {
     store_name: s.storeName,
     default_min_stock: s.defaultMinStock,
     openai_api_key: s.openaiApiKey ?? undefined,
+    // null is meaningful here (clears a dismissal), so don't let defined() drop it
+    dismissed_snapshot_id: s.dismissedSnapshotId ?? null,
   })
 }
 
@@ -253,6 +255,7 @@ export function settingsFromDb(row: Record<string, unknown>): AppSettings {
     stalenessThreshold: 45, // not stored in DB, use default
     defaultMinStock: (row.default_min_stock as number) ?? 10,
     openaiApiKey: (row.openai_api_key as string) ?? '',
+    dismissedSnapshotId: (row.dismissed_snapshot_id as string | null) ?? null,
   }
 }
 

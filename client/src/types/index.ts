@@ -138,6 +138,9 @@ export interface AppSettings {
   stalenessThreshold: number // days
   defaultMinStock: number
   openaiApiKey: string
+  /** Snapshot id dismissed via "Reset & Start New" — hydrate must not rebuild
+   *  the reorder list from it. Cleared on the next upload. */
+  dismissedSnapshotId?: string | null
 }
 
 // Match cache: key (e.g. "name|brand") -> productId
@@ -163,4 +166,5 @@ export const DEFAULT_SETTINGS: AppSettings = {
   stalenessThreshold: 45,
   defaultMinStock: 10,
   openaiApiKey: '',
+  dismissedSnapshotId: null,
 }

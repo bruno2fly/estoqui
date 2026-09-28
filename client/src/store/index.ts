@@ -111,9 +111,15 @@ export const useStore = create<StoreState>()((set, get) => ({
           reorderDraft: { snapshotId: latestSnapshot.id, lines: [] },
         } as any)
       } else if (latestSnapshot) {
-        // No order yet — rebuild reorder draft from the latest snapshot
-        console.log('[hydrateFromSupabase] Rebuilding reorder draft from snapshot', latestSnapshot.id)
-        state.buildReorderDraftFromSnapshot(latestSnapshot.id)
+        if (data.settings?.dismissedSnapshotId === latestSnapshot.id) {
+          // User hit "Reset & Start New" on this snapshot — leave the page
+          // clean instead of resurrecting the reorder list on every reload.
+          console.log('[hydrateFromSupabase] Snapshot dismissed by user — not rebuilding reorder draft')
+        } else {
+          // No order yet — rebuild reorder draft from the latest snapshot
+          console.log('[hydrateFromSupabase] Rebuilding reorder draft from snapshot', latestSnapshot.id)
+          state.buildReorderDraftFromSnapshot(latestSnapshot.id)
+        }
       }
     }, 100)
   },
